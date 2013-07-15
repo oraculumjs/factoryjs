@@ -1,0 +1,4 @@
+FlyMixFact
+==========
+
+Flyweight Mixin Factory
