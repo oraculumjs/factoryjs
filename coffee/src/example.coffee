@@ -1,14 +1,3 @@
-<link href="docs/public/stylesheets/normalize.css" rel="stylesheet"></link>
-
-Factory JS
-==========
-
-[tests](http://localhost:9001/specs.html)
-[docs](http://localhost:9001/docs/coffee/Factory.html)
-
-Factory tool for standardizing object definition and retrieval in various systems. To use this in your code you would describe the Factory of objects you are going to be creating, this is usually a domain of object definitions that have reasonable similarity.
-
-```coffeescript
 ###
 ENTIRELY CONTRIVED EXAMPLE!!
 ----------------------------
@@ -153,14 +142,3 @@ define ["Factory"], (Factory) ->
   runner.run()
   runner.clean()
 
-```
-
-To get this up and running:
-
-```bash
-npm install
-./node_modules/.bin/bower install
-./node_modules/.bin/grunt
-```
-
-You can then navigate to http://localhost:9001 and view the tests there or see them run in the console.

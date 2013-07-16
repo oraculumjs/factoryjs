@@ -1,0 +1,22 @@
+{
+  "name": "FactoryJS",
+  "version": "0.1.2",
+  "author": "Gabriel Hernandez <gabriel.hernandez@lookout.com>",
+  "repository": "git://github.com/lookout/factoryjs.git",
+  "devDependencies": {
+    "bower": "*",
+    "grunt-cli": "*",
+    "grunt-blanket": "*",
+    "grunt-contrib-clean": "*",
+    "grunt-contrib-coffee": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-contrib-concat": "*",
+    "grunt-contrib-jasmine": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-contrib-connect": "*",
+    "grunt-markdown": "*",
+    "grunt-docco": "git://github.com/webspinner/grunt-docco.git",
+    "grunt-template-jasmine-requirejs": "*"
+  }
+}

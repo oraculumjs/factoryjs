@@ -1,0 +1,11 @@
+{
+  "name": "Factory",
+  "version": "0.1.2",
+  "main": "src/Factory.js",
+  "dependencies": {
+    "underscore": "*",
+    "jquery": "*",
+    "backbone": "*",
+    "requirejs": "*"
+  }
+}

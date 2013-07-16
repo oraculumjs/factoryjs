@@ -1,0 +1,9 @@
+/components
+/node_modules
+/.grunt
+/index.html
+/src-cov
+/README.html
+/specs.html
+/index.html
+/docs
