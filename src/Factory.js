@@ -18,7 +18,8 @@
       }
 
       Factory.prototype.define = function(name, def, options) {
-        var definition, _base;
+        var definition, _base,
+          _this = this;
         if (options == null) {
           options = {};
         }
@@ -35,6 +36,9 @@
           definition.constructor = !_.isFunction(def) ? function() {
             return _.clone(def);
           } : def;
+          definition.constructor.prototype.__factory = function() {
+            return _this;
+          };
           definition.options = options;
           definition.tags = _.uniq([name].concat(options.tags)).filter(function(i) {
             return !!i;
@@ -87,6 +91,23 @@
         }
         options.tags = [].concat(bDef.tags, options.tags);
         return this.define(name, bDef.constructor.extend(def), options);
+      };
+
+      Factory.prototype.clone = function(factory) {
+        if (!(factory instanceof Factory)) {
+          throw new Error("Invalid Argument :: Expected Factory");
+        }
+        return _.each(["definitions", "mixins", "promises"], function(key) {
+          _.defaults(this[key], factory[key]);
+          if (key === 'definitions') {
+            return _.each(this[key], function(def, defname) {
+              var _this = this;
+              return this[key][defname].constructor.prototype.__factory = function() {
+                return _this;
+              };
+            }, this);
+          }
+        }, this);
       };
 
       Factory.prototype.defineMixin = function(name, def, options) {

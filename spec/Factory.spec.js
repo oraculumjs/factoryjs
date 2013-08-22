@@ -200,6 +200,11 @@
               mixins: ["one", "two"]
             });
           });
+          it("should provide a factory retrieval method on an instance", function() {
+            var test;
+            test = factory.get("Test", {});
+            return expect(test.__factory()).toEqual(factory);
+          });
           it("should return the appropriate object instance", function() {
             return expect(factory.get("Test", {})).toBeInstanceOf(Test);
           });
@@ -320,6 +325,70 @@
               return factory.extend('Base', 'NewThing', false);
             };
             return expect(tester).toThrow();
+          });
+        });
+        describe("Clone", function() {
+          beforeEach(function() {
+            return this.clonedFactory = new Factory(function() {
+              return this.cloned = true;
+            });
+          });
+          it("shoud throw when an invalid factory is passed", function() {
+            var test;
+            test = function() {
+              return factory.clone({});
+            };
+            return expect(test).toThrow();
+          });
+          it("should support cloning of the factory", function() {
+            factory.define('Test', {
+              test: true
+            });
+            this.clonedFactory.clone(factory);
+            return expect(this.clonedFactory).not.toEqual(factory);
+          });
+          it("should retain it's own core implementations", function() {
+            var test1, test2;
+            this.clonedFactory.clone(factory);
+            test1 = factory.get('Base');
+            test2 = this.clonedFactory.get('Base');
+            expect(test1.cloned).not.toBeDefined();
+            return expect(test2.cloned).toBe(true);
+          });
+          it("should support getting definitions from the cloned factory", function() {
+            factory.define('Test', {
+              test: true
+            });
+            this.clonedFactory.clone(factory);
+            return expect(this.clonedFactory.hasDefinition('Test')).toBe(true);
+          });
+          it("should have it's own definition hash as well", function() {
+            factory.define('Test', {
+              test: true
+            });
+            this.clonedFactory.clone(factory);
+            this.clonedFactory.define('NewTest', {
+              test: true
+            });
+            expect(this.clonedFactory.hasDefinition('NewTest')).toBe(true);
+            return expect(factory.hasDefinition('NewTest')).toBe(false);
+          });
+          it("should not share an instance pool with it's clone", function() {
+            var test1;
+            factory.define('Test', {
+              test: true
+            });
+            this.clonedFactory.clone(factory);
+            test1 = factory.get('Test');
+            return expect(this.clonedFactory.instances['Test']).not.toBeDefined();
+          });
+          return it("should reattach any instance factory accessors to itself", function() {
+            var test1, test2;
+            this.clonedFactory.clone(factory);
+            test1 = factory.get('Base');
+            test2 = this.clonedFactory.get('Base');
+            expect(test1.__factory()).toEqual(factory);
+            return expect(test2.__factory()).toEqual(this.clonedFactory);
           });
         });
         return describe("Factory Instance Mapping", function() {

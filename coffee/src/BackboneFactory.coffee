@@ -23,7 +23,7 @@ define [
 
   BackboneFactory.define "View", Backbone.View.extend
     initialize: (options) ->
-      @model = BackboneFactory.get @model, @modelData or {} if _.isString @model
+      @model = @__factory().get @model, @modelData or {} if _.isString @model
       Backbone.View::initialize.apply this, arguments
 
   # Model
@@ -40,7 +40,7 @@ define [
 
   BackboneFactory.define "Collection", Backbone.Collection.extend
     initialize: (options) ->
-      @model = BackboneFactory.getConstructor @model  if _.isString @model
+      @model = @__factory().getConstructor @model  if _.isString @model
       Backbone.Collection::initialize.apply this, arguments
 
   # Router

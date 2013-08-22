@@ -158,6 +158,9 @@ require ["Factory"], (Factory) ->
             singleton: true
             mixins: ["one", "two"]
 
+        it "should provide a factory retrieval method on an instance", ->
+          test = factory.get("Test", {})
+          expect(test.__factory()).toEqual(factory)
 
         it "should return the appropriate object instance", ->
           expect(factory.get("Test", {})).toBeInstanceOf Test
@@ -257,6 +260,45 @@ require ["Factory"], (Factory) ->
           tester = ->
             factory.extend 'Base', 'NewThing', false
           expect(tester).toThrow()
+      describe "Clone", ->
+        beforeEach ->
+          @clonedFactory = new Factory ()->
+            @cloned = true
+        it "shoud throw when an invalid factory is passed", ->
+          test = ->
+            factory.clone({})
+          expect(test).toThrow()
+        it "should support cloning of the factory", ->
+          factory.define 'Test', test: true
+          @clonedFactory.clone(factory)
+          expect(@clonedFactory).not.toEqual(factory)
+        it "should retain it's own core implementations", ->
+          @clonedFactory.clone(factory)
+          test1 = factory.get('Base')
+          test2 = @clonedFactory.get('Base')
+          expect(test1.cloned).not.toBeDefined()
+          expect(test2.cloned).toBe true
+        it "should support getting definitions from the cloned factory", ->
+          factory.define 'Test', {test: true}
+          @clonedFactory.clone(factory)
+          expect(@clonedFactory.hasDefinition('Test')).toBe true
+        it "should have it's own definition hash as well", ->
+          factory.define 'Test', {test: true}
+          @clonedFactory.clone(factory)
+          @clonedFactory.define 'NewTest', {test: true}
+          expect(@clonedFactory.hasDefinition('NewTest')).toBe true
+          expect(factory.hasDefinition('NewTest')).toBe false
+        it "should not share an instance pool with it's clone", ->
+          factory.define 'Test', {test: true}
+          @clonedFactory.clone(factory)
+          test1 = factory.get('Test')
+          expect(@clonedFactory.instances['Test']).not.toBeDefined()
+        it "should reattach any instance factory accessors to itself", ->
+          @clonedFactory.clone(factory)
+          test1 = factory.get('Base')
+          test2 = @clonedFactory.get('Base')
+          expect(test1.__factory()).toEqual(factory)
+          expect(test2.__factory()).toEqual(@clonedFactory)
       describe "Factory Instance Mapping", ->
         lso = undefined
         beforeEach ->
