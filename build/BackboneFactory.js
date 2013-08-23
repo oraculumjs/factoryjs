@@ -10,7 +10,7 @@
     BackboneFactory.define("View", Backbone.View.extend({
       initialize: function(options) {
         if (_.isString(this.model)) {
-          this.model = BackboneFactory.get(this.model, this.modelData || {});
+          this.model = this.__factory().get(this.model, this.modelData || {});
         }
         return Backbone.View.prototype.initialize.apply(this, arguments);
       }
@@ -19,7 +19,7 @@
     BackboneFactory.define("Collection", Backbone.Collection.extend({
       initialize: function(options) {
         if (_.isString(this.model)) {
-          this.model = BackboneFactory.getConstructor(this.model);
+          this.model = this.__factory().getConstructor(this.model);
         }
         return Backbone.Collection.prototype.initialize.apply(this, arguments);
       }

@@ -52,6 +52,8 @@ define [
         def.extend = Backbone.Model.extend  unless _.isFunction(def.extend)
         # we will store an object instead of a function if that is what you need.
         definition.constructor =  unless _.isFunction(def) then ()-> return _.clone(def) else def
+        definition.constructor.prototype.__factory = ()=>
+          return this
         definition.options = options
         # tag support
         definition.tags = _.uniq([name].concat(options.tags)).filter (i)-> return !!i
@@ -111,7 +113,21 @@ define [
       options.tags = [].concat(bDef.tags, options.tags)
       return @define name, bDef.constructor.extend(def), options
 
-
+    # Clone
+    # -----
+    # This can be used to add the definitions from one factory to another.
+    # Use it by creating your new clean factory and call clone passing in
+    # the factory whose definitions you want to include.
+    clone: (factory)->
+      throw new Error "Invalid Argument :: Expected Factory" unless factory instanceof Factory
+      _.each ["definitions", "mixins", "promises"], (key)->
+        _.defaults @[key], factory[key]
+        if key is 'definitions'
+          _.each @[key], (def, defname)->
+            @[key][defname].constructor.prototype.__factory = =>
+              return this
+          , this
+      , this
     # Define Mixin
     # -----------
     # Use defineMixin to add mixin definitions to the factory. You can
@@ -156,6 +172,7 @@ define [
     # on tags. This is the engine for doing AOP style Dependency Injection.
     handleCreate: (instance) ->
       _.each instance.__tags(), (tag) ->
+        @tagCbs[tag] = [] unless @tagCbs[tag]?
         cbs = @tagCbs[tag]
         return if cbs.length is 0
         _.each cbs, (cb) ->
@@ -178,6 +195,7 @@ define [
 
       factoryMap = [@instances[name]]
       _.each tags, (tag) ->
+        @tagMap[tag] = [] unless @tagMap[tag]?
         @tagMap[tag].push instance
         factoryMap.push @tagMap[tag]
       , this
@@ -306,6 +324,5 @@ define [
 
     getType: (instance) ->
       return instance.__type()
-
   # And there you go, have fun with it.
 
