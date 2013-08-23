@@ -148,6 +148,9 @@
       Factory.prototype.handleCreate = function(instance) {
         return _.each(instance.__tags(), function(tag) {
           var cbs;
+          if (this.tagCbs[tag] == null) {
+            this.tagCbs[tag] = [];
+          }
           cbs = this.tagCbs[tag];
           if (cbs.length === 0) {
             return;
@@ -171,6 +174,9 @@
         };
         factoryMap = [this.instances[name]];
         _.each(tags, function(tag) {
+          if (this.tagMap[tag] == null) {
+            this.tagMap[tag] = [];
+          }
           this.tagMap[tag].push(instance);
           return factoryMap.push(this.tagMap[tag]);
         }, this);

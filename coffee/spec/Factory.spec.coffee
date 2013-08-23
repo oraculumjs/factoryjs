@@ -282,6 +282,8 @@ require ["Factory"], (Factory) ->
           factory.define 'Test', {test: true}
           @clonedFactory.clone(factory)
           expect(@clonedFactory.hasDefinition('Test')).toBe true
+          test = @clonedFactory.get('Test', {})
+          expect(test).toBeDefined()
         it "should have it's own definition hash as well", ->
           factory.define 'Test', {test: true}
           @clonedFactory.clone(factory)

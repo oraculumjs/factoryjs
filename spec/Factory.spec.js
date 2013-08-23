@@ -356,11 +356,14 @@
             return expect(test2.cloned).toBe(true);
           });
           it("should support getting definitions from the cloned factory", function() {
+            var test;
             factory.define('Test', {
               test: true
             });
             this.clonedFactory.clone(factory);
-            return expect(this.clonedFactory.hasDefinition('Test')).toBe(true);
+            expect(this.clonedFactory.hasDefinition('Test')).toBe(true);
+            test = this.clonedFactory.get('Test', {});
+            return expect(test).toBeDefined();
           });
           it("should have it's own definition hash as well", function() {
             factory.define('Test', {

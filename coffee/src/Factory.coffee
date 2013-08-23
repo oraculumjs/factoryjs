@@ -172,6 +172,7 @@ define [
     # on tags. This is the engine for doing AOP style Dependency Injection.
     handleCreate: (instance) ->
       _.each instance.__tags(), (tag) ->
+        @tagCbs[tag] = [] unless @tagCbs[tag]?
         cbs = @tagCbs[tag]
         return if cbs.length is 0
         _.each cbs, (cb) ->
@@ -194,6 +195,7 @@ define [
 
       factoryMap = [@instances[name]]
       _.each tags, (tag) ->
+        @tagMap[tag] = [] unless @tagMap[tag]?
         @tagMap[tag].push instance
         factoryMap.push @tagMap[tag]
       , this
