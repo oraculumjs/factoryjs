@@ -30,7 +30,10 @@ define [
   # ----
   # You can extend or get models, no changes.
 
-  BackboneFactory.define "Model", Backbone.Model
+  BackboneFactory.define "Model", Backbone.Model.extend
+    clone: ->
+      factory = @__factory()
+      factory.get(factory.getType(this), this.attributes)
 
   # Collection
   # ----
@@ -39,9 +42,13 @@ define [
   # from the factory.
 
   BackboneFactory.define "Collection", Backbone.Collection.extend
+    model: 'Model'
     initialize: (options) ->
       @model = @__factory().getConstructor @model  if _.isString @model
       Backbone.Collection::initialize.apply this, arguments
+    clone: ->
+      factory = @__factory()
+      factory.get(factory.getType(this), this.models)
 
   # Router
   # ------
