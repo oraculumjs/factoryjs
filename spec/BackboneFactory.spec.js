@@ -89,6 +89,29 @@
           return expect(master.two).toBe(true);
         });
       });
+      describe("Model Support", function() {
+        return describe("Clone override", function() {
+          beforeEach(function() {
+            return this.model = BackboneFactory.get('Model', {
+              test: true
+            });
+          });
+          afterEach(function() {
+            BackboneFactory.dispose(this.model);
+            return this.model = null;
+          });
+          return it("should allow cloning of models through the factory", function() {
+            var disposeTest, model;
+            model = this.model.clone();
+            expect(model.get('test')).toBe(true);
+            expect(BackboneFactory.verifyTags(model)).toBe(true);
+            disposeTest = function() {
+              return BackboneFactory.dispose(model);
+            };
+            return expect(disposeTest).not.toThrow();
+          });
+        });
+      });
       return describe("Collection Support", function() {
         it("should support getting a standard collection", function() {
           var collection;
@@ -96,7 +119,7 @@
           expect(collection).toBeDefined();
           return expect(collection).toBeInstanceOf(Backbone.Collection);
         });
-        return it("should support getting a collection referring to a factory model", function() {
+        it("should support getting a collection referring to a factory model", function() {
           var collection;
           BackboneFactory.extend("Model", "FactoryModel", {
             test: function() {
@@ -110,6 +133,36 @@
           expect(collection).toBeDefined();
           return collection.each(function(model) {
             return expect(model.test()).toBe(true);
+          });
+        });
+        return describe("Clone override", function() {
+          beforeEach(function() {
+            return this.collection = BackboneFactory.get('Collection', [
+              {
+                id: 1
+              }, {
+                id: 2
+              }, {
+                id: 3
+              }
+            ]);
+          });
+          afterEach(function() {
+            BackboneFactory.dispose(this.collection);
+            return this.collection = null;
+          });
+          return it("should allow cloning of models through the factory", function() {
+            var collection, disposeTest;
+            collection = this.collection.clone();
+            expect(collection.reduce(function(m, i) {
+              expect(BackboneFactory.verifyTags(i)).toBe(true);
+              return m += i.get("id");
+            }, 0)).toBe(6);
+            expect(BackboneFactory.verifyTags(collection)).toBe(true);
+            disposeTest = function() {
+              return BackboneFactory.dispose(collection);
+            };
+            return expect(disposeTest).not.toThrow();
           });
         });
       });

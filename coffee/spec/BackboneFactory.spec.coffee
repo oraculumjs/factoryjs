@@ -79,6 +79,24 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
         expect(master.two).toBe true
 
 
+    describe "Model Support", ->
+      describe "Clone override", ->
+        beforeEach ->
+          @model = BackboneFactory.get 'Model',
+            test: true
+
+        afterEach ->
+          BackboneFactory.dispose @model
+          @model = null
+
+        it "should allow cloning of models through the factory", ->
+          model = @model.clone()
+          expect(model.get('test')).toBe true
+          expect(BackboneFactory.verifyTags(model)).toBe true
+          disposeTest = ->
+            BackboneFactory.dispose model
+          expect(disposeTest).not.toThrow()
+
     describe "Collection Support", ->
       it "should support getting a standard collection", ->
         collection = BackboneFactory.get("Collection", [1, 2, 3])
@@ -97,6 +115,25 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
         collection.each (model)->
           expect(model.test()).toBe true
 
+      describe "Clone override", ->
+        beforeEach ->
+          @collection = BackboneFactory.get 'Collection', [{id: 1},{id: 2},{id: 3}]
+
+        afterEach ->
+          BackboneFactory.dispose @collection
+          @collection = null
+
+        it "should allow cloning of models through the factory", ->
+          collection = @collection.clone()
+          expect(collection.reduce(
+            (m, i)->
+              expect(BackboneFactory.verifyTags(i)).toBe true
+              m += i.get("id")
+            , 0)).toBe 6
+          expect(BackboneFactory.verifyTags(collection)).toBe true
+          disposeTest = ->
+            BackboneFactory.dispose collection
+          expect(disposeTest).not.toThrow()
 
 
 

@@ -15,13 +15,25 @@
         return Backbone.View.prototype.initialize.apply(this, arguments);
       }
     }));
-    BackboneFactory.define("Model", Backbone.Model);
+    BackboneFactory.define("Model", Backbone.Model.extend({
+      clone: function() {
+        var factory;
+        factory = this.__factory();
+        return factory.get(factory.getType(this), this.attributes);
+      }
+    }));
     BackboneFactory.define("Collection", Backbone.Collection.extend({
+      model: 'Model',
       initialize: function(options) {
         if (_.isString(this.model)) {
           this.model = this.__factory().getConstructor(this.model);
         }
         return Backbone.Collection.prototype.initialize.apply(this, arguments);
+      },
+      clone: function() {
+        var factory;
+        factory = this.__factory();
+        return factory.get(factory.getType(this), this.models);
       }
     }));
     BackboneFactory.define("Router", Backbone.Router);
