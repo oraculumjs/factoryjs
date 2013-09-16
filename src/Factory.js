@@ -1,5 +1,6 @@
 (function() {
-  var __slice = [].slice;
+  var __slice = [].slice,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
     var Factory;
@@ -7,14 +8,14 @@
       _.extend(Factory.prototype, Backbone.Events);
 
       function Factory(Base) {
-        this.definitions = {};
-        this.instances = {};
         this.mixins = {};
-        this.tagMap = {};
         this.tagCbs = {};
+        this.tagMap = {};
         this.promises = {};
-        this.define("Base", Base);
-        this.on("create", this.handleCreate, this);
+        this.instances = {};
+        this.definitions = {};
+        this.define('Base', Base);
+        this.on('create', this.handleCreate, this);
       }
 
       Factory.prototype.define = function(name, def, options) {
@@ -25,33 +26,33 @@
         }
         if ((this.definitions[name] != null) && !options.override) {
           throw new Error("Definition already exists :: " + name + " :: user overide option to ignore");
-        } else {
-          if ((_base = this.promises)[name] == null) {
-            _base[name] = $.Deferred();
-          }
-          definition = {};
-          if (!_.isFunction(def.extend)) {
-            def.extend = Backbone.Model.extend;
-          }
-          definition.constructor = !_.isFunction(def) ? function() {
-            return _.clone(def);
-          } : def;
-          definition.constructor.prototype.__factory = function() {
-            return _this;
-          };
-          definition.options = options;
-          definition.tags = _.uniq([name].concat(options.tags)).filter(function(i) {
-            return !!i;
-          });
-          this.instances[name] = [];
-          _.each(definition.tags, (function(tag) {
-            this.tagMap[tag] = this.tagMap[tag] || [];
-            return this.tagCbs[tag] = this.tagCbs[tag] || [];
-          }), this);
-          this.definitions[name] = definition;
-          this.trigger("define", definition);
-          this.promises[name].resolve(this, name);
         }
+        if ((_base = this.promises)[name] == null) {
+          _base[name] = $.Deferred();
+        }
+        definition = {
+          options: options
+        };
+        if (!_.isFunction(def.extend)) {
+          def.extend = Backbone.Model.extend;
+        }
+        definition.constructor = _.isFunction(def) ? def : function() {
+          return _.clone(def);
+        };
+        definition.constructor.prototype.__factory = function() {
+          return _this;
+        };
+        definition.tags = _.uniq([name].concat(options.tags)).filter(function(i) {
+          return !!i;
+        });
+        this.instances[name] = [];
+        _.each(definition.tags, function(tag) {
+          _this.tagMap[tag] = _this.tagMap[tag] || [];
+          return _this.tagCbs[tag] = _this.tagCbs[tag] || [];
+        });
+        this.definitions[name] = definition;
+        this.trigger("define", definition);
+        this.promises[name].resolve(this, name);
         return this;
       };
 
@@ -94,20 +95,20 @@
       };
 
       Factory.prototype.clone = function(factory) {
+        var _this = this;
         if (!(factory instanceof Factory)) {
           throw new Error("Invalid Argument :: Expected Factory");
         }
         return _.each(["definitions", "mixins", "promises"], function(key) {
-          _.defaults(this[key], factory[key]);
+          _.defaults(_this[key], factory[key]);
           if (key === 'definitions') {
-            return _.each(this[key], function(def, defname) {
-              var _this = this;
-              return this[key][defname].constructor.prototype.__factory = function() {
+            return _.each(_this[key], function(def, defname) {
+              return _this[key][defname].constructor.prototype.__factory = function() {
                 return _this;
               };
-            }, this);
+            });
           }
-        }, this);
+        });
       };
 
       Factory.prototype.defineMixin = function(name, def, options) {
@@ -123,9 +124,10 @@
       };
 
       Factory.prototype.handleMixins = function(instance, mixins) {
+        var _this = this;
         return _.each(mixins, function(mixin) {
           var mixer;
-          mixer = this.mixins[mixin];
+          mixer = _this.mixins[mixin];
           if (!mixer) {
             throw new Error("Mixin Not Defined :: " + mixin);
           }
@@ -136,22 +138,24 @@
             instance.mixinitialize();
             return instance.mixinitialize = function() {};
           }
-        }, this);
+        });
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {
+        var _this = this;
         return _.each(injections, function(injection) {
-          return instance[injection] = this.get(injection);
-        }, this);
+          return instance[injection] = _this.get(injection);
+        });
       };
 
       Factory.prototype.handleCreate = function(instance) {
+        var _this = this;
         return _.each(instance.__tags(), function(tag) {
           var cbs;
-          if (this.tagCbs[tag] == null) {
-            this.tagCbs[tag] = [];
+          if (_this.tagCbs[tag] == null) {
+            _this.tagCbs[tag] = [];
           }
-          cbs = this.tagCbs[tag];
+          cbs = _this.tagCbs[tag];
           if (cbs.length === 0) {
             return;
           }
@@ -159,12 +163,13 @@
             if (_.isFunction(cb)) {
               return cb(instance);
             }
-          }, this);
-        }, this);
+          });
+        });
       };
 
       Factory.prototype.handleTags = function(name, instance, tags) {
-        var factoryMap;
+        var factoryMap,
+          _this = this;
         this.instances[name].push(instance);
         instance.__type = function() {
           return name;
@@ -174,12 +179,12 @@
         };
         factoryMap = [this.instances[name]];
         _.each(tags, function(tag) {
-          if (this.tagMap[tag] == null) {
-            this.tagMap[tag] = [];
+          if (_this.tagMap[tag] == null) {
+            _this.tagMap[tag] = [];
           }
-          this.tagMap[tag].push(instance);
-          return factoryMap.push(this.tagMap[tag]);
-        }, this);
+          _this.tagMap[tag].push(instance);
+          return factoryMap.push(_this.tagMap[tag]);
+        });
         return instance.__factoryMap = function() {
           return [].slice.call(factoryMap);
         };
@@ -218,24 +223,25 @@
             return factory.dispose(this);
           };
         })(this);
-        this.trigger("create", instance);
+        this.trigger('create', instance);
         return instance;
       };
 
       Factory.prototype.verifyTags = function(instance) {
         return _.all(instance.__factoryMap(), function(arr) {
-          return arr.indexOf(instance) !== -1;
+          return __indexOf.call(arr, instance) >= 0;
         });
       };
 
       Factory.prototype.dispose = function(instance) {
-        return _.each(instance.__factoryMap(), (function(arr) {
-          if (arr.indexOf(instance) === -1) {
+        var _this = this;
+        _.each(instance.__factoryMap(), function(arr) {
+          if (__indexOf.call(arr, instance) < 0) {
             throw new Error("Instance Not In Factory :: " + instance + " :: disposal failed!");
           }
-          arr.splice(arr.indexOf(instance), 1);
-          return this.trigger("dispose", instance);
-        }), this);
+          return arr.splice(arr.indexOf(instance), 1);
+        });
+        return this.trigger('dispose', instance);
       };
 
       Factory.prototype.getConstructor = function(name, original) {
@@ -266,7 +272,7 @@
       Factory.prototype.offTag = function(tag, cb) {
         var cbIdx;
         if (!_.isString(tag)) {
-          throw new Error("Invalid Argument :: " + typeof tag + " provided :: expected String");
+          throw new Error("Invalid Argument :: " + (typeof tag) + " provided :: expected String");
         }
         if (this.tagCbs[tag] == null) {
           return;
