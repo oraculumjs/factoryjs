@@ -111,6 +111,14 @@
         });
       };
 
+      Factory.prototype.mirror = function(factory) {
+        var _this = this;
+        this.clone(factory);
+        return factory.on('define defineMixin', function() {
+          return _this.clone(factory);
+        });
+      };
+
       Factory.prototype.defineMixin = function(name, def, options) {
         if (options == null) {
           options = {};

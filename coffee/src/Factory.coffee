@@ -132,6 +132,16 @@ define [
           _.each @[key], (def, defname) =>
             @[key][defname].constructor.prototype.__factory = => this
 
+    # Mirror
+    # ------
+    # This is a wrapper for clone that keeps this factory synced with the
+    # cloned factory. Useful for when you have need to clone a factory that
+    # has asynchronous definitions.
+
+    mirror: (factory) ->
+      @clone factory
+      factory.on 'define defineMixin', => @clone factory
+
     # Define Mixin
     # -----------
     # Use defineMixin to add mixin definitions to the factory. You can
