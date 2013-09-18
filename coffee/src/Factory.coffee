@@ -69,7 +69,7 @@ define [
       @definitions[name] = definition
       # if you need to know when a type is defined you can listen to
       # the define event on the factory or ask using whenDefined.
-      @trigger "define", definition
+      @trigger 'define', definition
       @promises[name].resolve(this, name)
       return this
 
@@ -113,8 +113,8 @@ define [
 
     extend: (base, name, def, options = {}) ->
       bDef = @definitions[base]
-      throw new Error("Base Class Not Available :: #{base}") unless bDef
-      throw new Error("Invalid Parameter Definition :: expected object :: got " + def.constructor::toString()) unless _.isObject(def)
+      throw new Error "Base Class Not Available :: #{base}" unless bDef
+      throw new Error "Invalid Parameter Definition :: expected object :: got #{def.constructor::toString()}" unless _.isObject(def)
       options.tags = [].concat(bDef.tags, options.tags)
       return @define name, bDef.constructor.extend(def), options
 
@@ -131,6 +131,7 @@ define [
         if key is 'definitions'
           _.each @[key], (def, defname) =>
             @[key][defname].constructor.prototype.__factory = => this
+
     # Define Mixin
     # -----------
     # Use defineMixin to add mixin definitions to the factory. You can
@@ -140,8 +141,8 @@ define [
     defineMixin: (name, def, options = {}) ->
       if @mixins[name]? and not options.override
         throw new Error "Mixin already defined :: #{name} :: use override option to ignore"
-      else
-        @mixins[name] = def
+      @mixins[name] = def
+      @trigger 'defineMixin', def
       return this
 
     # Handle Mixins
@@ -244,7 +245,7 @@ define [
       # but the user can use this for other purposes as well.
       @trigger 'create', instance
 
-      instance
+      return instance
 
     # Verify Tags
     # -----------

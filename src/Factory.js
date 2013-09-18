@@ -51,7 +51,7 @@
           return _this.tagCbs[tag] = _this.tagCbs[tag] || [];
         });
         this.definitions[name] = definition;
-        this.trigger("define", definition);
+        this.trigger('define', definition);
         this.promises[name].resolve(this, name);
         return this;
       };
@@ -88,7 +88,7 @@
           throw new Error("Base Class Not Available :: " + base);
         }
         if (!_.isObject(def)) {
-          throw new Error("Invalid Parameter Definition :: expected object :: got " + def.constructor.prototype.toString());
+          throw new Error("Invalid Parameter Definition :: expected object :: got " + (def.constructor.prototype.toString()));
         }
         options.tags = [].concat(bDef.tags, options.tags);
         return this.define(name, bDef.constructor.extend(def), options);
@@ -117,9 +117,9 @@
         }
         if ((this.mixins[name] != null) && !options.override) {
           throw new Error("Mixin already defined :: " + name + " :: use override option to ignore");
-        } else {
-          this.mixins[name] = def;
         }
+        this.mixins[name] = def;
+        this.trigger('defineMixin', def);
         return this;
       };
 

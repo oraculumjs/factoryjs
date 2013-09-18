@@ -131,10 +131,14 @@
           });
         });
         describe("defineMixin method", function() {
+          var mixin, trigger;
+          trigger = mixin = null;
           beforeEach(function() {
-            return factory.defineMixin("test", {
-              test: true
-            });
+            mixin = {
+              'test': 'test'
+            };
+            trigger = sinon.stub(factory, 'trigger');
+            return factory.defineMixin("test", mixin);
           });
           it("should provide defineMixin method", function() {
             return expect(factory).toProvideMethod("defineMixin");
@@ -145,22 +149,22 @@
           it("should throw if that mixin is already defined", function() {
             var test;
             test = function() {
-              return factory.defineMixin('test', {
-                test: false
-              });
+              return factory.defineMixin('test', mixin);
             };
             return expect(test).toThrow();
           });
-          return it("should allow overriding a mixin with appropriate flag", function() {
+          it("should allow overriding a mixin with appropriate flag", function() {
             var test;
             test = function() {
-              return factory.defineMixin('test', {
-                test: false
-              }, {
+              return factory.defineMixin('test', mixin, {
                 override: true
               });
             };
             return expect(test).not.toThrow();
+          });
+          return it('should trigger an event', function() {
+            expect(trigger).toHaveBeenCalledOnce();
+            return expect(trigger).toHaveBeenCalledWith('defineMixin', mixin);
           });
         });
         it("should provide get method", function() {

@@ -56,7 +56,13 @@ module.exports = function (grunt) {
           host: 'http://localhost:9001',
           outfile: 'specs.html',
           specs: 'spec/**/*.spec.js',
-          helpers: 'spec/**/*.helper.js',
+          helpers: [
+            'components/sinon/lib/sinon.js'
+          , 'components/sinon/lib/sinon/spy.js'
+          , 'components/sinon/lib/sinon/**/*.js'
+          , 'components/jasmine-sinon/lib/jasmine-sinon.js'
+          , 'spec/**/*.helper.js'
+          ],
           keepRunner: true
         }
       },
@@ -68,7 +74,13 @@ module.exports = function (grunt) {
             requireConfigFile: 'src-cov/main.js'
           },
           specs: 'spec/**/*.spec.js',
-          helpers: 'spec/**/*.helper.js',
+          helpers: [
+            'components/sinon/lib/sinon.js'
+          , 'components/sinon/lib/sinon/spy.js'
+          , 'components/sinon/lib/sinon/**/*.js'
+          , 'components/jasmine-sinon/lib/jasmine-sinon.js'
+          , 'spec/**/*.helper.js'
+          ],
         }
       }
     },
