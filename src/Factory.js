@@ -51,7 +51,7 @@
           return _this.tagCbs[tag] = _this.tagCbs[tag] || [];
         });
         this.definitions[name] = definition;
-        this.trigger('define', definition);
+        this.trigger('define', name, definition);
         this.promises[name].resolve(this, name);
         return this;
       };
@@ -114,8 +114,11 @@
       Factory.prototype.mirror = function(factory) {
         var _this = this;
         this.clone(factory);
-        return factory.on('define defineMixin', function() {
-          return _this.clone(factory);
+        factory.on('define', function(name, def) {
+          return _this.define(name, def.constructor, def.options);
+        });
+        return factory.on('defineMixin', function(name, def) {
+          return _this.defineMixin(name, def);
         });
       };
 
@@ -127,7 +130,7 @@
           throw new Error("Mixin already defined :: " + name + " :: use override option to ignore");
         }
         this.mixins[name] = def;
-        this.trigger('defineMixin', def);
+        this.trigger('defineMixin', name, def);
         return this;
       };
 

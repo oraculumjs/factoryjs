@@ -69,7 +69,7 @@ define [
       @definitions[name] = definition
       # if you need to know when a type is defined you can listen to
       # the define event on the factory or ask using whenDefined.
-      @trigger 'define', definition
+      @trigger 'define', name, definition
       @promises[name].resolve(this, name)
       return this
 
@@ -140,10 +140,11 @@ define [
 
     mirror: (factory) ->
       @clone factory
-      factory.on 'define defineMixin', => @clone factory
+      factory.on 'define', (name, def)=> @define name, def.constructor, def.options
+      factory.on 'defineMixin', (name, def)=> @defineMixin name, def
 
     # Define Mixin
-    # -----------
+    # ------------
     # Use defineMixin to add mixin definitions to the factory. You can
     # use these definitions in the define and extend method by adding
     # a mixins array option with the names of the mixins to include.
@@ -152,7 +153,7 @@ define [
       if @mixins[name]? and not options.override
         throw new Error "Mixin already defined :: #{name} :: use override option to ignore"
       @mixins[name] = def
-      @trigger 'defineMixin', def
+      @trigger 'defineMixin', name, def
       return this
 
     # Handle Mixins
