@@ -398,6 +398,46 @@
             return expect(test2.__factory()).toEqual(this.clonedFactory);
           });
         });
+        describe('Mirror method', function() {
+          var base, baseOn, clone;
+          base = clone = baseOn = null;
+          beforeEach(function() {
+            base = new Factory(function() {
+              return {};
+            });
+            baseOn = sinon.stub(base, 'on');
+            clone = sinon.stub(factory, 'clone');
+            return factory.mirror(base);
+          });
+          afterEach(function() {
+            baseOn.restore();
+            return clone.restore();
+          });
+          it('should invoke clone', function() {
+            expect(clone).toHaveBeenCalledOnce();
+            return expect(clone).toHaveBeenCalledWith(base);
+          });
+          it('should bind a method to define, defineMixin', function() {
+            expect(baseOn).toHaveBeenCalledOnce();
+            expect(baseOn.firstCall.args[0]).toMatch(/\bdefine\b/);
+            expect(baseOn.firstCall.args[0]).toMatch(/\bdefineMixin\b/);
+            return expect(typeof baseOn.firstCall.args[1]).toBe('function');
+          });
+          return describe('event handler', function() {
+            var handler;
+            handler = null;
+            beforeEach(function() {
+              clone.restore();
+              clone = sinon.stub(factory, 'clone');
+              handler = baseOn.firstCall.args[1];
+              return handler();
+            });
+            return it('should invoke clone with the base factory', function() {
+              expect(clone).toHaveBeenCalledOnce();
+              return expect(clone).toHaveBeenCalledWith(base);
+            });
+          });
+        });
         return describe("Factory Instance Mapping", function() {
           var lso;
           lso = void 0;

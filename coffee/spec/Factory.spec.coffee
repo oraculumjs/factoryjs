@@ -258,6 +258,7 @@ require ["Factory"], (Factory) ->
           tester = ->
             factory.extend 'Base', 'NewThing', false
           expect(tester).toThrow()
+
       describe "Clone", ->
         beforeEach ->
           @clonedFactory = new Factory ()->
@@ -299,6 +300,40 @@ require ["Factory"], (Factory) ->
           test2 = @clonedFactory.get('Base')
           expect(test1.__factory()).toEqual(factory)
           expect(test2.__factory()).toEqual(@clonedFactory)
+
+      describe 'Mirror method', ->
+        base = clone = baseOn = null
+        beforeEach ->
+          base = new Factory -> {}
+          baseOn = sinon.stub base, 'on'
+          clone = sinon.stub factory, 'clone'
+          factory.mirror base
+        afterEach ->
+          baseOn.restore()
+          clone.restore()
+
+        it 'should invoke clone', ->
+          expect(clone).toHaveBeenCalledOnce()
+          expect(clone).toHaveBeenCalledWith base
+
+        it 'should bind a method to define, defineMixin', ->
+          expect(baseOn).toHaveBeenCalledOnce()
+          expect(baseOn.firstCall.args[0]).toMatch /\bdefine\b/
+          expect(baseOn.firstCall.args[0]).toMatch /\bdefineMixin\b/
+          expect(typeof baseOn.firstCall.args[1]).toBe 'function'
+
+        describe 'event handler', ->
+          handler = null
+          beforeEach ->
+            clone.restore()
+            clone = sinon.stub factory, 'clone'
+            handler = baseOn.firstCall.args[1]
+            handler()
+
+          it 'should invoke clone with the base factory', ->
+            expect(clone).toHaveBeenCalledOnce()
+            expect(clone).toHaveBeenCalledWith base
+
       describe "Factory Instance Mapping", ->
         lso = undefined
         beforeEach ->
