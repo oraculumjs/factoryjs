@@ -18,9 +18,14 @@ require ["Factory"], (Factory) ->
         )
 
       describe "define method", ->
+        trigger = null
         beforeEach ->
+          trigger = sinon.stub factory, 'trigger'
           factory.define "test", ->
             @test = true
+
+        afterEach ->
+          trigger.restore()
 
         it "should provide define method", ->
           expect(factory).toProvideMethod "define"
@@ -37,6 +42,10 @@ require ["Factory"], (Factory) ->
             factory.define "test", ->
               @test = false
           expect(test).toThrow()
+
+        it "should trigger an event", ->
+          expect(trigger).toHaveBeenCalledOnce()
+          expect(trigger).toHaveBeenCalledWith 'define', 'test', factory.definitions.test
 
         it "should allow override of a definition with override flag", ->
           test = ->
@@ -126,7 +135,7 @@ require ["Factory"], (Factory) ->
 
         it 'should trigger an event', ->
           expect(trigger).toHaveBeenCalledOnce()
-          expect(trigger).toHaveBeenCalledWith 'defineMixin', mixin
+          expect(trigger).toHaveBeenCalledWith 'defineMixin', 'test', mixin
 
       it "should provide get method", ->
         expect(factory).toProvideMethod "get"
@@ -317,22 +326,35 @@ require ["Factory"], (Factory) ->
           expect(clone).toHaveBeenCalledWith base
 
         it 'should bind a method to define, defineMixin', ->
-          expect(baseOn).toHaveBeenCalledOnce()
+          expect(baseOn).toHaveBeenCalledTwice()
           expect(baseOn.firstCall.args[0]).toMatch /\bdefine\b/
-          expect(baseOn.firstCall.args[0]).toMatch /\bdefineMixin\b/
+          expect(baseOn.secondCall.args[0]).toMatch /\bdefineMixin\b/
           expect(typeof baseOn.firstCall.args[1]).toBe 'function'
+          expect(typeof baseOn.secondCall.args[1]).toBe 'function'
 
         describe 'event handler', ->
-          handler = null
+          definition = mixin = define = defineMixin = define_handler = null
           beforeEach ->
-            clone.restore()
-            clone = sinon.stub factory, 'clone'
-            handler = baseOn.firstCall.args[1]
-            handler()
+            definition = {constructor: Object, options: {}}
+            mixin = {}
+            define = sinon.stub factory, 'define'
+            defineMixin = sinon.stub factory, 'defineMixin'
+            define_handler = baseOn.firstCall.args[1]
+            defineMixin_handler = baseOn.secondCall.args[1]
+            define_handler 'test', definition
+            defineMixin_handler 'test', mixin
 
-          it 'should invoke clone with the base factory', ->
-            expect(clone).toHaveBeenCalledOnce()
-            expect(clone).toHaveBeenCalledWith base
+          afterEach ->
+            define.restore()
+            defineMixin.restore()
+
+          it 'should invoke define with the new definition', ->
+            expect(define).toHaveBeenCalledOnce()
+            expect(define).toHaveBeenCalledWith 'test', Object, {}
+
+          it 'should invoke defineMixin with the new mixin', ->
+            expect(defineMixin).toHaveBeenCalledOnce()
+            expect(defineMixin).toHaveBeenCalledWith 'test', mixin
 
       describe "Factory Instance Mapping", ->
         lso = undefined

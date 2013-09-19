@@ -1,6 +1,6 @@
 {
   "name": "FactoryJS",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "author": "Gabriel Hernandez <gabriel.hernandez@lookout.com>",
   "repository": "git://github.com/lookout/factoryjs.git",
   "devDependencies": {

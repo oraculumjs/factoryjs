@@ -21,10 +21,16 @@
           });
         });
         describe("define method", function() {
+          var trigger;
+          trigger = null;
           beforeEach(function() {
+            trigger = sinon.stub(factory, 'trigger');
             return factory.define("test", function() {
               return this.test = true;
             });
+          });
+          afterEach(function() {
+            return trigger.restore();
           });
           it("should provide define method", function() {
             return expect(factory).toProvideMethod("define");
@@ -47,6 +53,10 @@
               });
             };
             return expect(test).toThrow();
+          });
+          it("should trigger an event", function() {
+            expect(trigger).toHaveBeenCalledOnce();
+            return expect(trigger).toHaveBeenCalledWith('define', 'test', factory.definitions.test);
           });
           return it("should allow override of a definition with override flag", function() {
             var t, test;
@@ -164,7 +174,7 @@
           });
           return it('should trigger an event', function() {
             expect(trigger).toHaveBeenCalledOnce();
-            return expect(trigger).toHaveBeenCalledWith('defineMixin', mixin);
+            return expect(trigger).toHaveBeenCalledWith('defineMixin', 'test', mixin);
           });
         });
         it("should provide get method", function() {
@@ -418,23 +428,40 @@
             return expect(clone).toHaveBeenCalledWith(base);
           });
           it('should bind a method to define, defineMixin', function() {
-            expect(baseOn).toHaveBeenCalledOnce();
+            expect(baseOn).toHaveBeenCalledTwice();
             expect(baseOn.firstCall.args[0]).toMatch(/\bdefine\b/);
-            expect(baseOn.firstCall.args[0]).toMatch(/\bdefineMixin\b/);
-            return expect(typeof baseOn.firstCall.args[1]).toBe('function');
+            expect(baseOn.secondCall.args[0]).toMatch(/\bdefineMixin\b/);
+            expect(typeof baseOn.firstCall.args[1]).toBe('function');
+            return expect(typeof baseOn.secondCall.args[1]).toBe('function');
           });
           return describe('event handler', function() {
-            var handler;
-            handler = null;
+            var define, defineMixin, define_handler, definition, mixin;
+            definition = mixin = define = defineMixin = define_handler = null;
             beforeEach(function() {
-              clone.restore();
-              clone = sinon.stub(factory, 'clone');
-              handler = baseOn.firstCall.args[1];
-              return handler();
+              var defineMixin_handler;
+              definition = {
+                constructor: Object,
+                options: {}
+              };
+              mixin = {};
+              define = sinon.stub(factory, 'define');
+              defineMixin = sinon.stub(factory, 'defineMixin');
+              define_handler = baseOn.firstCall.args[1];
+              defineMixin_handler = baseOn.secondCall.args[1];
+              define_handler('test', definition);
+              return defineMixin_handler('test', mixin);
             });
-            return it('should invoke clone with the base factory', function() {
-              expect(clone).toHaveBeenCalledOnce();
-              return expect(clone).toHaveBeenCalledWith(base);
+            afterEach(function() {
+              define.restore();
+              return defineMixin.restore();
+            });
+            it('should invoke define with the new definition', function() {
+              expect(define).toHaveBeenCalledOnce();
+              return expect(define).toHaveBeenCalledWith('test', Object, {});
+            });
+            return it('should invoke defineMixin with the new mixin', function() {
+              expect(defineMixin).toHaveBeenCalledOnce();
+              return expect(defineMixin).toHaveBeenCalledWith('test', mixin);
             });
           });
         });
