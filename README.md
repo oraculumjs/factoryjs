@@ -1,6 +1,6 @@
 <link href="docs/public/stylesheets/normalize.css" rel="stylesheet"></link>
 
-Factory JS ![build status](https://travis-ci.org/egeste/factoryjs.png?branch=travis-ci)
+Factory JS ![build status](https://travis-ci.org/lookout/factoryjs.png)
 ==========
 
 [tests](http://localhost:9001/specs.html)
