@@ -17,7 +17,6 @@ require ["Factory"], (Factory) ->
           @y = false
         )
 
-
       describe "define method", ->
         beforeEach ->
           factory.define "test", ->
@@ -105,30 +104,29 @@ require ["Factory"], (Factory) ->
             n = f
 
       describe "defineMixin method", ->
+        trigger = mixin = null
         beforeEach ->
-          factory.defineMixin "test",
-            test: true
+          mixin = { 'test' }
+          trigger = sinon.stub factory, 'trigger'
+          factory.defineMixin "test", mixin
 
         it "should provide defineMixin method", ->
           expect(factory).toProvideMethod "defineMixin"
-
 
         it "should have the defined mixins", ->
           expect(factory.mixins.test).toBeDefined()
 
         it "should throw if that mixin is already defined", ->
-          test = ->
-            factory.defineMixin 'test',
-              test: false
+          test = -> factory.defineMixin 'test', mixin
           expect(test).toThrow()
 
         it "should allow overriding a mixin with appropriate flag", ->
-          test = ->
-            factory.defineMixin 'test',
-              test: false
-            , override: true
+          test = -> factory.defineMixin 'test', mixin, { override: true }
           expect(test).not.toThrow()
 
+        it 'should trigger an event', ->
+          expect(trigger).toHaveBeenCalledOnce()
+          expect(trigger).toHaveBeenCalledWith 'defineMixin', mixin
 
       it "should provide get method", ->
         expect(factory).toProvideMethod "get"

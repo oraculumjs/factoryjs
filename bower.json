@@ -3,9 +3,13 @@
   "version": "0.1.3",
   "main": "src/Factory.js",
   "dependencies": {
-    "underscore": "*",
     "jquery": "*",
     "backbone": "*",
-    "requirejs": "*"
+    "requirejs": "*",
+    "underscore": "*"
+  }
+, "devDependencies": {
+    "sinon": "latest",
+    "jasmine-sinon": "latest"
   }
 }
