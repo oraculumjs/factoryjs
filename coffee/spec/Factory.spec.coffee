@@ -9,13 +9,18 @@ require ["Factory"], (Factory) ->
       )
       expect(factory).toBeDefined()
 
+    it 'should allow the baseTags property to be set in the constructor', ->
+      baseTags = ['BaseTag1', 'BaseTag2']
+      factory = new Factory (->), {baseTags}
+      expect(factory.baseTags).toBe baseTags
+
     describe "factory instance", ->
       factory = null
       beforeEach ->
-        factory = new Factory(->
+        factory = new Factory (->
           @x = true
           @y = false
-        )
+        ), baseTags: ['BaseTag1', 'BaseTag2']
 
       describe "define method", ->
         trigger = null
@@ -38,10 +43,13 @@ require ["Factory"], (Factory) ->
           expect(factory.get('Object').test).toBe(true)
 
         it "should throw if a definition is already defined", ->
-          test = ->
-            factory.define "test", ->
-              @test = false
+          test = -> factory.define "test", -> @test = false
           expect(test).toThrow()
+
+        it 'should concat @baseTags into options.tags', ->
+          factory.define 'test', {}, override: true
+          expect(factory.definitions.test.tags).toContain 'BaseTag1'
+          expect(factory.definitions.test.tags).toContain 'BaseTag2'
 
         it "should trigger an event", ->
           expect(trigger).toHaveBeenCalledOnce()
