@@ -11,13 +11,23 @@
         });
         return expect(factory).toBeDefined();
       });
+      it('should allow the baseTags property to be set in the constructor', function() {
+        var baseTags, factory;
+        baseTags = ['BaseTag1', 'BaseTag2'];
+        factory = new Factory((function() {}), {
+          baseTags: baseTags
+        });
+        return expect(factory.baseTags).toBe(baseTags);
+      });
       return describe("factory instance", function() {
         var factory;
         factory = null;
         beforeEach(function() {
-          return factory = new Factory(function() {
+          return factory = new Factory((function() {
             this.x = true;
             return this.y = false;
+          }), {
+            baseTags: ['BaseTag1', 'BaseTag2']
           });
         });
         describe("define method", function() {
@@ -53,6 +63,13 @@
               });
             };
             return expect(test).toThrow();
+          });
+          it('should concat @baseTags into options.tags', function() {
+            factory.define('test', {}, {
+              override: true
+            });
+            expect(factory.definitions.test.tags).toContain('BaseTag1');
+            return expect(factory.definitions.test.tags).toContain('BaseTag2');
           });
           it("should trigger an event", function() {
             expect(trigger).toHaveBeenCalledOnce();

@@ -29,7 +29,7 @@ define [
   class Factory
     _.extend @prototype, Backbone.Events
 
-    constructor: (Base) ->
+    constructor: (Base, options = {}) ->
       @mixins = {}
       @tagCbs = {}
       @tagMap = {}
@@ -37,6 +37,7 @@ define [
       @instances = {}
       @definitions = {}
       @define 'Base', Base
+      @baseTags = options.baseTags || []
       @on 'create', @handleCreate, this
 
     # Define
@@ -60,7 +61,8 @@ define [
       definition.constructor.prototype.__factory = => this
 
       # tag support
-      definition.tags = _.uniq([name].concat(options.tags)).filter (i) -> !!i
+      tags = [name].concat(options.tags).concat @baseTags
+      definition.tags = _.uniq(tags).filter (i) -> !!i
       @instances[name] = []
       _.each definition.tags, (tag) =>
         @tagMap[tag] = @tagMap[tag] or []

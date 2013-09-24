@@ -7,7 +7,10 @@
     return Factory = (function() {
       _.extend(Factory.prototype, Backbone.Events);
 
-      function Factory(Base) {
+      function Factory(Base, options) {
+        if (options == null) {
+          options = {};
+        }
         this.mixins = {};
         this.tagCbs = {};
         this.tagMap = {};
@@ -15,11 +18,12 @@
         this.instances = {};
         this.definitions = {};
         this.define('Base', Base);
+        this.baseTags = options.baseTags || [];
         this.on('create', this.handleCreate, this);
       }
 
       Factory.prototype.define = function(name, def, options) {
-        var definition, _base,
+        var definition, tags, _base,
           _this = this;
         if (options == null) {
           options = {};
@@ -42,7 +46,8 @@
         definition.constructor.prototype.__factory = function() {
           return _this;
         };
-        definition.tags = _.uniq([name].concat(options.tags)).filter(function(i) {
+        tags = [name].concat(options.tags).concat(this.baseTags);
+        definition.tags = _.uniq(tags).filter(function(i) {
           return !!i;
         });
         this.instances[name] = [];
