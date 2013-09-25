@@ -47,6 +47,7 @@ define [
 
     define: (name, def, options = {}) ->
       if @definitions[name]? and not options.override
+        return this if options.silent
         throw new Error "Definition already exists :: #{name} :: user overide option to ignore"
 
       # whenDefined support.
@@ -71,7 +72,7 @@ define [
       @definitions[name] = definition
       # if you need to know when a type is defined you can listen to
       # the define event on the factory or ask using whenDefined.
-      @trigger 'define', name, definition
+      @trigger 'define', name, definition, options
       @promises[name].resolve(this, name)
       return this
 
@@ -142,8 +143,9 @@ define [
 
     mirror: (factory) ->
       @clone factory
-      factory.on 'define', (name, def)=> @define name, def.constructor, def.options
-      factory.on 'defineMixin', (name, def)=> @defineMixin name, def
+      factory.on 'define', (name, def, options) =>
+        @define name, def.constructor, _.extend({silent: true}, options)
+      factory.on 'defineMixin', @defineMixin, this
 
     # Define Mixin
     # ------------
@@ -155,7 +157,7 @@ define [
       if @mixins[name]? and not options.override
         throw new Error "Mixin already defined :: #{name} :: use override option to ignore"
       @mixins[name] = def
-      @trigger 'defineMixin', name, def
+      @trigger 'defineMixin', name, def, options
       return this
 
     # Handle Mixins

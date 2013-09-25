@@ -29,6 +29,9 @@
           options = {};
         }
         if ((this.definitions[name] != null) && !options.override) {
+          if (options.silent) {
+            return this;
+          }
           throw new Error("Definition already exists :: " + name + " :: user overide option to ignore");
         }
         if ((_base = this.promises)[name] == null) {
@@ -56,7 +59,7 @@
           return _this.tagCbs[tag] = _this.tagCbs[tag] || [];
         });
         this.definitions[name] = definition;
-        this.trigger('define', name, definition);
+        this.trigger('define', name, definition, options);
         this.promises[name].resolve(this, name);
         return this;
       };
@@ -119,12 +122,12 @@
       Factory.prototype.mirror = function(factory) {
         var _this = this;
         this.clone(factory);
-        factory.on('define', function(name, def) {
-          return _this.define(name, def.constructor, def.options);
+        factory.on('define', function(name, def, options) {
+          return _this.define(name, def.constructor, _.extend({
+            silent: true
+          }, options));
         });
-        return factory.on('defineMixin', function(name, def) {
-          return _this.defineMixin(name, def);
-        });
+        return factory.on('defineMixin', this.defineMixin, this);
       };
 
       Factory.prototype.defineMixin = function(name, def, options) {
@@ -135,7 +138,7 @@
           throw new Error("Mixin already defined :: " + name + " :: use override option to ignore");
         }
         this.mixins[name] = def;
-        this.trigger('defineMixin', name, def);
+        this.trigger('defineMixin', name, def, options);
         return this;
       };
 
