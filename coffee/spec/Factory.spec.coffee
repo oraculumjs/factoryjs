@@ -64,7 +64,6 @@ require ["Factory"], (Factory) ->
           t = factory.get('test')
           expect(t.test).toEqual(t)
 
-
       it "should provide hasDefinition method", ->
         expect(factory).toProvideMethod "hasDefinition"
 
@@ -318,7 +317,7 @@ require ["Factory"], (Factory) ->
           expect(test1.__factory()).toEqual(factory)
           expect(test2.__factory()).toEqual(@clonedFactory)
 
-      describe 'Mirror method', ->
+      describe 'mirror method', ->
         base = clone = baseOn = null
         beforeEach ->
           base = new Factory -> {}
@@ -333,36 +332,30 @@ require ["Factory"], (Factory) ->
           expect(clone).toHaveBeenCalledOnce()
           expect(clone).toHaveBeenCalledWith base
 
-        it 'should bind a method to define, defineMixin', ->
+        it 'should bind a method to define', ->
           expect(baseOn).toHaveBeenCalledTwice()
-          expect(baseOn.firstCall.args[0]).toMatch /\bdefine\b/
-          expect(baseOn.secondCall.args[0]).toMatch /\bdefineMixin\b/
+          expect(baseOn.firstCall.args[0]).toBe 'define'
           expect(typeof baseOn.firstCall.args[1]).toBe 'function'
-          expect(typeof baseOn.secondCall.args[1]).toBe 'function'
 
-        describe 'event handler', ->
-          definition = mixin = define = defineMixin = define_handler = null
+        describe 'define handler', ->
+          mockDefinition = mixin = options = define = defineMixin = define_handler = null
           beforeEach ->
-            definition = {constructor: Object, options: {}}
-            mixin = {}
+            options = {}
+            mockDefinition = {constructor: Object, options}
             define = sinon.stub factory, 'define'
-            defineMixin = sinon.stub factory, 'defineMixin'
             define_handler = baseOn.firstCall.args[1]
-            defineMixin_handler = baseOn.secondCall.args[1]
-            define_handler 'test', definition
-            defineMixin_handler 'test', mixin
+            define_handler 'test', mockDefinition, options
 
           afterEach ->
             define.restore()
-            defineMixin.restore()
 
           it 'should invoke define with the new definition', ->
             expect(define).toHaveBeenCalledOnce()
-            expect(define).toHaveBeenCalledWith 'test', Object, {}
+            expect(define).toHaveBeenCalledWith 'test', Object
+            expect(define.firstCall.args[2].silent).toBe true
 
-          it 'should invoke defineMixin with the new mixin', ->
-            expect(defineMixin).toHaveBeenCalledOnce()
-            expect(defineMixin).toHaveBeenCalledWith 'test', mixin
+        it 'should bind a method to defineMixin', ->
+          expect(baseOn.secondCall).toHaveBeenCalledWith 'defineMixin', factory.defineMixin, factory
 
       describe "Factory Instance Mapping", ->
         lso = undefined

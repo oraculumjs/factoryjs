@@ -425,7 +425,7 @@
             return expect(test2.__factory()).toEqual(this.clonedFactory);
           });
         });
-        describe('Mirror method', function() {
+        describe('mirror method', function() {
           var base, baseOn, clone;
           base = clone = baseOn = null;
           beforeEach(function() {
@@ -444,42 +444,35 @@
             expect(clone).toHaveBeenCalledOnce();
             return expect(clone).toHaveBeenCalledWith(base);
           });
-          it('should bind a method to define, defineMixin', function() {
+          it('should bind a method to define', function() {
             expect(baseOn).toHaveBeenCalledTwice();
-            expect(baseOn.firstCall.args[0]).toMatch(/\bdefine\b/);
-            expect(baseOn.secondCall.args[0]).toMatch(/\bdefineMixin\b/);
-            expect(typeof baseOn.firstCall.args[1]).toBe('function');
-            return expect(typeof baseOn.secondCall.args[1]).toBe('function');
+            expect(baseOn.firstCall.args[0]).toBe('define');
+            return expect(typeof baseOn.firstCall.args[1]).toBe('function');
           });
-          return describe('event handler', function() {
-            var define, defineMixin, define_handler, definition, mixin;
-            definition = mixin = define = defineMixin = define_handler = null;
+          describe('define handler', function() {
+            var define, defineMixin, define_handler, mixin, mockDefinition, options;
+            mockDefinition = mixin = options = define = defineMixin = define_handler = null;
             beforeEach(function() {
-              var defineMixin_handler;
-              definition = {
+              options = {};
+              mockDefinition = {
                 constructor: Object,
-                options: {}
+                options: options
               };
-              mixin = {};
               define = sinon.stub(factory, 'define');
-              defineMixin = sinon.stub(factory, 'defineMixin');
               define_handler = baseOn.firstCall.args[1];
-              defineMixin_handler = baseOn.secondCall.args[1];
-              define_handler('test', definition);
-              return defineMixin_handler('test', mixin);
+              return define_handler('test', mockDefinition, options);
             });
             afterEach(function() {
-              define.restore();
-              return defineMixin.restore();
+              return define.restore();
             });
-            it('should invoke define with the new definition', function() {
+            return it('should invoke define with the new definition', function() {
               expect(define).toHaveBeenCalledOnce();
-              return expect(define).toHaveBeenCalledWith('test', Object, {});
+              expect(define).toHaveBeenCalledWith('test', Object);
+              return expect(define.firstCall.args[2].silent).toBe(true);
             });
-            return it('should invoke defineMixin with the new mixin', function() {
-              expect(defineMixin).toHaveBeenCalledOnce();
-              return expect(defineMixin).toHaveBeenCalledWith('test', mixin);
-            });
+          });
+          return it('should bind a method to defineMixin', function() {
+            return expect(baseOn.secondCall).toHaveBeenCalledWith('defineMixin', factory.defineMixin, factory);
           });
         });
         return describe("Factory Instance Mapping", function() {
