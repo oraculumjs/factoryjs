@@ -9,14 +9,15 @@
         return expect(BackboneFactory.get("Base").on).toBeDefined();
       });
       it("should initialize objects that support that interface", function() {
-        var TestObject;
+        var TestObject, ctor;
         TestObject = {
           initialize: function() {
             return this.tested = true;
           }
         };
         BackboneFactory.extend("Base", "TestObject", TestObject);
-        return expect(BackboneFactory.get("TestObject")).toBeInstanceOf(BackboneFactory.definitions.Base.constructor);
+        ctor = BackboneFactory.definitions.Base.constructor;
+        return expect(BackboneFactory.get("TestObject")).toBeInstanceOf(ctor);
       });
       it("should return a view as defined", function() {
         var view;
@@ -27,7 +28,10 @@
         BackboneFactory.extend("View", "Test.View", {
           el: "body",
           render: function() {
-            return this.$el.append("<div class=\"test-item item-" + this.cid + "\">" + (new Date()).getTime() + "</div>");
+            var html, now;
+            now = (new Date()).getTime();
+            html = "<div class='test-item item-" + this.cid + "'>" + now + "</div>";
+            return this.$el.append(html);
           },
           model: "Test.Model"
         }, {

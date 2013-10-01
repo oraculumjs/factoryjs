@@ -12,6 +12,9 @@
         },
         toBePromise: function() {
           return toProvideMethod.call(this, 'done') && toProvideMethod.call(this, 'fail');
+        },
+        toBeFunction: function(expected) {
+          return typeof this.actual === 'function';
         }
       });
     });

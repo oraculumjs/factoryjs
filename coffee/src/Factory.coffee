@@ -48,7 +48,10 @@ define [
     define: (name, def, options = {}) ->
       if @definitions[name]? and not options.override
         return this if options.silent
-        throw new Error "Definition already exists :: #{name} :: user overide option to ignore"
+        message = """
+          Definition already exists :: #{name} :: user overide option to ignore
+        """
+        throw new Error message
 
       # whenDefined support.
       @promises[name] ?= $.Deferred()
@@ -58,7 +61,10 @@ define [
       def.extend = Backbone.Model.extend unless _.isFunction(def.extend)
 
       # we will store an object instead of a function if that is what you need.
-      definition.constructor = if _.isFunction(def) then def else -> _.clone(def)
+      if _.isFunction(def)
+        definition.constructor = def
+      else
+        definition.constructor = -> _.clone(def)
       definition.constructor.prototype.__factory = => this
 
       # tag support
@@ -116,8 +122,14 @@ define [
 
     extend: (base, name, def, options = {}) ->
       bDef = @definitions[base]
-      throw new Error "Base Class Not Available :: #{base}" unless bDef
-      throw new Error "Invalid Parameter Definition :: expected object :: got #{def.constructor::toString()}" unless _.isObject(def)
+      message = "Base Class Not Available :: #{base}"
+      throw new Error message unless bDef
+      message = """
+        Invalid Parameter Definition ::
+        expected object ::
+        got #{def.constructor::toString()}
+      """
+      throw new Error message unless _.isObject(def)
       options.tags = [].concat(bDef.tags, options.tags)
       return @define name, bDef.constructor.extend(def), options
 
@@ -128,7 +140,8 @@ define [
     # the factory whose definitions you want to include.
 
     clone: (factory) ->
-      throw new Error "Invalid Argument :: Expected Factory" unless factory instanceof Factory
+      message = "Invalid Argument :: Expected Factory"
+      throw new Error message unless factory instanceof Factory
       _.each ["definitions", "mixins", "promises"], (key) =>
         _.defaults @[key], factory[key]
         if key is 'definitions'
@@ -155,7 +168,10 @@ define [
 
     defineMixin: (name, def, options = {}) ->
       if @mixins[name]? and not options.override
-        throw new Error "Mixin already defined :: #{name} :: use override option to ignore"
+        message = """
+          Mixin already defined :: #{name} :: use override option to ignore
+        """
+        throw new Error message
       @mixins[name] = def
       @trigger 'defineMixin', name, def, options
       return this
@@ -186,7 +202,10 @@ define [
     handleMixins: (instance, mixins) ->
       _.each mixins, (mixin) =>
         @applyMixin(instance, mixin, instance.mixinOptions)
-      instance.__mixin = _.chain(@applyMixin).bind(this).partial(instance).value()
+      instance.__mixin = _.chain(@applyMixin)
+        .bind(this)
+        .partial(instance)
+        .value()
 
     # Handle Injections
     # -----------------
@@ -239,7 +258,8 @@ define [
       instances = @instances[name] ?= []
       instance = @instances[name][0]
       def = @definitions[name]
-      throw new Error("Invalid Definition :: #{name} :: not defined") unless def?
+      message = "Invalid Definition :: #{name} :: not defined"
+      throw new Error message unless def?
       constructor = def.constructor
 
       options = def.options or {}
@@ -276,7 +296,7 @@ define [
     # Verify Tags
     # -----------
     # Call this to make sure that the instance hasn't yet been disposed. If it
-    # hasn't been disposed this will return true, otherwise it will return false.
+    # hasn't been disposed this will return true, otherwise return false.
 
     verifyTags: (instance) ->
       _.all instance.__factoryMap(), (arr) -> instance in arr
@@ -289,17 +309,18 @@ define [
 
     dispose: (instance) ->
       _.each instance.__factoryMap(), (arr) =>
-        throw new Error("Instance Not In Factory :: #{instance} :: disposal failed!") if instance not in arr
+        message = "Instance Not In Factory :: #{instance} :: disposal failed!"
+        throw new Error message if instance not in arr
         arr.splice arr.indexOf(instance), 1
       @trigger 'dispose', instance
 
     # Get Constructor
     # ---------------
-    # This allows you to use the factory in contexts where a constructor function
-    # is expected. The instances returned from this constructor will support all
-    # the functionality of the factory including mixins, tags and singleton. Optionally
-    # you can pass in the original flag to get the original constructor method. Use
-    # this for instance of checks.
+    # This allows you to use the factory in contexts where a constructor
+    # function is expected. The instances returned from this constructor will
+    # support all the functionality of the factory including mixins, tags and
+    # singleton. Optionally you can pass in the original flag to get the
+    # original constructor method. Use this for instance of checks.
 
     getConstructor: (name, original = false) ->
       return @definitions[name].constructor if original
@@ -313,25 +334,29 @@ define [
     # bind that same function to any future instances created.
 
     onTag: (tag, cb) ->
-      throw new Error("Invalid Argument :: " + typeof tag + " provided :: expected String") unless _.isString(tag)
-      throw new Error("Invalid Argument :: " + typeof cb + " provided :: expected Function") unless _.isFunction(cb)
+      message = "Invalid Argument :: #{typeof tag} provided :: expected String"
+      throw new Error message unless _.isString(tag)
+      message = "Invalid Argument :: #{typeof cb} provided :: expected Function"
+      throw new Error message unless _.isFunction(cb)
       _.each @tagMap[tag], cb
       @tagCbs[tag] ?= []
       @tagCbs[tag].push cb
 
     # Off Tag
     # -------
-    # Call to remove a function from calling on all future instances of an instance
-    # that relates to a tag.
+    # Call to remove a function from calling on all future instances of an
+    # instance that relates to a tag.
 
     offTag: (tag, cb) ->
-      throw new Error("Invalid Argument :: #{typeof tag} provided :: expected String") unless _.isString(tag)
+      message = "Invalid Argument :: #{typeof tag} provided :: expected String"
+      throw new Error message unless _.isString(tag)
       return unless @tagCbs[tag]?
       unless _.isFunction(cb)
         @tagCbs[tag] = []
         return
       cbIdx = @tagCbs[tag].indexOf(cb)
-      throw new Error "Callback Not Found :: #{cb} :: for tag #{tag}" if cbIdx is -1
+      message = "Callback Not Found :: #{cb} :: for tag #{tag}"
+      throw new Error message if cbIdx is -1
       @tagCbs[tag].splice cbIdx, 1
 
     # Is Type

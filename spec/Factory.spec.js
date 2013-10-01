@@ -72,8 +72,10 @@
             return expect(factory.definitions.test.tags).toContain('BaseTag2');
           });
           it("should trigger an event", function() {
+            var test;
             expect(trigger).toHaveBeenCalledOnce();
-            return expect(trigger).toHaveBeenCalledWith('define', 'test', factory.definitions.test);
+            test = factory.definitions.test;
+            return expect(trigger).toHaveBeenCalledWith('define', 'test', test);
           });
           return it("should allow override of a definition with override flag", function() {
             var t, test;
@@ -292,10 +294,13 @@
             });
           });
           it("should return a function", function() {
-            return expect(typeof factory.getConstructor("ConstructorTest") === "function").toBe(true);
+            return expect(factory.getConstructor("ConstructorTest")).toBeFunction();
           });
           it("should attach the correct prototype to the function returned", function() {
-            return expect(factory.getConstructor('ConstructorTest').prototype).toBe(factory.definitions.ConstructorTest.constructor.prototype);
+            var cptype, ptype;
+            cptype = factory.getConstructor('ConstructorTest').prototype;
+            ptype = factory.definitions.ConstructorTest.constructor.prototype;
+            return expect(cptype).toBe(ptype);
           });
           describe("optional original argument", function() {
             return it("should return the original constructor", function() {
@@ -474,7 +479,8 @@
           });
           describe('define handler', function() {
             var define, defineMixin, define_handler, mixin, mockDefinition, options;
-            mockDefinition = mixin = options = define = defineMixin = define_handler = null;
+            mockDefinition = mixin = options = null;
+            define = defineMixin = define_handler = null;
             beforeEach(function() {
               options = {};
               mockDefinition = {
@@ -612,7 +618,7 @@
             });
           });
           describe("offTag", function() {
-            it("should ignore requests to remove callbacks for non existant tags", function() {
+            it("should ignore requests to remove callbacks if no tag", function() {
               var test;
               test = function() {
                 return factory.offTag('UndeclaredTag');

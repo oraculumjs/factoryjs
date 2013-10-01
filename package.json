@@ -17,6 +17,7 @@
     "grunt-contrib-connect": "*",
     "grunt-markdown": "*",
     "grunt-docco": "git://github.com/webspinner/grunt-docco.git",
-    "grunt-template-jasmine-requirejs": "*"
+    "grunt-template-jasmine-requirejs": "*",
+    "grunt-coffeelint": "latest"
   }
 }

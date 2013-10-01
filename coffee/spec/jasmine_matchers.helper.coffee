@@ -10,3 +10,5 @@ require ['underscore'], (_)->
       toBePromise: ->
         return toProvideMethod.call(this, 'done') and
           toProvideMethod.call(this, 'fail')
+      toBeFunction: (expected) ->
+        typeof @actual is 'function'

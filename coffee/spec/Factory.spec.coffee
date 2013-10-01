@@ -53,7 +53,8 @@ require ["Factory"], (Factory) ->
 
         it "should trigger an event", ->
           expect(trigger).toHaveBeenCalledOnce()
-          expect(trigger).toHaveBeenCalledWith 'define', 'test', factory.definitions.test
+          test = factory.definitions.test
+          expect(trigger).toHaveBeenCalledWith 'define', 'test', test
 
         it "should allow override of a definition with override flag", ->
           test = ->
@@ -226,10 +227,12 @@ require ["Factory"], (Factory) ->
 
 
         it "should return a function", ->
-          expect(typeof factory.getConstructor("ConstructorTest") is "function").toBe true
+          expect(factory.getConstructor("ConstructorTest")).toBeFunction()
 
         it "should attach the correct prototype to the function returned", ->
-          expect(factory.getConstructor('ConstructorTest').prototype).toBe(factory.definitions.ConstructorTest.constructor.prototype)
+          cptype = factory.getConstructor('ConstructorTest').prototype
+          ptype = factory.definitions.ConstructorTest.constructor.prototype
+          expect(cptype).toBe(ptype)
 
         describe "optional original argument", ->
           it "should return the original constructor", ->
@@ -358,7 +361,8 @@ require ["Factory"], (Factory) ->
           expect(typeof baseOn.firstCall.args[1]).toBe 'function'
 
         describe 'define handler', ->
-          mockDefinition = mixin = options = define = defineMixin = define_handler = null
+          mockDefinition = mixin = options = null
+          define = defineMixin = define_handler = null
           beforeEach ->
             options = {}
             mockDefinition = {constructor: Object, options}
@@ -375,7 +379,9 @@ require ["Factory"], (Factory) ->
             expect(define.firstCall.args[2].silent).toBe true
 
         it 'should bind a method to defineMixin', ->
-          expect(baseOn.secondCall).toHaveBeenCalledWith 'defineMixin', factory.defineMixin, factory
+          expect(baseOn.secondCall).toHaveBeenCalledWith 'defineMixin',
+            factory.defineMixin,
+            factory
 
       describe "Factory Instance Mapping", ->
         lso = undefined
@@ -458,7 +464,12 @@ require ["Factory"], (Factory) ->
               _.each instances, (i) ->
                 i.test = false
 
-            _.each ["NotSoSimple", "KindaComplicated", "LessSimpleObject", "Difficult"], (tag) ->
+            _.each [
+              "NotSoSimple"
+              "KindaComplicated"
+              "LessSimpleObject"
+              "Difficult"
+            ], (tag) ->
               factory.onTag tag, (i) ->
                 i.test = true
 
@@ -467,13 +478,19 @@ require ["Factory"], (Factory) ->
 
 
           it "should call the callback on any future instances", ->
-            _.each ["SimpleObject", "NotSoSimple", "KindaComplicated", "LessSimpleObject", "Difficult"], (tag) ->
+            _.each [
+              "SimpleObject"
+              "NotSoSimple"
+              "KindaComplicated"
+              "LessSimpleObject"
+              "Difficult"
+            ], (tag) ->
               factory.onTag tag, (i) ->
                 i.test = true
             expect(factory.get("SimpleObject").test).toBe true
 
         describe "offTag", ->
-          it "should ignore requests to remove callbacks for non existant tags", ->
+          it "should ignore requests to remove callbacks if no tag", ->
             test = ->
               factory.offTag('UndeclaredTag')
             expect(test).not.toThrow()

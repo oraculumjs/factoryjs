@@ -13,7 +13,9 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
         @tested = true
 
       BackboneFactory.extend "Base", "TestObject", TestObject
-      expect(BackboneFactory.get("TestObject")).toBeInstanceOf BackboneFactory.definitions.Base.constructor
+      ctor = BackboneFactory.definitions.Base.constructor
+      expect(BackboneFactory.get("TestObject")).toBeInstanceOf ctor
+
 
     it "should return a view as defined", ->
       view = BackboneFactory.get("View")
@@ -23,7 +25,9 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
       BackboneFactory.extend "View", "Test.View",
         el: "body"
         render: ->
-          @$el.append "<div class=\"test-item item-" + @cid + "\">" + (new Date()).getTime() + "</div>"
+          now = (new Date()).getTime()
+          html = "<div class='test-item item-#{@cid}'>#{now}</div>"
+          @$el.append html
 
         model: "Test.Model"
       ,
@@ -110,7 +114,11 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
         BackboneFactory.extend "Collection", "FactoryCollection",
           model: "FactoryModel"
 
-        collection = BackboneFactory.get("FactoryCollection", [{id: 1}, {id: 2}, {id: 3}]);
+        collection = BackboneFactory.get("FactoryCollection", [
+          {id: 1}
+          {id: 2}
+          {id: 3}
+        ])
         expect(collection).toBeDefined()
         collection.each (model)->
           expect(model.test()).toBe true
@@ -119,7 +127,11 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
 
       describe "Clone override", ->
         beforeEach ->
-          @collection = BackboneFactory.get 'Collection', [{id: 1},{id: 2},{id: 3}]
+          @collection = BackboneFactory.get 'Collection', [
+            {id: 1}
+            {id: 2}
+            {id: 3}
+          ]
 
         afterEach ->
           BackboneFactory.dispose @collection
@@ -136,6 +148,4 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
           disposeTest = ->
             BackboneFactory.dispose collection
           expect(disposeTest).not.toThrow()
-
-
 
