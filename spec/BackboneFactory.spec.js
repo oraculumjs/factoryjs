@@ -129,11 +129,27 @@
           BackboneFactory.extend("Collection", "FactoryCollection", {
             model: "FactoryModel"
           });
-          collection = BackboneFactory.get("FactoryCollection", [{}, {}, {}]);
+          collection = BackboneFactory.get("FactoryCollection", [
+            {
+              id: 1
+            }, {
+              id: 2
+            }, {
+              id: 3
+            }
+          ]);
           expect(collection).toBeDefined();
-          return collection.each(function(model) {
+          collection.each(function(model) {
             return expect(model.test()).toBe(true);
           });
+          collection.set([
+            {
+              id: 1
+            }, {
+              id: 2
+            }
+          ]);
+          return expect(collection.size()).toBe(2);
         });
         return describe("Clone override", function() {
           beforeEach(function() {
