@@ -142,22 +142,28 @@
         return this;
       };
 
+      Factory.prototype.applyMixin = function(obj, mixin, mixinOptions) {
+        var mixer;
+        mixer = this.mixins[mixin];
+        if (!mixer) {
+          throw new Error("Mixin Not Defined :: " + mixin);
+        }
+        obj.mixinOptions || (obj.mixinOptions = {});
+        _.defaults(obj.mixinOptions, mixinOptions, mixer.mixinOptions || {});
+        _.extend(obj, _.omit(mixer, 'mixinOptions'));
+        if (_.isFunction(obj.mixinitialize)) {
+          obj.mixinitialize();
+          obj.mixinitialize = function() {};
+        }
+        return obj;
+      };
+
       Factory.prototype.handleMixins = function(instance, mixins) {
         var _this = this;
-        return _.each(mixins, function(mixin) {
-          var mixer;
-          mixer = _this.mixins[mixin];
-          if (!mixer) {
-            throw new Error("Mixin Not Defined :: " + mixin);
-          }
-          instance.mixinOptions = instance.mixinOptions || {};
-          _.defaults(instance.mixinOptions, mixer.mixinOptions || {});
-          _.extend(instance, _.omit(mixer, 'mixinOptions'));
-          if (_.isFunction(instance.mixinitialize)) {
-            instance.mixinitialize();
-            return instance.mixinitialize = function() {};
-          }
+        _.each(mixins, function(mixin) {
+          return _this.applyMixin(instance, mixin, instance.mixinOptions);
         });
+        return instance.__mixin = _.chain(this.applyMixin).bind(this).partial(instance).value();
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {
@@ -264,13 +270,16 @@
       };
 
       Factory.prototype.getConstructor = function(name, original) {
+        var result;
         if (original == null) {
           original = false;
         }
         if (original) {
           return this.definitions[name].constructor;
         }
-        return _.chain(this.get).bind(this).partial(name).value();
+        result = _.chain(this.get).bind(this).partial(name).value();
+        result.prototype = this.definitions[name].constructor.prototype;
+        return result;
       };
 
       Factory.prototype.onTag = function(tag, cb) {

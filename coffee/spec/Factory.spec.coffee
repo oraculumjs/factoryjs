@@ -64,13 +64,14 @@ require ["Factory"], (Factory) ->
           t = factory.get('test')
           expect(t.test).toEqual(t)
 
-      it "should provide hasDefinition method", ->
-        expect(factory).toProvideMethod "hasDefinition"
 
       describe "hasDefinition method", ->
         beforeEach ->
           factory.define "test", ->
             @test = true
+
+        it "should provide hasDefinition method", ->
+          expect(factory).toProvideMethod "hasDefinition"
 
         it "should provide hasDefinition method", ->
           expect(factory).toProvideMethod "hasDefinition"
@@ -144,8 +145,6 @@ require ["Factory"], (Factory) ->
           expect(trigger).toHaveBeenCalledOnce()
           expect(trigger).toHaveBeenCalledWith 'defineMixin', 'test', mixin
 
-      it "should provide get method", ->
-        expect(factory).toProvideMethod "get"
 
       describe "get method", ->
         Test = (options) ->
@@ -168,9 +167,16 @@ require ["Factory"], (Factory) ->
             mixinitialize: ->
               @two = true
 
+          factory.defineMixin "three",
+            mixinitialize: ->
+              @three = true
+
           factory.define "Test", Test,
             singleton: true
             mixins: ["one", "two"]
+
+        it "should provide get method", ->
+          expect(factory).toProvideMethod "get"
 
         it "should provide a factory retrieval method on an instance", ->
           test = factory.get("Test", {})
@@ -198,6 +204,11 @@ require ["Factory"], (Factory) ->
 
           expect(tester).toThrow()
 
+        it "should support late mixing via the apply mixin method", ->
+          t = factory.get("Test", {})
+          factory.applyMixin t, 'three'
+          expect(t.three).toBe true
+
         it "should throw if an invalid definition is referenced", ->
           tester = ->
             factory.get('Invalid.Object')
@@ -217,6 +228,9 @@ require ["Factory"], (Factory) ->
         it "should return a function", ->
           expect(typeof factory.getConstructor("ConstructorTest") is "function").toBe true
 
+        it "should attach the correct prototype to the function returned", ->
+          expect(factory.getConstructor('ConstructorTest').prototype).toBe(factory.definitions.ConstructorTest.constructor.prototype)
+
         describe "optional original argument", ->
           it "should return the original constructor", ->
             ctor = factory.getConstructor "ConstructorTest", true
@@ -229,6 +243,12 @@ require ["Factory"], (Factory) ->
           obj = new ctor(y: false)
           expect(obj.x).toBe true
           expect(obj.y).toBe false
+
+        it "should create the expected type of object", ->
+          ctor = factory.getConstructor("ConstructorTest", true)
+          fctor = factory.getConstructor("ConstructorTest")
+          obj = new fctor(y: false)
+          expect(obj).toBeInstanceOf(ctor)
 
         it "should support singletons", ->
           factory.define "SingletonTest", (->

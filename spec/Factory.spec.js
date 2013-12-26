@@ -89,14 +89,14 @@
             return expect(t.test).toEqual(t);
           });
         });
-        it("should provide hasDefinition method", function() {
-          return expect(factory).toProvideMethod("hasDefinition");
-        });
         describe("hasDefinition method", function() {
           beforeEach(function() {
             return factory.define("test", function() {
               return this.test = true;
             });
+          });
+          it("should provide hasDefinition method", function() {
+            return expect(factory).toProvideMethod("hasDefinition");
           });
           it("should provide hasDefinition method", function() {
             return expect(factory).toProvideMethod("hasDefinition");
@@ -194,9 +194,6 @@
             return expect(trigger).toHaveBeenCalledWith('defineMixin', 'test', mixin);
           });
         });
-        it("should provide get method", function() {
-          return expect(factory).toProvideMethod("get");
-        });
         describe("get method", function() {
           var Test;
           Test = function(options) {
@@ -226,10 +223,18 @@
                 return this.two = true;
               }
             });
+            factory.defineMixin("three", {
+              mixinitialize: function() {
+                return this.three = true;
+              }
+            });
             return factory.define("Test", Test, {
               singleton: true,
               mixins: ["one", "two"]
             });
+          });
+          it("should provide get method", function() {
+            return expect(factory).toProvideMethod("get");
           });
           it("should provide a factory retrieval method on an instance", function() {
             var test;
@@ -260,6 +265,12 @@
             };
             return expect(tester).toThrow();
           });
+          it("should support late mixing via the apply mixin method", function() {
+            var t;
+            t = factory.get("Test", {});
+            factory.applyMixin(t, 'three');
+            return expect(t.three).toBe(true);
+          });
           it("should throw if an invalid definition is referenced", function() {
             var tester;
             tester = function() {
@@ -283,6 +294,9 @@
           it("should return a function", function() {
             return expect(typeof factory.getConstructor("ConstructorTest") === "function").toBe(true);
           });
+          it("should attach the correct prototype to the function returned", function() {
+            return expect(factory.getConstructor('ConstructorTest').prototype).toBe(factory.definitions.ConstructorTest.constructor.prototype);
+          });
           describe("optional original argument", function() {
             return it("should return the original constructor", function() {
               var ctor, obj;
@@ -301,6 +315,15 @@
             });
             expect(obj.x).toBe(true);
             return expect(obj.y).toBe(false);
+          });
+          it("should create the expected type of object", function() {
+            var ctor, fctor, obj;
+            ctor = factory.getConstructor("ConstructorTest", true);
+            fctor = factory.getConstructor("ConstructorTest");
+            obj = new fctor({
+              y: false
+            });
+            return expect(obj).toBeInstanceOf(ctor);
           });
           it("should support singletons", function() {
             var ctor;

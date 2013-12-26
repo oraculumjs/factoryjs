@@ -110,10 +110,12 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
         BackboneFactory.extend "Collection", "FactoryCollection",
           model: "FactoryModel"
 
-        collection = BackboneFactory.get("FactoryCollection", [{}, {}, {}]);
+        collection = BackboneFactory.get("FactoryCollection", [{id: 1}, {id: 2}, {id: 3}]);
         expect(collection).toBeDefined()
         collection.each (model)->
           expect(model.test()).toBe true
+        collection.set([{id: 1},{id: 2}])
+        expect(collection.size()).toBe 2
 
       describe "Clone override", ->
         beforeEach ->

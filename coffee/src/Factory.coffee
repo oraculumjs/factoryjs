@@ -160,6 +160,23 @@ define [
       @trigger 'defineMixin', name, def, options
       return this
 
+    # Apply Mixin
+    # -----------
+    # Apply a mixin by name to an object. Options that are on the object
+    # will be supported by passed in defaults then by mixer defaults. Will
+    # invoke mixinitialize and empty mixinitialize method after invocation.
+
+    applyMixin: (obj, mixin, mixinOptions) ->
+      mixer = @mixins[mixin]
+      throw new Error("Mixin Not Defined :: #{mixin}") unless mixer
+      obj.mixinOptions or= {}
+      _.defaults obj.mixinOptions, mixinOptions, mixer.mixinOptions or {}
+      _.extend obj, _.omit mixer, 'mixinOptions'
+      if _.isFunction obj.mixinitialize
+        obj.mixinitialize()
+        obj.mixinitialize = ->
+      return obj
+
     # Handle Mixins
     # -------------
     # Gets called when an object is created to mixin anything you said
@@ -168,14 +185,8 @@ define [
 
     handleMixins: (instance, mixins) ->
       _.each mixins, (mixin) =>
-        mixer = @mixins[mixin]
-        throw new Error("Mixin Not Defined :: #{mixin}") unless mixer
-        instance.mixinOptions = instance.mixinOptions or {}
-        _.defaults instance.mixinOptions, mixer.mixinOptions or {}
-        _.extend instance, _.omit mixer, 'mixinOptions'
-        if _.isFunction instance.mixinitialize
-          instance.mixinitialize()
-          instance.mixinitialize = ->
+        @applyMixin(instance, mixin, instance.mixinOptions)
+      instance.__mixin = _.chain(@applyMixin).bind(this).partial(instance).value()
 
     # Handle Injections
     # -----------------
@@ -292,7 +303,9 @@ define [
 
     getConstructor: (name, original = false) ->
       return @definitions[name].constructor if original
-      _.chain(@get).bind(this).partial(name).value()
+      result = _.chain(@get).bind(this).partial(name).value()
+      result.prototype = @definitions[name].constructor.prototype
+      return result
 
     # On Tag
     # ------
