@@ -38,6 +38,9 @@ module.exports = function (grunt) {
         ext: '.helper.js'
       }
     },
+    coffeelint: {
+      app: ['coffee/**/*.coffee']
+    },
     blanket: {
       instrument: {
         files: {
@@ -166,7 +169,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-markdown');
   grunt.loadNpmTasks('grunt-docco');
   grunt.loadNpmTasks('grunt-blanket');
+  grunt.loadNpmTasks('grunt-coffeelint');
 
-  grunt.registerTask('default', ['clean', 'coffee','jshint','blanket','jasmine:normal','docco','markdown','concat','uglify']);
-  grunt.registerTask('live', ['clean','connect', 'coffee','jshint','blanket','jasmine:live','docco','markdown','concat','uglify', 'watch']);
+  grunt.registerTask('default', ['clean','coffeelint', 'coffee','jshint','blanket','jasmine:normal','docco','markdown','concat','uglify']);
+  grunt.registerTask('live', ['clean','connect','coffeelint', 'coffee','jshint','blanket','jasmine:live','docco','markdown','concat','uglify', 'watch']);
 };

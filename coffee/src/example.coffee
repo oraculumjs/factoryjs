@@ -18,7 +18,8 @@ define ["Factory"], (Factory) ->
 
   TestFactory = new Factory(TestObject)
 
-  # from here on out you can define new object types or extend your original object type in the container
+  # from here on out you can define new object types or extend your original
+  # object type in the container
   TestFactory.extend "Base", "Test",
     defaults:
       name: "Unamed Test Object"
@@ -53,7 +54,8 @@ define ["Factory"], (Factory) ->
       execute: ->
         result = 0
         # Here are using the Runner injection to access the runner for the page,
-        # good for accessing singletons that have commone reusable functionality.
+        # good for accessing singletons that have commone reusable
+        # functionality.
         @log 'log', @Runner.url()
         @tests.forEach (test) ->
           test.log "log", test.name, test.run()
@@ -68,7 +70,8 @@ define ["Factory"], (Factory) ->
 
   # now you can get a Suite object out of the factory
 
-  # there are three options that can additionally be passed in to the define or extend methods:
+  # there are three options that can additionally be passed in to the define or
+  # extend methods:
   # mixins: Array
   # tags: Array
   # singleton: Boolean
@@ -130,7 +133,8 @@ define ["Factory"], (Factory) ->
       oLog.apply instance, arguments
 
 
-  # now any existing instance that supports logging (tagged) will post the log to a server endpoint
+  # now any existing instance that supports logging (tagged) will post the log
+  # to a server endpoint
   thirdTest = TestFactory.get("Test",
     name: "True is False"
     execute: ->

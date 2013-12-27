@@ -23,7 +23,7 @@
       }
 
       Factory.prototype.define = function(name, def, options) {
-        var definition, tags, _base,
+        var definition, message, tags, _base,
           _this = this;
         if (options == null) {
           options = {};
@@ -32,7 +32,8 @@
           if (options.silent) {
             return this;
           }
-          throw new Error("Definition already exists :: " + name + " :: user overide option to ignore");
+          message = "Definition already exists :: " + name + " :: user overide option to ignore";
+          throw new Error(message);
         }
         if ((_base = this.promises)[name] == null) {
           _base[name] = $.Deferred();
@@ -43,9 +44,13 @@
         if (!_.isFunction(def.extend)) {
           def.extend = Backbone.Model.extend;
         }
-        definition.constructor = _.isFunction(def) ? def : function() {
-          return _.clone(def);
-        };
+        if (_.isFunction(def)) {
+          definition.constructor = def;
+        } else {
+          definition.constructor = function() {
+            return _.clone(def);
+          };
+        }
         definition.constructor.prototype.__factory = function() {
           return _this;
         };
@@ -87,25 +92,29 @@
       };
 
       Factory.prototype.extend = function(base, name, def, options) {
-        var bDef;
+        var bDef, message;
         if (options == null) {
           options = {};
         }
         bDef = this.definitions[base];
+        message = "Base Class Not Available :: " + base;
         if (!bDef) {
-          throw new Error("Base Class Not Available :: " + base);
+          throw new Error(message);
         }
+        message = "Invalid Parameter Definition ::\nexpected object ::\ngot " + (def.constructor.prototype.toString());
         if (!_.isObject(def)) {
-          throw new Error("Invalid Parameter Definition :: expected object :: got " + (def.constructor.prototype.toString()));
+          throw new Error(message);
         }
         options.tags = [].concat(bDef.tags, options.tags);
         return this.define(name, bDef.constructor.extend(def), options);
       };
 
       Factory.prototype.clone = function(factory) {
-        var _this = this;
+        var message,
+          _this = this;
+        message = "Invalid Argument :: Expected Factory";
         if (!(factory instanceof Factory)) {
-          throw new Error("Invalid Argument :: Expected Factory");
+          throw new Error(message);
         }
         return _.each(["definitions", "mixins", "promises"], function(key) {
           _.defaults(_this[key], factory[key]);
@@ -131,11 +140,13 @@
       };
 
       Factory.prototype.defineMixin = function(name, def, options) {
+        var message;
         if (options == null) {
           options = {};
         }
         if ((this.mixins[name] != null) && !options.override) {
-          throw new Error("Mixin already defined :: " + name + " :: use override option to ignore");
+          message = "Mixin already defined :: " + name + " :: use override option to ignore";
+          throw new Error(message);
         }
         this.mixins[name] = def;
         this.trigger('defineMixin', name, def, options);
@@ -216,13 +227,14 @@
       };
 
       Factory.prototype.get = function() {
-        var args, constructor, def, injections, instance, instances, mixins, name, options, singleton, _base;
+        var args, constructor, def, injections, instance, instances, message, mixins, name, options, singleton, _base;
         name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         instances = (_base = this.instances)[name] != null ? (_base = this.instances)[name] : _base[name] = [];
         instance = this.instances[name][0];
         def = this.definitions[name];
+        message = "Invalid Definition :: " + name + " :: not defined";
         if (def == null) {
-          throw new Error("Invalid Definition :: " + name + " :: not defined");
+          throw new Error(message);
         }
         constructor = def.constructor;
         options = def.options || {};
@@ -261,8 +273,10 @@
       Factory.prototype.dispose = function(instance) {
         var _this = this;
         _.each(instance.__factoryMap(), function(arr) {
+          var message;
+          message = "Instance Not In Factory :: " + instance + " :: disposal failed!";
           if (__indexOf.call(arr, instance) < 0) {
-            throw new Error("Instance Not In Factory :: " + instance + " :: disposal failed!");
+            throw new Error(message);
           }
           return arr.splice(arr.indexOf(instance), 1);
         });
@@ -283,12 +297,14 @@
       };
 
       Factory.prototype.onTag = function(tag, cb) {
-        var _base;
+        var message, _base;
+        message = "Invalid Argument :: " + (typeof tag) + " provided :: expected String";
         if (!_.isString(tag)) {
-          throw new Error("Invalid Argument :: " + typeof tag + " provided :: expected String");
+          throw new Error(message);
         }
+        message = "Invalid Argument :: " + (typeof cb) + " provided :: expected Function";
         if (!_.isFunction(cb)) {
-          throw new Error("Invalid Argument :: " + typeof cb + " provided :: expected Function");
+          throw new Error(message);
         }
         _.each(this.tagMap[tag], cb);
         if ((_base = this.tagCbs)[tag] == null) {
@@ -298,9 +314,10 @@
       };
 
       Factory.prototype.offTag = function(tag, cb) {
-        var cbIdx;
+        var cbIdx, message;
+        message = "Invalid Argument :: " + (typeof tag) + " provided :: expected String";
         if (!_.isString(tag)) {
-          throw new Error("Invalid Argument :: " + (typeof tag) + " provided :: expected String");
+          throw new Error(message);
         }
         if (this.tagCbs[tag] == null) {
           return;
@@ -310,8 +327,9 @@
           return;
         }
         cbIdx = this.tagCbs[tag].indexOf(cb);
+        message = "Callback Not Found :: " + cb + " :: for tag " + tag;
         if (cbIdx === -1) {
-          throw new Error("Callback Not Found :: " + cb + " :: for tag " + tag);
+          throw new Error(message);
         }
         return this.tagCbs[tag].splice(cbIdx, 1);
       };
