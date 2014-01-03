@@ -226,7 +226,7 @@ define [
         @tagCbs[tag] = [] unless @tagCbs[tag]?
         cbs = @tagCbs[tag]
         return if cbs.length is 0
-        _.each cbs, (cb) =>
+        _.each cbs, (cb) ->
           cb instance if _.isFunction(cb)
 
     # Handle Tags
@@ -279,7 +279,7 @@ define [
       # tag support
       @handleTags name, instance, def.tags
       # late initialization support
-      instance.constructed() if _.isFunction instance.constructed
+      instance.constructed(args...) if _.isFunction instance.constructed
 
       # we shortcut the dispose functionality so we can wire it into other
       # frameworks and stuff easily
@@ -308,7 +308,7 @@ define [
     # object to be constructed again.
 
     dispose: (instance) ->
-      _.each instance.__factoryMap(), (arr) =>
+      _.each instance.__factoryMap(), (arr) ->
         message = "Instance Not In Factory :: #{instance} :: disposal failed!"
         throw new Error message if instance not in arr
         arr.splice arr.indexOf(instance), 1

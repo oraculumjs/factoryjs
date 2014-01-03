@@ -157,8 +157,7 @@ require ["Factory"], (Factory) ->
               this[option] = options[option]
             this
 
-          constructed: ->
-            @hasConstructed = true  if @one and @two
+          constructed: sinon.stub()
 
         beforeEach ->
           factory.defineMixin "one",
@@ -216,8 +215,16 @@ require ["Factory"], (Factory) ->
           expect(tester).toThrow()
 
         it "should have invoked the constructed method at invocation time", ->
-          test = factory.get("Test")
-          expect(test.hasConstructed).toBe true
+          test = factory.get("Test", 1, 2, 3)
+          expect(test.constructed).toHaveBeenCalled()
+
+        it "should invoke constructed method with args from constructor", ->
+          test = factory.get("Test", 1, 2, 3)
+          expect(test.constructed).toHaveBeenCalledWith(1,2,3)
+
+        it "should invoke constructed method with the instance context", ->
+          test = factory.get("Test", 1, 2, 3)
+          expect(test.constructed).toHaveBeenCalledOn(test)
 
       describe "getConstructor method", ->
         beforeEach ->

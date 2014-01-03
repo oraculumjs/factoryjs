@@ -210,11 +210,7 @@
               }
               return this;
             },
-            constructed: function() {
-              if (this.one && this.two) {
-                return this.hasConstructed = true;
-              }
-            }
+            constructed: sinon.stub()
           };
           beforeEach(function() {
             factory.defineMixin("one", {
@@ -280,10 +276,20 @@
             };
             return expect(tester).toThrow();
           });
-          return it("should have invoked the constructed method at invocation time", function() {
+          it("should have invoked the constructed method at invocation time", function() {
             var test;
-            test = factory.get("Test");
-            return expect(test.hasConstructed).toBe(true);
+            test = factory.get("Test", 1, 2, 3);
+            return expect(test.constructed).toHaveBeenCalled();
+          });
+          it("should invoke constructed method with args from constructor", function() {
+            var test;
+            test = factory.get("Test", 1, 2, 3);
+            return expect(test.constructed).toHaveBeenCalledWith(1, 2, 3);
+          });
+          return it("should invoke constructed method with the instance context", function() {
+            var test;
+            test = factory.get("Test", 1, 2, 3);
+            return expect(test.constructed).toHaveBeenCalledOn(test);
           });
         });
         describe("getConstructor method", function() {

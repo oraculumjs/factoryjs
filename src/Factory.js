@@ -253,7 +253,7 @@
         this.handleInjections(instance, injections);
         this.handleTags(name, instance, def.tags);
         if (_.isFunction(instance.constructed)) {
-          instance.constructed();
+          instance.constructed.apply(instance, args);
         }
         instance.__dispose = (function(factory) {
           return function() {
@@ -271,7 +271,6 @@
       };
 
       Factory.prototype.dispose = function(instance) {
-        var _this = this;
         _.each(instance.__factoryMap(), function(arr) {
           var message;
           message = "Instance Not In Factory :: " + instance + " :: disposal failed!";
