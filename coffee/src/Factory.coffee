@@ -31,6 +31,7 @@ define [
 
     constructor: (Base, options = {}) ->
       @mixins = {}
+      @mixinSettings = {}
       @tagCbs = {}
       @tagMap = {}
       @promises = {}
@@ -173,6 +174,7 @@ define [
         """
         throw new Error message
       @mixins[name] = def
+      @mixinSettings[name] = options
       @trigger 'defineMixin', name, def, options
       return this
 
@@ -183,7 +185,21 @@ define [
     # invoke mixinitialize and empty mixinitialize method after invocation.
 
     applyMixin: (obj, mixin, mixinOptions) ->
+      unless obj.____mixed
+        # we are in a late mix, use transient loop protection
+        # ignore tags
+        remove_mixed_array = true
+        ignore_tags = true
+        obj.____mixed = []
+      return if mixin in obj.____mixed
       mixer = @mixins[mixin]
+      mixerSettings = @mixinSettings[mixin]
+      if mixerSettings.mixins
+        for m in mixerSettings.mixins
+          @applyMixin(obj, m, mixinOptions)
+      if mixerSettings.tags and not ignore_tags
+        obj.____tags or= []
+        obj.____tags = obj.____tags.concat(mixerSettings.tags)
       throw new Error("Mixin Not Defined :: #{mixin}") unless mixer
       obj.mixinOptions or= {}
       _.defaults obj.mixinOptions, mixinOptions, mixer.mixinOptions or {}
@@ -191,6 +207,8 @@ define [
       if _.isFunction obj.mixinitialize
         obj.mixinitialize()
         obj.mixinitialize = ->
+      obj.____mixed.push(mixin)
+      delete obj.____mixed if remove_mixed_array
       return obj
 
     # Handle Mixins
@@ -200,12 +218,15 @@ define [
     # method it will get called after initialize and before constructed.
 
     handleMixins: (instance, mixins) ->
+      instance.____mixed = []
       _.each mixins, (mixin) =>
         @applyMixin(instance, mixin, instance.mixinOptions)
-      instance.__mixin = _.chain(@applyMixin)
-        .bind(this)
-        .partial(instance)
-        .value()
+      instance.__mixin = _.chain((obj, mixin, mixinOptions)->
+        obj.____mixed = []
+        @applyMixin(obj, mixin, mixinOptions)
+        delete obj.____mixed
+      ).bind(this).partial(instance).value()
+      delete instance.____mixed
 
     # Handle Injections
     # -----------------
@@ -237,11 +258,13 @@ define [
 
     handleTags: (name, instance, tags) ->
       @instances[name].push instance
+      fullTags = _.toArray(tags).concat(instance.____tags or [])
+      delete instance.____tags if instance.____tags
       instance.__type = -> name
-      instance.__tags = -> [].slice.call tags
+      instance.__tags = -> _.toArray fullTags
 
       factoryMap = [@instances[name]]
-      _.each tags, (tag) =>
+      _.each fullTags, (tag) =>
         @tagMap[tag] = [] unless @tagMap[tag]?
         @tagMap[tag].push instance
         factoryMap.push @tagMap[tag]

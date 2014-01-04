@@ -126,13 +126,22 @@ require ["Factory"], (Factory) ->
         beforeEach ->
           mixin = { 'test' }
           trigger = sinon.stub factory, 'trigger'
-          factory.defineMixin "test", mixin
+          factory.defineMixin "test", mixin, {
+            mixins: ['test1'],
+            tags: ['test1']
+          }
 
         it "should provide defineMixin method", ->
           expect(factory).toProvideMethod "defineMixin"
 
         it "should have the defined mixins", ->
           expect(factory.mixins.test).toBeDefined()
+
+        it "should have the defined mixin dependency", ->
+          expect(factory.mixinSettings.test.mixins).toEqual(['test1'])
+
+        it "should have the defined mixin tags", ->
+          expect(factory.mixinSettings.test.tags).toEqual(['test1'])
 
         it "should throw if that mixin is already defined", ->
           test = -> factory.defineMixin 'test', mixin
@@ -171,6 +180,11 @@ require ["Factory"], (Factory) ->
             mixinitialize: ->
               @three = true
 
+          factory.defineMixin "four",
+            mixinitialize: ->
+              @four = true
+          , mixins: ['three']
+
           factory.define "Test", Test,
             singleton: true
             mixins: ["one", "two"]
@@ -208,6 +222,12 @@ require ["Factory"], (Factory) ->
           t = factory.get("Test", {})
           factory.applyMixin t, 'three'
           expect(t.three).toBe true
+
+        it "should support mixin dependencies", ->
+          t = factory.get("Test", {})
+          t.__mixin('four')
+          expect(t.three).toBe true
+          expect(t.four).toBe true
 
         it "should throw if an invalid definition is referenced", ->
           tester = ->
@@ -393,6 +413,10 @@ require ["Factory"], (Factory) ->
       describe "Factory Instance Mapping", ->
         lso = undefined
         beforeEach ->
+          factory.defineMixin 'TagMixin', {}, {
+            tags: ['MixedInto']
+          }
+
           factory.define "SimpleObject", (->
             @isSimple = true
           ),
@@ -402,9 +426,17 @@ require ["Factory"], (Factory) ->
             isThisSiple: ->
               not @isSimple
           ,
+            mixins: ['TagMixin']
             tags: ["Difficult"]
 
           lso = factory.get("LessSimpleObject")
+
+        it "should have the right tags in memory", ->
+          expect(lso.__tags()).toContain('MixedInto')
+          expect(lso.__tags()).toContain('Difficult')
+          expect(lso.__tags()).toContain('NotSoSimple')
+          expect(lso.__tags()).toContain('KindaComplicated')
+          expect(lso.__tags()).toContain('SimpleObject')
 
         it "should be able to verify an instance map", ->
           expect(factory.verifyTags(lso)).toBe true
@@ -476,6 +508,7 @@ require ["Factory"], (Factory) ->
               "KindaComplicated"
               "LessSimpleObject"
               "Difficult"
+              "MixedInto"
             ], (tag) ->
               factory.onTag tag, (i) ->
                 i.test = true
@@ -491,6 +524,7 @@ require ["Factory"], (Factory) ->
               "KindaComplicated"
               "LessSimpleObject"
               "Difficult"
+              "MixedInto"
             ], (tag) ->
               factory.onTag tag, (i) ->
                 i.test = true
