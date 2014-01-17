@@ -1,6 +1,6 @@
 (function() {
-  var __slice = [].slice,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __slice = [].slice;
 
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
     var Factory;
@@ -12,6 +12,7 @@
           options = {};
         }
         this.mixins = {};
+        this.mixinSettings = {};
         this.tagCbs = {};
         this.tagMap = {};
         this.promises = {};
@@ -149,13 +150,34 @@
           throw new Error(message);
         }
         this.mixins[name] = def;
+        this.mixinSettings[name] = options;
         this.trigger('defineMixin', name, def, options);
         return this;
       };
 
       Factory.prototype.applyMixin = function(obj, mixin, mixinOptions) {
-        var mixer;
+        var ignore_tags, m, mixer, mixerSettings, remove_mixed_array, _i, _len, _ref;
+        if (!obj.____mixed) {
+          remove_mixed_array = true;
+          ignore_tags = true;
+          obj.____mixed = [];
+        }
+        if (__indexOf.call(obj.____mixed, mixin) >= 0) {
+          return;
+        }
         mixer = this.mixins[mixin];
+        mixerSettings = this.mixinSettings[mixin];
+        if (mixerSettings.mixins) {
+          _ref = mixerSettings.mixins;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            m = _ref[_i];
+            this.applyMixin(obj, m, mixinOptions);
+          }
+        }
+        if (mixerSettings.tags && !ignore_tags) {
+          obj.____tags || (obj.____tags = []);
+          obj.____tags = obj.____tags.concat(mixerSettings.tags);
+        }
         if (!mixer) {
           throw new Error("Mixin Not Defined :: " + mixin);
         }
@@ -166,15 +188,25 @@
           obj.mixinitialize();
           obj.mixinitialize = function() {};
         }
+        obj.____mixed.push(mixin);
+        if (remove_mixed_array) {
+          delete obj.____mixed;
+        }
         return obj;
       };
 
       Factory.prototype.handleMixins = function(instance, mixins) {
         var _this = this;
+        instance.____mixed = [];
         _.each(mixins, function(mixin) {
           return _this.applyMixin(instance, mixin, instance.mixinOptions);
         });
-        return instance.__mixin = _.chain(this.applyMixin).bind(this).partial(instance).value();
+        instance.__mixin = _.chain(function(obj, mixin, mixinOptions) {
+          obj.____mixed = [];
+          this.applyMixin(obj, mixin, mixinOptions);
+          return delete obj.____mixed;
+        }).bind(this).partial(instance).value();
+        return delete instance.____mixed;
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {
@@ -204,17 +236,21 @@
       };
 
       Factory.prototype.handleTags = function(name, instance, tags) {
-        var factoryMap,
+        var factoryMap, fullTags,
           _this = this;
         this.instances[name].push(instance);
+        fullTags = _.toArray(tags).concat(instance.____tags || []);
+        if (instance.____tags) {
+          delete instance.____tags;
+        }
         instance.__type = function() {
           return name;
         };
         instance.__tags = function() {
-          return [].slice.call(tags);
+          return _.toArray(fullTags);
         };
         factoryMap = [this.instances[name]];
-        _.each(tags, function(tag) {
+        _.each(fullTags, function(tag) {
           if (_this.tagMap[tag] == null) {
             _this.tagMap[tag] = [];
           }
@@ -253,7 +289,7 @@
         this.handleInjections(instance, injections);
         this.handleTags(name, instance, def.tags);
         if (_.isFunction(instance.constructed)) {
-          instance.constructed();
+          instance.constructed.apply(instance, args);
         }
         instance.__dispose = (function(factory) {
           return function() {
@@ -271,7 +307,6 @@
       };
 
       Factory.prototype.dispose = function(instance) {
-        var _this = this;
         _.each(instance.__factoryMap(), function(arr) {
           var message;
           message = "Instance Not In Factory :: " + instance + " :: disposal failed!";

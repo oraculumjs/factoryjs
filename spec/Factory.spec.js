@@ -167,13 +167,22 @@
               'test': 'test'
             };
             trigger = sinon.stub(factory, 'trigger');
-            return factory.defineMixin("test", mixin);
+            return factory.defineMixin("test", mixin, {
+              mixins: ['test1'],
+              tags: ['test1']
+            });
           });
           it("should provide defineMixin method", function() {
             return expect(factory).toProvideMethod("defineMixin");
           });
           it("should have the defined mixins", function() {
             return expect(factory.mixins.test).toBeDefined();
+          });
+          it("should have the defined mixin dependency", function() {
+            return expect(factory.mixinSettings.test.mixins).toEqual(['test1']);
+          });
+          it("should have the defined mixin tags", function() {
+            return expect(factory.mixinSettings.test.tags).toEqual(['test1']);
           });
           it("should throw if that mixin is already defined", function() {
             var test;
@@ -210,11 +219,7 @@
               }
               return this;
             },
-            constructed: function() {
-              if (this.one && this.two) {
-                return this.hasConstructed = true;
-              }
-            }
+            constructed: sinon.stub()
           };
           beforeEach(function() {
             factory.defineMixin("one", {
@@ -229,6 +234,13 @@
               mixinitialize: function() {
                 return this.three = true;
               }
+            });
+            factory.defineMixin("four", {
+              mixinitialize: function() {
+                return this.four = true;
+              }
+            }, {
+              mixins: ['three']
             });
             return factory.define("Test", Test, {
               singleton: true,
@@ -273,6 +285,13 @@
             factory.applyMixin(t, 'three');
             return expect(t.three).toBe(true);
           });
+          it("should support mixin dependencies", function() {
+            var t;
+            t = factory.get("Test", {});
+            t.__mixin('four');
+            expect(t.three).toBe(true);
+            return expect(t.four).toBe(true);
+          });
           it("should throw if an invalid definition is referenced", function() {
             var tester;
             tester = function() {
@@ -280,10 +299,20 @@
             };
             return expect(tester).toThrow();
           });
-          return it("should have invoked the constructed method at invocation time", function() {
+          it("should have invoked the constructed method at invocation time", function() {
             var test;
-            test = factory.get("Test");
-            return expect(test.hasConstructed).toBe(true);
+            test = factory.get("Test", 1, 2, 3);
+            return expect(test.constructed).toHaveBeenCalled();
+          });
+          it("should invoke constructed method with args from constructor", function() {
+            var test;
+            test = factory.get("Test", 1, 2, 3);
+            return expect(test.constructed).toHaveBeenCalledWith(1, 2, 3);
+          });
+          return it("should invoke constructed method with the instance context", function() {
+            var test;
+            test = factory.get("Test", 1, 2, 3);
+            return expect(test.constructed).toHaveBeenCalledOn(test);
           });
         });
         describe("getConstructor method", function() {
@@ -508,6 +537,9 @@
           var lso;
           lso = void 0;
           beforeEach(function() {
+            factory.defineMixin('TagMixin', {}, {
+              tags: ['MixedInto']
+            });
             factory.define("SimpleObject", (function() {
               return this.isSimple = true;
             }), {
@@ -518,9 +550,17 @@
                 return !this.isSimple;
               }
             }, {
+              mixins: ['TagMixin'],
               tags: ["Difficult"]
             });
             return lso = factory.get("LessSimpleObject");
+          });
+          it("should have the right tags in memory", function() {
+            expect(lso.__tags()).toContain('MixedInto');
+            expect(lso.__tags()).toContain('Difficult');
+            expect(lso.__tags()).toContain('NotSoSimple');
+            expect(lso.__tags()).toContain('KindaComplicated');
+            return expect(lso.__tags()).toContain('SimpleObject');
           });
           it("should be able to verify an instance map", function() {
             return expect(factory.verifyTags(lso)).toBe(true);
@@ -600,7 +640,7 @@
                   return i.test = false;
                 });
               };
-              return _.each(["NotSoSimple", "KindaComplicated", "LessSimpleObject", "Difficult"], function(tag) {
+              return _.each(["NotSoSimple", "KindaComplicated", "LessSimpleObject", "Difficult", "MixedInto"], function(tag) {
                 factory.onTag(tag, function(i) {
                   return i.test = true;
                 });
@@ -609,7 +649,7 @@
               });
             });
             return it("should call the callback on any future instances", function() {
-              _.each(["SimpleObject", "NotSoSimple", "KindaComplicated", "LessSimpleObject", "Difficult"], function(tag) {
+              _.each(["SimpleObject", "NotSoSimple", "KindaComplicated", "LessSimpleObject", "Difficult", "MixedInto"], function(tag) {
                 return factory.onTag(tag, function(i) {
                   return i.test = true;
                 });
