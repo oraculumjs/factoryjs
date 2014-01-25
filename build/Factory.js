@@ -155,8 +155,47 @@
         return this;
       };
 
+      Factory.prototype.composeMixinOptions = function(obj, mixin, mixinOptions) {
+        var defaults, isArray, isObject, key, mixer;
+        if (mixinOptions == null) {
+          mixinOptions = {};
+        }
+        mixer = this.mixins[mixin];
+        defaults = mixer.mixinOptions || (typeof mixer.mixconfig === "function" ? mixer.mixconfig(mixinOptions) : void 0) || {};
+        for (key in defaults) {
+          isObject = _.isObject(mixinOptions[key] || defaults[key]);
+          isArray = _.isArray(mixinOptions[key] || defaults[key]);
+          if ((mixinOptions[key] != null) && isObject === false) {
+            continue;
+          }
+          if (isObject) {
+            _.defaults(mixinOptions[key] != null ? mixinOptions[key] : mixinOptions[key] = {}, defaults[key]);
+          }
+          if (isArray) {
+            (mixinOptions[key] != null ? mixinOptions[key] : mixinOptions[key] = []).concat(defaults[key] || []);
+          }
+          mixinOptions[key] = defaults[key];
+        }
+        return obj.mixinOptions = _.defaults(mixinOptions, defaults);
+      };
+
+      Factory.prototype.composeMixinDependencies = function(mixins) {
+        var deps, mixin, result, _i, _len;
+        if (mixins == null) {
+          mixins = [];
+        }
+        result = [];
+        for (_i = 0, _len = mixins.length; _i < _len; _i++) {
+          mixin = mixins[_i];
+          deps = this.mixinSettings[mixin].mixins || [];
+          result = result.concat(this.composeMixinDependencies(deps));
+          result.push(mixin);
+        }
+        return result;
+      };
+
       Factory.prototype.applyMixin = function(obj, mixin, mixinOptions) {
-        var ignore_tags, m, mixer, mixerSettings, remove_mixed_array, _i, _len, _ref;
+        var ignore_tags, mixer, mixerSettings, remove_mixed_array;
         if (!obj.____mixed) {
           remove_mixed_array = true;
           ignore_tags = true;
@@ -167,13 +206,6 @@
         }
         mixer = this.mixins[mixin];
         mixerSettings = this.mixinSettings[mixin];
-        if (mixerSettings.mixins) {
-          _ref = mixerSettings.mixins;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            m = _ref[_i];
-            this.applyMixin(obj, m, mixinOptions);
-          }
-        }
         if (mixerSettings.tags && !ignore_tags) {
           obj.____tags || (obj.____tags = []);
           obj.____tags = obj.____tags.concat(mixerSettings.tags);
@@ -181,8 +213,6 @@
         if (!mixer) {
           throw new Error("Mixin Not Defined :: " + mixin);
         }
-        obj.mixinOptions || (obj.mixinOptions = {});
-        _.defaults(obj.mixinOptions, mixinOptions, mixer.mixinOptions || {});
         _.extend(obj, _.omit(mixer, 'mixinOptions'));
         if (_.isFunction(obj.mixinitialize)) {
           obj.mixinitialize();
@@ -198,12 +228,16 @@
       Factory.prototype.handleMixins = function(instance, mixins) {
         var _this = this;
         instance.____mixed = [];
+        mixins = _.uniq(this.composeMixinDependencies(mixins));
+        _.each(mixins, function(mixin) {
+          return _this.composeMixinOptions(instance, mixin, instance.mixinOptions);
+        });
         _.each(mixins, function(mixin) {
           return _this.applyMixin(instance, mixin, instance.mixinOptions);
         });
         instance.__mixin = _.chain(function(obj, mixin, mixinOptions) {
           obj.____mixed = [];
-          this.applyMixin(obj, mixin, mixinOptions);
+          this.handleMixins(obj, [mixin], mixinOptions);
           return delete obj.____mixed;
         }).bind(this).partial(instance).value();
         return delete instance.____mixed;

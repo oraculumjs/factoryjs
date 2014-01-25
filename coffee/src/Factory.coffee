@@ -178,6 +178,40 @@ define [
       @trigger 'defineMixin', name, def, options
       return this
 
+    # Compose Mixin Options
+    # ---------------------
+    # By introducing mixin inheritence we inadvertently made the possible
+    # option sets way more complicated since a mixin can depend on another
+    # mixin and give some defaults that should override the depended mixins
+    # defaults.
+
+    composeMixinOptions: (obj, mixin, mixinOptions = {}) ->
+      mixer = @mixins[mixin]
+      defaults = mixer.mixinOptions or mixer.mixconfig?(mixinOptions) or {}
+      for key of defaults
+        isObject = _.isObject(mixinOptions[key] or defaults[key])
+        isArray = _.isArray(mixinOptions[key] or defaults[key])
+        continue if mixinOptions[key]? and isObject is false
+        _.defaults(mixinOptions[key] ?= {}, defaults[key]) if isObject
+        (mixinOptions[key] ?= []).concat(defaults[key] or []) if isArray
+        mixinOptions[key] = defaults[key]
+      obj.mixinOptions = _.defaults(mixinOptions, defaults)
+
+
+    # Compose Mixin Dependencies
+    # --------------------------
+    # This allows to get all the mixin dependencies as a consolidated list
+    # in the order we are expecting.
+
+    composeMixinDependencies: (mixins = []) ->
+      # mixins is the top level mixins
+      result = []
+      for mixin in mixins
+        deps = @mixinSettings[mixin].mixins or []
+        result = result.concat(@composeMixinDependencies(deps))
+        result.push(mixin)
+      return result
+
     # Apply Mixin
     # -----------
     # Apply a mixin by name to an object. Options that are on the object
@@ -194,15 +228,10 @@ define [
       return if mixin in obj.____mixed
       mixer = @mixins[mixin]
       mixerSettings = @mixinSettings[mixin]
-      if mixerSettings.mixins
-        for m in mixerSettings.mixins
-          @applyMixin(obj, m, mixinOptions)
       if mixerSettings.tags and not ignore_tags
         obj.____tags or= []
         obj.____tags = obj.____tags.concat(mixerSettings.tags)
       throw new Error("Mixin Not Defined :: #{mixin}") unless mixer
-      obj.mixinOptions or= {}
-      _.defaults obj.mixinOptions, mixinOptions, mixer.mixinOptions or {}
       _.extend obj, _.omit mixer, 'mixinOptions'
       if _.isFunction obj.mixinitialize
         obj.mixinitialize()
@@ -219,11 +248,14 @@ define [
 
     handleMixins: (instance, mixins) ->
       instance.____mixed = []
+      mixins = _.uniq(@composeMixinDependencies(mixins))
+      _.each mixins, (mixin) =>
+        @composeMixinOptions(instance, mixin, instance.mixinOptions)
       _.each mixins, (mixin) =>
         @applyMixin(instance, mixin, instance.mixinOptions)
       instance.__mixin = _.chain((obj, mixin, mixinOptions)->
         obj.____mixed = []
-        @applyMixin(obj, mixin, mixinOptions)
+        @handleMixins(obj, [mixin], mixinOptions)
         delete obj.____mixed
       ).bind(this).partial(instance).value()
       delete instance.____mixed
