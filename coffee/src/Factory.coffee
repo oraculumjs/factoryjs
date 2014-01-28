@@ -187,15 +187,15 @@ define [
 
     composeMixinOptions: (obj, mixin, mixinOptions = {}) ->
       mixer = @mixins[mixin]
-      defaults = mixer.mixinOptions or mixer.mixconfig?(mixinOptions) or {}
-      for key of defaults
-        isObject = _.isObject(mixinOptions[key] or defaults[key])
-        isArray = _.isArray(mixinOptions[key] or defaults[key])
-        continue if mixinOptions[key]? and isObject is false
-        _.defaults(mixinOptions[key] ?= {}, defaults[key]) if isObject
-        (mixinOptions[key] ?= []).concat(defaults[key] or []) if isArray
-        mixinOptions[key] = defaults[key]
-      obj.mixinOptions = _.defaults(mixinOptions, defaults)
+      mixinDefaults = mixer.mixinOptions or {}
+      for option, defaultValue of mixinDefaults
+        value = mixinOptions[option]
+        bothArrays = _.isArray(value) and _.isArray(defaultValue)
+        bothObjects = _.isObject(value) and _.isObject(defaultValue)
+        value.concat defaultValue if bothArrays
+        _.defaults value, defaultValue if bothObjects
+      obj.mixinOptions = _.defaults mixinOptions, mixinDefaults
+      mixer.mixconfig?.call null, mixinOptions
 
 
     # Compose Mixin Dependencies
@@ -208,9 +208,9 @@ define [
       result = []
       for mixin in mixins
         deps = @mixinSettings[mixin].mixins or []
-        result = result.concat(@composeMixinDependencies(deps))
-        result.push(mixin)
-      return result
+        result = result.concat @composeMixinDependencies deps
+        result.push mixin
+      return _.uniq result
 
     # Apply Mixin
     # -----------
@@ -248,16 +248,19 @@ define [
 
     handleMixins: (instance, mixins) ->
       instance.____mixed = []
-      mixins = _.uniq(@composeMixinDependencies(mixins))
-      _.each mixins, (mixin) =>
-        @composeMixinOptions(instance, mixin, instance.mixinOptions)
-      _.each mixins, (mixin) =>
-        @applyMixin(instance, mixin, instance.mixinOptions)
-      instance.__mixin = _.chain((obj, mixin, mixinOptions)->
+
+      resolvedMixins = @composeMixinDependencies mixins
+      _.each resolvedMixins, (mixin) =>
+        @composeMixinOptions instance, mixin, instance.mixinOptions
+      _.each resolvedMixins, (mixin) =>
+        @applyMixin instance, mixin, instance.mixinOptions
+
+      instance.__mixin = _.chain((obj, mixin, mixinOptions) ->
         obj.____mixed = []
-        @handleMixins(obj, [mixin], mixinOptions)
+        @handleMixins obj, [mixin], mixinOptions
         delete obj.____mixed
       ).bind(this).partial(instance).value()
+
       delete instance.____mixed
 
     # Handle Injections
