@@ -5,7 +5,7 @@ module.exports = function (grunt) {
     connect: {
       server: {
         options: {
-          port: 9001
+          port: 9002
         }
       }
     },
@@ -56,7 +56,7 @@ module.exports = function (grunt) {
           templateOptions: {
             requireConfigFile: 'src-cov/main.js'
           },
-          host: 'http://localhost:9001',
+          host: 'http://localhost:9002',
           outfile: 'specs.html',
           specs: 'spec/**/*.spec.js',
           helpers: [
