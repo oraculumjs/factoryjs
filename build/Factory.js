@@ -117,7 +117,7 @@
         if (!(factory instanceof Factory)) {
           throw new Error(message);
         }
-        return _.each(["definitions", "mixins", "promises"], function(key) {
+        return _.each(["definitions", "mixins", "promises", "mixinSettings"], function(key) {
           _.defaults(_this[key], factory[key]);
           if (key === 'definitions') {
             return _.each(_this[key], function(def, defname) {

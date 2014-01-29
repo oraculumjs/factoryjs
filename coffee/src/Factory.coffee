@@ -143,7 +143,7 @@ define [
     clone: (factory) ->
       message = "Invalid Argument :: Expected Factory"
       throw new Error message unless factory instanceof Factory
-      _.each ["definitions", "mixins", "promises"], (key) =>
+      _.each ["definitions", "mixins", "promises", "mixinSettings"], (key) =>
         _.defaults @[key], factory[key]
         if key is 'definitions'
           _.each @[key], (def, defname) =>
