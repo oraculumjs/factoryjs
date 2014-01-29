@@ -178,26 +178,6 @@ define [
       @trigger 'defineMixin', name, def, options
       return this
 
-    # Compose Mixin Options
-    # ---------------------
-    # By introducing mixin inheritence we inadvertently made the possible
-    # option sets way more complicated since a mixin can depend on another
-    # mixin and give some defaults that should override the depended mixins
-    # defaults.
-
-    composeMixinOptions: (obj, mixin, mixinOptions = {}) ->
-      mixer = @mixins[mixin]
-      mixinDefaults = mixer.mixinOptions or {}
-      for option, defaultValue of mixinDefaults
-        value = mixinOptions[option]
-        bothArrays = _.isArray(value) and _.isArray(defaultValue)
-        bothObjects = _.isObject(value) and _.isObject(defaultValue)
-        value.concat defaultValue if bothArrays
-        _.defaults value, defaultValue if bothObjects
-      obj.mixinOptions = _.defaults mixinOptions, mixinDefaults
-      mixer.mixconfig?.call null, mixinOptions
-
-
     # Compose Mixin Dependencies
     # --------------------------
     # This allows to get all the mixin dependencies as a consolidated list
@@ -212,33 +192,69 @@ define [
         result.push mixin
       return _.uniq result
 
+    # Compose Mixin Options
+    # ---------------------
+    # By introducing mixin inheritence we inadvertently made the possible
+    # option sets way more complicated since a mixin can depend on another
+    # mixin and give some defaults that should override the depended mixins
+    # defaults.
+
+    composeMixinOptions: (instance, mixinName, mixinOptions = {}) ->
+      mixin = @mixins[mixinName]
+      mixinDefaults = mixin.mixinOptions or {}
+      for option, defaultValue of mixinDefaults
+        value = mixinOptions[option]
+        bothArrays = _.isArray(value) and _.isArray(defaultValue)
+        bothObjects = _.isObject(value) and _.isObject(defaultValue)
+        value.concat defaultValue if bothArrays
+        _.defaults value, defaultValue if bothObjects
+      instance.mixinOptions = _.defaults mixinOptions, mixinDefaults
+      mixin.mixconfig?.call null, mixinOptions
+
     # Apply Mixin
     # -----------
     # Apply a mixin by name to an object. Options that are on the object
-    # will be supported by passed in defaults then by mixer defaults. Will
+    # will be supported by passed in defaults then by mixin defaults. Will
     # invoke mixinitialize and empty mixinitialize method after invocation.
 
-    applyMixin: (obj, mixin, mixinOptions) ->
-      unless obj.____mixed
+    applyMixin: (instance, mixinName, mixinOptions) ->
+      mixin = @mixins[mixinName]
+      throw new Error("Mixin Not Defined :: #{mixinName}") unless mixin
+
+      unless instance.____mixed
         # we are in a late mix, use transient loop protection
+        late_mix = true
         # ignore tags
-        remove_mixed_array = true
         ignore_tags = true
-        obj.____mixed = []
-      return if mixin in obj.____mixed
-      mixer = @mixins[mixin]
-      mixerSettings = @mixinSettings[mixin]
-      if mixerSettings.tags and not ignore_tags
-        obj.____tags or= []
-        obj.____tags = obj.____tags.concat(mixerSettings.tags)
-      throw new Error("Mixin Not Defined :: #{mixin}") unless mixer
-      _.extend obj, _.omit mixer, 'mixinOptions'
-      if _.isFunction obj.mixinitialize
-        obj.mixinitialize()
-        obj.mixinitialize = ->
-      obj.____mixed.push(mixin)
-      delete obj.____mixed if remove_mixed_array
-      return obj
+        instance.____mixed = []
+
+      return if mixinName in instance.____mixed
+
+      mixinSettings = @mixinSettings[mixinName]
+      if mixinSettings.tags and not ignore_tags
+        instance.____tags or= []
+        instance.____tags = instance.____tags.concat(mixinSettings.tags)
+
+      props = _.omit mixin, 'mixinOptions', 'mixinitialize', 'mixconfig'
+      _.extend instance, props
+
+      if late_mix
+        @mixinitialize instance, mixinName
+        delete instance.____mixed
+      else instance.____mixed.push mixinName
+
+      return instance
+
+    # Mixinitialize
+    # -------------
+    # Invoke the mixin's mixinitialize method on the instance, if it exists.
+    # This is done after the mixin's options are composed and its methods
+    # applied so that the instance is fully composed.
+
+    mixinitialize: (instance, mixinName) ->
+      mixin = @mixins[mixinName]
+      mixinitialize = mixin.mixinitialize
+      mixinitialize.call instance if _.isFunction mixinitialize
 
     # Handle Mixins
     # -------------
@@ -250,10 +266,12 @@ define [
       instance.____mixed = []
 
       resolvedMixins = @composeMixinDependencies mixins
-      _.each resolvedMixins, (mixin) =>
-        @composeMixinOptions instance, mixin, instance.mixinOptions
-      _.each resolvedMixins, (mixin) =>
-        @applyMixin instance, mixin, instance.mixinOptions
+      _.each resolvedMixins, (mixinName) =>
+        @applyMixin instance, mixinName, instance.mixinOptions
+      _.each resolvedMixins, (mixinName) =>
+        @composeMixinOptions instance, mixinName, instance.mixinOptions
+      _.each resolvedMixins, (mixinName) =>
+        @mixinitialize instance, mixinName
 
       instance.__mixin = _.chain((obj, mixin, mixinOptions) ->
         obj.____mixed = []
