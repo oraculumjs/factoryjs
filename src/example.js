@@ -1,8 +1,8 @@
+
 /*
 ENTIRELY CONTRIVED EXAMPLE!!
 ----------------------------
-*/
-
+ */
 
 (function() {
   define(["Factory"], function(Factory) {

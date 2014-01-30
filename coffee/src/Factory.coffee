@@ -199,8 +199,9 @@ define [
     # mixin and give some defaults that should override the depended mixins
     # defaults.
 
-    composeMixinOptions: (instance, mixinName, mixinOptions = {}) ->
+    composeMixinOptions: (instance, mixinName, args) ->
       mixin = @mixins[mixinName]
+      mixinOptions = instance.mixinOptions or {}
       mixinDefaults = mixin.mixinOptions or {}
       for option, defaultValue of mixinDefaults
         value = mixinOptions[option]
@@ -209,7 +210,7 @@ define [
         value.concat defaultValue if bothArrays
         _.defaults value, defaultValue if bothObjects
       instance.mixinOptions = _.defaults mixinOptions, mixinDefaults
-      mixin.mixconfig?.call null, mixinOptions
+      mixin.mixconfig mixinOptions, args... if _.isFunction mixin.mixconfig
 
     # Apply Mixin
     # -----------
@@ -217,7 +218,7 @@ define [
     # will be supported by passed in defaults then by mixin defaults. Will
     # invoke mixinitialize and empty mixinitialize method after invocation.
 
-    applyMixin: (instance, mixinName, mixinOptions) ->
+    applyMixin: (instance, mixinName) ->
       mixin = @mixins[mixinName]
       throw new Error("Mixin Not Defined :: #{mixinName}") unless mixin
 
@@ -262,14 +263,14 @@ define [
     # to include in the definition. If the mixin defines a mixinitialize
     # method it will get called after initialize and before constructed.
 
-    handleMixins: (instance, mixins) ->
+    handleMixins: (instance, mixins, args) ->
       instance.____mixed = []
 
       resolvedMixins = @composeMixinDependencies mixins
       _.each resolvedMixins, (mixinName) =>
-        @applyMixin instance, mixinName, instance.mixinOptions
+        @applyMixin instance, mixinName
       _.each resolvedMixins, (mixinName) =>
-        @composeMixinOptions instance, mixinName, instance.mixinOptions
+        @composeMixinOptions instance, mixinName, args
       _.each resolvedMixins, (mixinName) =>
         @mixinitialize instance, mixinName
 
@@ -347,15 +348,15 @@ define [
       return instance if singleton and instance
 
       # arbitrary arguments length on the constructor
-      instance = new constructor(args...)
+      instance = new constructor args...
       # mixin support
-      @handleMixins instance, mixins
+      @handleMixins instance, mixins, args
       # injection support
       @handleInjections instance, injections
       # tag support
       @handleTags name, instance, def.tags
       # late initialization support
-      instance.constructed(args...) if _.isFunction instance.constructed
+      instance.constructed args... if _.isFunction instance.constructed
 
       # we shortcut the dispose functionality so we can wire it into other
       # frameworks and stuff easily

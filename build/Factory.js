@@ -1,6 +1,6 @@
 (function() {
-  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
-    __slice = [].slice;
+  var __slice = [].slice,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
     var Factory;
@@ -24,8 +24,7 @@
       }
 
       Factory.prototype.define = function(name, def, options) {
-        var definition, message, tags, _base,
-          _this = this;
+        var definition, message, tags, _base;
         if (options == null) {
           options = {};
         }
@@ -52,18 +51,22 @@
             return _.clone(def);
           };
         }
-        definition.constructor.prototype.__factory = function() {
-          return _this;
-        };
+        definition.constructor.prototype.__factory = (function(_this) {
+          return function() {
+            return _this;
+          };
+        })(this);
         tags = [name].concat(options.tags).concat(this.baseTags);
         definition.tags = _.uniq(tags).filter(function(i) {
           return !!i;
         });
         this.instances[name] = [];
-        _.each(definition.tags, function(tag) {
-          _this.tagMap[tag] = _this.tagMap[tag] || [];
-          return _this.tagCbs[tag] = _this.tagCbs[tag] || [];
-        });
+        _.each(definition.tags, (function(_this) {
+          return function(tag) {
+            _this.tagMap[tag] = _this.tagMap[tag] || [];
+            return _this.tagCbs[tag] = _this.tagCbs[tag] || [];
+          };
+        })(this));
         this.definitions[name] = definition;
         this.trigger('define', name, definition, options);
         this.promises[name].resolve(this, name);
@@ -83,12 +86,13 @@
       };
 
       Factory.prototype.fetchDefinition = function(name) {
-        var dfd,
-          _this = this;
+        var dfd;
         dfd = this.whenDefined(name);
-        require([name], function(def) {
-          return _this.define(name, def);
-        });
+        require([name], (function(_this) {
+          return function(def) {
+            return _this.define(name, def);
+          };
+        })(this));
         return dfd;
       };
 
@@ -111,32 +115,34 @@
       };
 
       Factory.prototype.clone = function(factory) {
-        var message,
-          _this = this;
+        var message;
         message = "Invalid Argument :: Expected Factory";
         if (!(factory instanceof Factory)) {
           throw new Error(message);
         }
-        return _.each(["definitions", "mixins", "promises", "mixinSettings"], function(key) {
-          _.defaults(_this[key], factory[key]);
-          if (key === 'definitions') {
-            return _.each(_this[key], function(def, defname) {
-              return _this[key][defname].constructor.prototype.__factory = function() {
-                return _this;
-              };
-            });
-          }
-        });
+        return _.each(["definitions", "mixins", "promises", "mixinSettings"], (function(_this) {
+          return function(key) {
+            _.defaults(_this[key], factory[key]);
+            if (key === 'definitions') {
+              return _.each(_this[key], function(def, defname) {
+                return _this[key][defname].constructor.prototype.__factory = function() {
+                  return _this;
+                };
+              });
+            }
+          };
+        })(this));
       };
 
       Factory.prototype.mirror = function(factory) {
-        var _this = this;
         this.clone(factory);
-        factory.on('define', function(name, def, options) {
-          return _this.define(name, def.constructor, _.extend({
-            silent: true
-          }, options));
-        });
+        factory.on('define', (function(_this) {
+          return function(name, def, options) {
+            return _this.define(name, def.constructor, _.extend({
+              silent: true
+            }, options));
+          };
+        })(this));
         return factory.on('defineMixin', this.defineMixin, this);
       };
 
@@ -170,12 +176,10 @@
         return _.uniq(result);
       };
 
-      Factory.prototype.composeMixinOptions = function(instance, mixinName, mixinOptions) {
-        var bothArrays, bothObjects, defaultValue, mixin, mixinDefaults, option, value, _ref;
-        if (mixinOptions == null) {
-          mixinOptions = {};
-        }
+      Factory.prototype.composeMixinOptions = function(instance, mixinName, args) {
+        var bothArrays, bothObjects, defaultValue, mixin, mixinDefaults, mixinOptions, option, value;
         mixin = this.mixins[mixinName];
+        mixinOptions = instance.mixinOptions || {};
         mixinDefaults = mixin.mixinOptions || {};
         for (option in mixinDefaults) {
           defaultValue = mixinDefaults[option];
@@ -190,10 +194,12 @@
           }
         }
         instance.mixinOptions = _.defaults(mixinOptions, mixinDefaults);
-        return (_ref = mixin.mixconfig) != null ? _ref.call(null, mixinOptions) : void 0;
+        if (_.isFunction(mixin.mixconfig)) {
+          return mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));
+        }
       };
 
-      Factory.prototype.applyMixin = function(instance, mixinName, mixinOptions) {
+      Factory.prototype.applyMixin = function(instance, mixinName) {
         var ignore_tags, late_mix, mixin, mixinSettings, props;
         mixin = this.mixins[mixinName];
         if (!mixin) {
@@ -232,20 +238,25 @@
         }
       };
 
-      Factory.prototype.handleMixins = function(instance, mixins) {
-        var resolvedMixins,
-          _this = this;
+      Factory.prototype.handleMixins = function(instance, mixins, args) {
+        var resolvedMixins;
         instance.____mixed = [];
         resolvedMixins = this.composeMixinDependencies(mixins);
-        _.each(resolvedMixins, function(mixinName) {
-          return _this.applyMixin(instance, mixinName, instance.mixinOptions);
-        });
-        _.each(resolvedMixins, function(mixinName) {
-          return _this.composeMixinOptions(instance, mixinName, instance.mixinOptions);
-        });
-        _.each(resolvedMixins, function(mixinName) {
-          return _this.mixinitialize(instance, mixinName);
-        });
+        _.each(resolvedMixins, (function(_this) {
+          return function(mixinName) {
+            return _this.applyMixin(instance, mixinName);
+          };
+        })(this));
+        _.each(resolvedMixins, (function(_this) {
+          return function(mixinName) {
+            return _this.composeMixinOptions(instance, mixinName, args);
+          };
+        })(this));
+        _.each(resolvedMixins, (function(_this) {
+          return function(mixinName) {
+            return _this.mixinitialize(instance, mixinName);
+          };
+        })(this));
         instance.__mixin = _.chain(function(obj, mixin, mixinOptions) {
           obj.____mixed = [];
           this.handleMixins(obj, [mixin], mixinOptions);
@@ -255,34 +266,35 @@
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {
-        var _this = this;
-        return _.each(injections, function(injection) {
-          return instance[injection] = _this.get(injection);
-        });
+        return _.each(injections, (function(_this) {
+          return function(injection) {
+            return instance[injection] = _this.get(injection);
+          };
+        })(this));
       };
 
       Factory.prototype.handleCreate = function(instance) {
-        var _this = this;
-        return _.each(instance.__tags(), function(tag) {
-          var cbs;
-          if (_this.tagCbs[tag] == null) {
-            _this.tagCbs[tag] = [];
-          }
-          cbs = _this.tagCbs[tag];
-          if (cbs.length === 0) {
-            return;
-          }
-          return _.each(cbs, function(cb) {
-            if (_.isFunction(cb)) {
-              return cb(instance);
+        return _.each(instance.__tags(), (function(_this) {
+          return function(tag) {
+            var cbs;
+            if (_this.tagCbs[tag] == null) {
+              _this.tagCbs[tag] = [];
             }
-          });
-        });
+            cbs = _this.tagCbs[tag];
+            if (cbs.length === 0) {
+              return;
+            }
+            return _.each(cbs, function(cb) {
+              if (_.isFunction(cb)) {
+                return cb(instance);
+              }
+            });
+          };
+        })(this));
       };
 
       Factory.prototype.handleTags = function(name, instance, tags) {
-        var factoryMap, fullTags,
-          _this = this;
+        var factoryMap, fullTags;
         this.instances[name].push(instance);
         fullTags = _.toArray(tags).concat(instance.____tags || []);
         if (instance.____tags) {
@@ -295,13 +307,15 @@
           return _.toArray(fullTags);
         };
         factoryMap = [this.instances[name]];
-        _.each(fullTags, function(tag) {
-          if (_this.tagMap[tag] == null) {
-            _this.tagMap[tag] = [];
-          }
-          _this.tagMap[tag].push(instance);
-          return factoryMap.push(_this.tagMap[tag]);
-        });
+        _.each(fullTags, (function(_this) {
+          return function(tag) {
+            if (_this.tagMap[tag] == null) {
+              _this.tagMap[tag] = [];
+            }
+            _this.tagMap[tag].push(instance);
+            return factoryMap.push(_this.tagMap[tag]);
+          };
+        })(this));
         return instance.__factoryMap = function() {
           return [].slice.call(factoryMap);
         };
@@ -310,7 +324,7 @@
       Factory.prototype.get = function() {
         var args, constructor, def, injections, instance, instances, message, mixins, name, options, singleton, _base;
         name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        instances = (_base = this.instances)[name] != null ? (_base = this.instances)[name] : _base[name] = [];
+        instances = (_base = this.instances)[name] != null ? _base[name] : _base[name] = [];
         instance = this.instances[name][0];
         def = this.definitions[name];
         message = "Invalid Definition :: " + name + " :: not defined";
@@ -330,7 +344,7 @@
           var child = new ctor, result = func.apply(child, args);
           return Object(result) === result ? result : child;
         })(constructor, args, function(){});
-        this.handleMixins(instance, mixins);
+        this.handleMixins(instance, mixins, args);
         this.handleInjections(instance, injections);
         this.handleTags(name, instance, def.tags);
         if (_.isFunction(instance.constructed)) {
