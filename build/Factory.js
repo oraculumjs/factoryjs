@@ -241,6 +241,7 @@
       Factory.prototype.handleMixins = function(instance, mixins, args) {
         var resolvedMixins;
         instance.____mixed = [];
+        instance.mixinOptions = _.extend({}, instance.mixinOptions);
         resolvedMixins = this.composeMixinDependencies(mixins);
         _.each(resolvedMixins, (function(_this) {
           return function(mixinName) {

@@ -266,6 +266,9 @@ define [
     handleMixins: (instance, mixins, args) ->
       instance.____mixed = []
 
+      # clone the instance's mixinOptions to avoid overwriting the defaults
+      instance.mixinOptions = _.extend {}, instance.mixinOptions
+
       resolvedMixins = @composeMixinDependencies mixins
       _.each resolvedMixins, (mixinName) =>
         @applyMixin instance, mixinName
