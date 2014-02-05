@@ -131,7 +131,13 @@ define [
         got #{def.constructor::toString()}
       """
       throw new Error message unless _.isObject(def)
-      options.tags = [].concat(bDef.tags, options.tags)
+      options.tags = bDef.tags.concat(options.tags)
+      options.mixins = _.chain(bDef.options.mixins or [])
+        .union(options.mixins).compact().value()
+      if options.singleton?
+        options.singleton = options.singleton
+      else
+        options.singleton = bDef.options.singleton
       return @define name, bDef.constructor.extend(def), options
 
     # Clone
@@ -268,18 +274,22 @@ define [
       instance.____mixed = []
 
       # clone the instance's mixinOptions to avoid overwriting the defaults
+
       instance.mixinOptions = _.extend {}, instance.mixinOptions
 
       resolvedMixins = @composeMixinDependencies mixins
-      _.each resolvedMixins, (mixinName) =>
-        @applyMixin instance, mixinName
+
+      @applyMixin instance, mixinName for mixinName in resolvedMixins
+
       # because it considers instance.mixinOptions to be canonical
       # this needs to execute in reverse order so higher level mixins
       # take configuration precedence.
-      _.each resolvedMixins.slice().reverse(), (mixinName) =>
+
+      reverseMixins = resolvedMixins.slice().reverse()
+      for mixinName in reverseMixins
         @composeMixinOptions instance, mixinName, args
-      _.each resolvedMixins, (mixinName) =>
-        @mixinitialize instance, mixinName
+
+      @mixinitialize instance, mixinName for mixinName in resolvedMixins
 
       instance.__mixin = _.chain((obj, mixin, mixinOptions) ->
         obj.____mixed = []
@@ -295,8 +305,7 @@ define [
     # to include in the definition.
 
     handleInjections: (instance, injections) ->
-      _.each injections, (injection) =>
-        instance[injection] = @get(injection)
+      instance[injection] = @get(injection) for injection in injections
 
     # Handle Create
     # -------------
@@ -304,12 +313,13 @@ define [
     # on tags. This is the engine for doing AOP style Dependency Injection.
 
     handleCreate: (instance) ->
-      _.each instance.__tags(), (tag) =>
+      for tag in instance.__tags()
         @tagCbs[tag] = [] unless @tagCbs[tag]?
         cbs = @tagCbs[tag]
-        return if cbs.length is 0
-        _.each cbs, (cb) ->
+        continue if cbs.length is 0
+        for cb in cbs
           cb instance if _.isFunction(cb)
+      true
 
     # Handle Tags
     # -----------
@@ -325,7 +335,7 @@ define [
       instance.__tags = -> _.toArray fullTags
 
       factoryMap = [@instances[name]]
-      _.each fullTags, (tag) =>
+      for tag in fullTags
         @tagMap[tag] = [] unless @tagMap[tag]?
         @tagMap[tag].push instance
         factoryMap.push @tagMap[tag]
@@ -422,9 +432,10 @@ define [
       throw new Error message unless _.isString(tag)
       message = "Invalid Argument :: #{typeof cb} provided :: expected Function"
       throw new Error message unless _.isFunction(cb)
-      _.each @tagMap[tag], cb
+      cb instance for instance in @tagMap[tag] or []
       @tagCbs[tag] ?= []
       @tagCbs[tag].push cb
+      true
 
     # Off Tag
     # -------
