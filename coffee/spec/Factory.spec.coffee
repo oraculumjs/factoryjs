@@ -246,6 +246,49 @@ require ["Factory"], (Factory) ->
           test = factory.get("Test", 1, 2, 3)
           expect(test.constructed).toHaveBeenCalledOn(test)
 
+      describe "mixinOptions special cases", ->
+        beforeEach ->
+          factory.defineMixin 'one', {
+            mixinOptions: {
+              one: {
+                test: false
+                flat: false
+              },
+              two: {
+                test: false
+                flat: false
+              }
+            }
+          }, mixins: ['two']
+
+          factory.defineMixin 'two', {
+            mixinOptions: {
+              two: {
+                test: true
+                flat: true
+              }
+            }
+          }
+
+          factory.define 'MixedObject', (options) ->
+            @options = ->
+              options
+          , mixins: ['one']
+
+          factory.define 'RemixedObject', (options) ->
+            @options = ->
+              options
+          , mixins: ['two']
+
+        it "should have the right mixinOptions", ->
+          mixed = factory.get 'MixedObject'
+          expect(mixed.mixinOptions.one.test).toBe(false)
+          expect(mixed.mixinOptions.two.test).toBe(false)
+
+        it "should support single depth mixinOptions", ->
+          remixed = factory.get 'RemixedObject'
+          expect(remixed.mixinOptions.two.test).toBe(true)
+
       describe "getConstructor method", ->
         beforeEach ->
           factory.define "ConstructorTest", (options) ->

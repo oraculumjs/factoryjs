@@ -315,6 +315,57 @@
             return expect(test.constructed).toHaveBeenCalledOn(test);
           });
         });
+        describe("mixinOptions special cases", function() {
+          beforeEach(function() {
+            factory.defineMixin('one', {
+              mixinOptions: {
+                one: {
+                  test: false,
+                  flat: false
+                },
+                two: {
+                  test: false,
+                  flat: false
+                }
+              }
+            }, {
+              mixins: ['two']
+            });
+            factory.defineMixin('two', {
+              mixinOptions: {
+                two: {
+                  test: true,
+                  flat: true
+                }
+              }
+            });
+            factory.define('MixedObject', function(options) {
+              return this.options = function() {
+                return options;
+              };
+            }, {
+              mixins: ['one']
+            });
+            return factory.define('RemixedObject', function(options) {
+              return this.options = function() {
+                return options;
+              };
+            }, {
+              mixins: ['two']
+            });
+          });
+          it("should have the right mixinOptions", function() {
+            var mixed;
+            mixed = factory.get('MixedObject');
+            expect(mixed.mixinOptions.one.test).toBe(false);
+            return expect(mixed.mixinOptions.two.test).toBe(false);
+          });
+          return it("should support single depth mixinOptions", function() {
+            var remixed;
+            remixed = factory.get('RemixedObject');
+            return expect(remixed.mixinOptions.two.test).toBe(true);
+          });
+        });
         describe("getConstructor method", function() {
           beforeEach(function() {
             return factory.define("ConstructorTest", function(options) {
