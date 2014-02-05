@@ -110,7 +110,13 @@
         if (!_.isObject(def)) {
           throw new Error(message);
         }
-        options.tags = [].concat(bDef.tags, options.tags);
+        options.tags = bDef.tags.concat(options.tags);
+        options.mixins = _.chain(bDef.options.mixins || []).union(options.mixins).compact().value();
+        if (options.singleton != null) {
+          options.singleton = options.singleton;
+        } else {
+          options.singleton = bDef.options.singleton;
+        }
         return this.define(name, bDef.constructor.extend(def), options);
       };
 
@@ -242,25 +248,23 @@
       };
 
       Factory.prototype.handleMixins = function(instance, mixins, args) {
-        var resolvedMixins;
+        var mixinName, resolvedMixins, reverseMixins, _i, _j, _k, _len, _len1, _len2;
         instance.____mixed = [];
         instance.mixinOptions = _.extend({}, instance.mixinOptions);
         resolvedMixins = this.composeMixinDependencies(mixins);
-        _.each(resolvedMixins, (function(_this) {
-          return function(mixinName) {
-            return _this.applyMixin(instance, mixinName);
-          };
-        })(this));
-        _.each(resolvedMixins.slice().reverse(), (function(_this) {
-          return function(mixinName) {
-            return _this.composeMixinOptions(instance, mixinName, args);
-          };
-        })(this));
-        _.each(resolvedMixins, (function(_this) {
-          return function(mixinName) {
-            return _this.mixinitialize(instance, mixinName);
-          };
-        })(this));
+        for (_i = 0, _len = resolvedMixins.length; _i < _len; _i++) {
+          mixinName = resolvedMixins[_i];
+          this.applyMixin(instance, mixinName);
+        }
+        reverseMixins = resolvedMixins.slice().reverse();
+        for (_j = 0, _len1 = reverseMixins.length; _j < _len1; _j++) {
+          mixinName = reverseMixins[_j];
+          this.composeMixinOptions(instance, mixinName, args);
+        }
+        for (_k = 0, _len2 = resolvedMixins.length; _k < _len2; _k++) {
+          mixinName = resolvedMixins[_k];
+          this.mixinitialize(instance, mixinName);
+        }
         instance.__mixin = _.chain(function(obj, mixin, mixinOptions) {
           obj.____mixed = [];
           this.handleMixins(obj, [mixin], mixinOptions);
@@ -270,35 +274,39 @@
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {
-        return _.each(injections, (function(_this) {
-          return function(injection) {
-            return instance[injection] = _this.get(injection);
-          };
-        })(this));
+        var injection, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = injections.length; _i < _len; _i++) {
+          injection = injections[_i];
+          _results.push(instance[injection] = this.get(injection));
+        }
+        return _results;
       };
 
       Factory.prototype.handleCreate = function(instance) {
-        return _.each(instance.__tags(), (function(_this) {
-          return function(tag) {
-            var cbs;
-            if (_this.tagCbs[tag] == null) {
-              _this.tagCbs[tag] = [];
+        var cb, cbs, tag, _i, _j, _len, _len1, _ref;
+        _ref = instance.__tags();
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          tag = _ref[_i];
+          if (this.tagCbs[tag] == null) {
+            this.tagCbs[tag] = [];
+          }
+          cbs = this.tagCbs[tag];
+          if (cbs.length === 0) {
+            continue;
+          }
+          for (_j = 0, _len1 = cbs.length; _j < _len1; _j++) {
+            cb = cbs[_j];
+            if (_.isFunction(cb)) {
+              cb(instance);
             }
-            cbs = _this.tagCbs[tag];
-            if (cbs.length === 0) {
-              return;
-            }
-            return _.each(cbs, function(cb) {
-              if (_.isFunction(cb)) {
-                return cb(instance);
-              }
-            });
-          };
-        })(this));
+          }
+        }
+        return true;
       };
 
       Factory.prototype.handleTags = function(name, instance, tags) {
-        var factoryMap, fullTags;
+        var factoryMap, fullTags, tag, _i, _len;
         this.instances[name].push(instance);
         fullTags = _.toArray(tags).concat(instance.____tags || []);
         if (instance.____tags) {
@@ -311,15 +319,14 @@
           return _.toArray(fullTags);
         };
         factoryMap = [this.instances[name]];
-        _.each(fullTags, (function(_this) {
-          return function(tag) {
-            if (_this.tagMap[tag] == null) {
-              _this.tagMap[tag] = [];
-            }
-            _this.tagMap[tag].push(instance);
-            return factoryMap.push(_this.tagMap[tag]);
-          };
-        })(this));
+        for (_i = 0, _len = fullTags.length; _i < _len; _i++) {
+          tag = fullTags[_i];
+          if (this.tagMap[tag] == null) {
+            this.tagMap[tag] = [];
+          }
+          this.tagMap[tag].push(instance);
+          factoryMap.push(this.tagMap[tag]);
+        }
         return instance.__factoryMap = function() {
           return [].slice.call(factoryMap);
         };
@@ -395,7 +402,7 @@
       };
 
       Factory.prototype.onTag = function(tag, cb) {
-        var message, _base;
+        var instance, message, _base, _i, _len, _ref;
         message = "Invalid Argument :: " + (typeof tag) + " provided :: expected String";
         if (!_.isString(tag)) {
           throw new Error(message);
@@ -404,11 +411,16 @@
         if (!_.isFunction(cb)) {
           throw new Error(message);
         }
-        _.each(this.tagMap[tag], cb);
+        _ref = this.tagMap[tag] || [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          instance = _ref[_i];
+          cb(instance);
+        }
         if ((_base = this.tagCbs)[tag] == null) {
           _base[tag] = [];
         }
-        return this.tagCbs[tag].push(cb);
+        this.tagCbs[tag].push(cb);
+        return true;
       };
 
       Factory.prototype.offTag = function(tag, cb) {
