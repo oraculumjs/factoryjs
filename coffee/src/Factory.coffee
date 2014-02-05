@@ -201,16 +201,17 @@ define [
 
     composeMixinOptions: (instance, mixinName, args) ->
       mixin = @mixins[mixinName]
-      mixinOptions = instance.mixinOptions or {}
+      mixinOptions = instance.mixinOptions
       mixinDefaults = mixin.mixinOptions or {}
       for option, defaultValue of mixinDefaults
         value = mixinOptions[option]
-        bothArrays = _.isArray(value) and _.isArray(defaultValue)
-        bothObjects = _.isObject(value) and _.isObject(defaultValue)
-        value.concat defaultValue if bothArrays
-        _.defaults value, defaultValue if bothObjects
-      instance.mixinOptions = _.defaults mixinOptions, mixinDefaults
+        value = defaultValue if value is undefined
+        isArray = _.isArray(value) or _.isArray(defaultValue)
+        isObject = _.isObject(value) or _.isObject(defaultValue)
+        mixinOptions[option] = value.concat defaultValue if isArray
+        mixinOptions[option] = _.extend {}, defaultValue, value if isObject
       mixin.mixconfig mixinOptions, args... if _.isFunction mixin.mixconfig
+      instance.mixinOptions = _.extend {}, mixinDefaults, mixinOptions
 
     # Apply Mixin
     # -----------
@@ -272,7 +273,10 @@ define [
       resolvedMixins = @composeMixinDependencies mixins
       _.each resolvedMixins, (mixinName) =>
         @applyMixin instance, mixinName
-      _.each resolvedMixins, (mixinName) =>
+      # because it considers instance.mixinOptions to be canonical
+      # this needs to execute in reverse order so higher level mixins
+      # take configuration precedence.
+      _.each resolvedMixins.slice().reverse(), (mixinName) =>
         @composeMixinOptions instance, mixinName, args
       _.each resolvedMixins, (mixinName) =>
         @mixinitialize instance, mixinName

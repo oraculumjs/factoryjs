@@ -177,26 +177,29 @@
       };
 
       Factory.prototype.composeMixinOptions = function(instance, mixinName, args) {
-        var bothArrays, bothObjects, defaultValue, mixin, mixinDefaults, mixinOptions, option, value;
+        var defaultValue, isArray, isObject, mixin, mixinDefaults, mixinOptions, option, value;
         mixin = this.mixins[mixinName];
-        mixinOptions = instance.mixinOptions || {};
+        mixinOptions = instance.mixinOptions;
         mixinDefaults = mixin.mixinOptions || {};
         for (option in mixinDefaults) {
           defaultValue = mixinDefaults[option];
           value = mixinOptions[option];
-          bothArrays = _.isArray(value) && _.isArray(defaultValue);
-          bothObjects = _.isObject(value) && _.isObject(defaultValue);
-          if (bothArrays) {
-            value.concat(defaultValue);
+          if (value === void 0) {
+            value = defaultValue;
           }
-          if (bothObjects) {
-            _.defaults(value, defaultValue);
+          isArray = _.isArray(value) || _.isArray(defaultValue);
+          isObject = _.isObject(value) || _.isObject(defaultValue);
+          if (isArray) {
+            mixinOptions[option] = value.concat(defaultValue);
+          }
+          if (isObject) {
+            mixinOptions[option] = _.extend({}, defaultValue, value);
           }
         }
-        instance.mixinOptions = _.defaults(mixinOptions, mixinDefaults);
         if (_.isFunction(mixin.mixconfig)) {
-          return mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));
+          mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));
         }
+        return instance.mixinOptions = _.extend({}, mixinDefaults, mixinOptions);
       };
 
       Factory.prototype.applyMixin = function(instance, mixinName) {
@@ -248,7 +251,7 @@
             return _this.applyMixin(instance, mixinName);
           };
         })(this));
-        _.each(resolvedMixins, (function(_this) {
+        _.each(resolvedMixins.slice().reverse(), (function(_this) {
           return function(mixinName) {
             return _this.composeMixinOptions(instance, mixinName, args);
           };
