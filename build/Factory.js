@@ -183,24 +183,25 @@
       };
 
       Factory.prototype.composeMixinOptions = function(instance, mixinName, args) {
-        var defaultValue, isArray, isObject, mixin, mixinDefaults, mixinOptions, option, value;
+        var defaultValue, isObject, mixin, mixinDefaults, mixinOptions, option, value;
         mixin = this.mixins[mixinName];
         mixinOptions = instance.mixinOptions;
         mixinDefaults = mixin.mixinOptions || {};
         for (option in mixinDefaults) {
           defaultValue = mixinDefaults[option];
-          value = mixinOptions[option];
-          if (value === void 0) {
-            value = defaultValue;
-          }
-          isArray = _.isArray(value) || _.isArray(defaultValue);
+          value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
           isObject = _.isObject(value) || _.isObject(defaultValue);
-          if (isArray) {
+          if (!isObject) {
+            continue;
+          }
+          if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isFunction(value) || _.isFunction(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
+            continue;
+          }
+          if (_.isArray(value) || _.isArray(defaultValue)) {
             mixinOptions[option] = value.concat(defaultValue);
+            continue;
           }
-          if (isObject) {
-            mixinOptions[option] = _.extend({}, defaultValue, value);
-          }
+          mixinOptions[option] = _.extend({}, defaultValue, value);
         }
         if (_.isFunction(mixin.mixconfig)) {
           mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));

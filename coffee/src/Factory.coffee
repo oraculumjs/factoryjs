@@ -210,13 +210,34 @@ define [
       mixinOptions = instance.mixinOptions
       mixinDefaults = mixin.mixinOptions or {}
       for option, defaultValue of mixinDefaults
-        value = mixinOptions[option]
-        value = defaultValue if value is undefined
-        isArray = _.isArray(value) or _.isArray(defaultValue)
+        value = mixinOptions[option] ?= defaultValue
+
+        # Don't do anything if either value is not an object
         isObject = _.isObject(value) or _.isObject(defaultValue)
-        mixinOptions[option] = value.concat defaultValue if isArray
-        mixinOptions[option] = _.extend {}, defaultValue, value if isObject
+        continue unless isObject
+
+        # Don't do anything if either object is a type we don't support
+        continue if _.isDate(value) or _.isDate(defaultValue) or
+        _.isElement(value) or _.isElement(defaultValue) or
+        _.isFunction(value) or _.isFunction(defaultValue) or
+        _.isRegExp(value) or _.isRegExp(defaultValue)
+
+        # If it's an array, concat the values
+        if _.isArray(value) or _.isArray(defaultValue)
+          mixinOptions[option] = value.concat defaultValue
+          continue
+
+        # Lastly, if it's a bare object, extend it
+        mixinOptions[option] = _.extend {}, defaultValue, value
+
+      # Invoke the mixin's mixconfig method if available, passing through
+      # the mixinOptions object so that it can be modified by reference.
       mixin.mixconfig mixinOptions, args... if _.isFunction mixin.mixconfig
+
+      # Finally, complete the composition of the mixinOptions object by
+      # extending a bare object with mixinDefaults and whatever custom
+      # options the mixconfig method may have assigned before assigning
+      # it back onto the instance.
       instance.mixinOptions = _.extend {}, mixinDefaults, mixinOptions
 
     # Apply Mixin
