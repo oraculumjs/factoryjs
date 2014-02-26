@@ -56,7 +56,7 @@ define ["Factory"], (Factory) ->
         # Here are using the Runner injection to access the runner for the page,
         # good for accessing singletons that have commone reusable
         # functionality.
-        @log 'log', @Runner.url()
+        @log 'log', @runner.url()
         @tests.forEach (test) ->
           test.log "log", test.name, test.run()
           result++  if test.passed
@@ -65,7 +65,9 @@ define ["Factory"], (Factory) ->
   ,
     mixins: ["Logging"]
     tags: ["Logging"],
-    injections: ['Runner']
+    injections: {
+      runner: 'Runner'
+    }
 
 
   # now you can get a Suite object out of the factory
