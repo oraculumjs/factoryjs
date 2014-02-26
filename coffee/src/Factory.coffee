@@ -326,7 +326,7 @@ define [
     # to include in the definition.
 
     handleInjections: (instance, injections) ->
-      instance[injection] = @get(injection) for injection in injections
+      instance[name] = @get(type) for name, type of injections
 
     # Handle Create
     # -------------

@@ -275,11 +275,11 @@
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {
-        var injection, _i, _len, _results;
+        var name, type, _results;
         _results = [];
-        for (_i = 0, _len = injections.length; _i < _len; _i++) {
-          injection = injections[_i];
-          _results.push(instance[injection] = this.get(injection));
+        for (name in injections) {
+          type = injections[name];
+          _results.push(instance[name] = this.get(type));
         }
         return _results;
       };

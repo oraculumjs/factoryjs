@@ -63,7 +63,7 @@ ENTIRELY CONTRIVED EXAMPLE!!
         execute: function() {
           var result;
           result = 0;
-          this.log('log', this.Runner.url());
+          this.log('log', this.runner.url());
           this.tests.forEach(function(test) {
             test.log("log", test.name, test.run());
             if (test.passed) {
@@ -76,7 +76,9 @@ ENTIRELY CONTRIVED EXAMPLE!!
     }, {
       mixins: ["Logging"],
       tags: ["Logging"],
-      injections: ['Runner']
+      injections: {
+        runner: 'Runner'
+      }
     });
     TestFactory.defineMixin("Logging", {
       log: function(severity) {
