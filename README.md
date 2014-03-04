@@ -3,8 +3,10 @@
 Factory JS ![build status](https://travis-ci.org/lookout/factoryjs.png)
 ==========
 
-[tests](http://localhost:9001/specs.html)
-[docs](http://localhost:9001/docs/coffee/Factory.html)
+[tests](http://localhost:9002/specs.html)
+[docs](http://localhost:9002/docs/coffee/Factory.html)
+
+You can install from Bower: `bower install factoryjs`
 
 Factory tool for standardizing object definition and retrieval in various systems. To use this in your code you would describe the Factory of objects you are going to be creating, this is usually a domain of object definitions that have reasonable similarity.
 
