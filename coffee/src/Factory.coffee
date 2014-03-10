@@ -300,6 +300,9 @@ define [
 
       resolvedMixins = @composeMixinDependencies mixins
 
+      instance.__mixins = ->
+        resolvedMixins.slice()
+
       @applyMixin instance, mixinName for mixinName in resolvedMixins
 
       # because it considers instance.mixinOptions to be canonical

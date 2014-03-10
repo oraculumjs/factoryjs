@@ -253,6 +253,9 @@
         instance.____mixed = [];
         instance.mixinOptions = _.extend({}, instance.mixinOptions);
         resolvedMixins = this.composeMixinDependencies(mixins);
+        instance.__mixins = function() {
+          return resolvedMixins.slice();
+        };
         for (_i = 0, _len = resolvedMixins.length; _i < _len; _i++) {
           mixinName = resolvedMixins[_i];
           this.applyMixin(instance, mixinName);
