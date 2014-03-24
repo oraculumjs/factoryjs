@@ -1,8 +1,12 @@
 {
   "name": "FactoryJS",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "repository": "git://github.com/lookout/factoryjs.git",
   "author": "Gabriel Hernandez <gabriel.hernandez@lookout.com>",
+  "contributors": [{
+    "name": "Steven Regester",
+    "email": "steven.regester@lookout.com"
+  }],
   "devDependencies": {
     "bower": "latest",
     "grunt-cli": "latest",

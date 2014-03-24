@@ -97,7 +97,7 @@
       };
 
       Factory.prototype.extend = function(base, name, def, options) {
-        var bDef, message;
+        var bDef, baseMixins, message;
         if (options == null) {
           options = {};
         }
@@ -111,7 +111,10 @@
           throw new Error(message);
         }
         options.tags = bDef.tags.concat(options.tags);
-        options.mixins = _.chain(bDef.options.mixins || []).union(options.mixins).compact().value();
+        if (options.inheritMixins) {
+          baseMixins = bDef.options.mixins;
+        }
+        options.mixins = _.chain(baseMixins || []).union(options.mixins).compact().value();
         if (options.singleton != null) {
           options.singleton = options.singleton;
         } else {
@@ -253,6 +256,9 @@
         instance.____mixed = [];
         instance.mixinOptions = _.extend({}, instance.mixinOptions);
         resolvedMixins = this.composeMixinDependencies(mixins);
+        instance.__mixins = function() {
+          return resolvedMixins.slice();
+        };
         for (_i = 0, _len = resolvedMixins.length; _i < _len; _i++) {
           mixinName = resolvedMixins[_i];
           this.applyMixin(instance, mixinName);
