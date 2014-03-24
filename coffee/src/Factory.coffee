@@ -132,12 +132,12 @@ define [
       """
       throw new Error message unless _.isObject(def)
       options.tags = bDef.tags.concat(options.tags)
-      options.mixins = _.chain(bDef.options.mixins or [])
+      baseMixins = bDef.options.mixins if options.inheritMixins
+      options.mixins = _.chain(baseMixins or [])
         .union(options.mixins).compact().value()
       if options.singleton?
-        options.singleton = options.singleton
-      else
-        options.singleton = bDef.options.singleton
+      then options.singleton = options.singleton
+      else options.singleton = bDef.options.singleton
       return @define name, bDef.constructor.extend(def), options
 
     # Clone
