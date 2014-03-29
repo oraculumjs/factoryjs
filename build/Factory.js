@@ -3,7 +3,34 @@
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
-    var Factory;
+    var Factory, extendMixinOptions;
+    extendMixinOptions = function(mixinOptions, mixinDefaults) {
+      var defaultValue, isObject, option, value, _results;
+      if (mixinOptions == null) {
+        mixinOptions = {};
+      }
+      if (mixinDefaults == null) {
+        mixinDefaults = {};
+      }
+      _results = [];
+      for (option in mixinDefaults) {
+        defaultValue = mixinDefaults[option];
+        value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
+        isObject = _.isObject(value) || _.isObject(defaultValue);
+        if (!isObject) {
+          continue;
+        }
+        if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isFunction(value) || _.isFunction(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
+          continue;
+        }
+        if (_.isArray(value) || _.isArray(defaultValue)) {
+          mixinOptions[option] = value.concat(defaultValue);
+          continue;
+        }
+        _results.push(mixinOptions[option] = _.extend({}, defaultValue, value));
+      }
+      return _results;
+    };
     return Factory = (function() {
       _.extend(Factory.prototype, Backbone.Events);
 
@@ -97,24 +124,24 @@
       };
 
       Factory.prototype.extend = function(base, name, def, options) {
-        var bDef, baseMixins, message;
+        var bDef, mixinDefaults, mixinOptions;
         if (options == null) {
           options = {};
         }
         bDef = this.definitions[base];
-        message = "Base Class Not Available :: " + base;
         if (!bDef) {
-          throw new Error(message);
+          throw new Error("Base Class Not Available :: " + base);
         }
-        message = "Invalid Parameter Definition ::\nexpected object ::\ngot " + (def.constructor.prototype.toString());
         if (!_.isObject(def)) {
-          throw new Error(message);
+          throw new Error("Invalid Parameter Definition ::\nexpected object ::\ngot " + (def.constructor.prototype.toString()));
         }
-        options.tags = bDef.tags.concat(options.tags);
+        options.tags = _.chain([]).union(options.tags).union(bDef.tags).compact().value();
         if (options.inheritMixins) {
-          baseMixins = bDef.options.mixins;
+          options.mixins = _.chain([]).union(bDef.options.mixins).union(options.mixins).compact().value();
+          mixinOptions = def.mixinOptions;
+          mixinDefaults = bDef.constructor.prototype.mixinOptions;
+          extendMixinOptions(mixinOptions, mixinDefaults);
         }
-        options.mixins = _.chain(baseMixins || []).union(options.mixins).compact().value();
         if (options.singleton != null) {
           options.singleton = options.singleton;
         } else {
@@ -186,27 +213,12 @@
       };
 
       Factory.prototype.composeMixinOptions = function(instance, mixinName, args) {
-        var defaultValue, isObject, mixin, mixinDefaults, mixinOptions, option, value;
+        var mixin, mixinDefaults, mixinOptions;
         mixin = this.mixins[mixinName];
+        mixinDefaults = mixin.mixinOptions;
         mixinOptions = instance.mixinOptions;
-        mixinDefaults = mixin.mixinOptions || {};
-        for (option in mixinDefaults) {
-          defaultValue = mixinDefaults[option];
-          value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
-          isObject = _.isObject(value) || _.isObject(defaultValue);
-          if (!isObject) {
-            continue;
-          }
-          if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isFunction(value) || _.isFunction(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
-            continue;
-          }
-          if (_.isArray(value) || _.isArray(defaultValue)) {
-            mixinOptions[option] = value.concat(defaultValue);
-            continue;
-          }
-          mixinOptions[option] = _.extend({}, defaultValue, value);
-        }
-        if (_.isFunction(mixin.mixconfig)) {
+        extendMixinOptions(mixinOptions, mixinDefaults);
+        if (typeof mixin.mixconfig === "function") {
           mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));
         }
         return instance.mixinOptions = _.extend({}, mixinDefaults, mixinOptions);
