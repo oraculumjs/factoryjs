@@ -17,12 +17,14 @@
         defaultValue = mixinDefaults[option];
         value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
         isObject = _.isObject(value) || _.isObject(defaultValue);
+        console.log(option, value, defaultValue);
         if (!isObject) {
           continue;
         }
         if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isFunction(value) || _.isFunction(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
           continue;
         }
+        console.log(option, value, defaultValue);
         if (_.isArray(value) || _.isArray(defaultValue)) {
           mixinOptions[option] = value.concat(defaultValue);
           continue;
@@ -140,6 +142,7 @@
           options.mixins = _.chain([]).union(bDef.options.mixins).union(options.mixins).compact().value();
           mixinOptions = def.mixinOptions;
           mixinDefaults = bDef.constructor.prototype.mixinOptions;
+          console.log(mixinOptions, mixinDefaults);
           extendMixinOptions(mixinOptions, mixinDefaults);
         }
         if (options.singleton != null) {

@@ -64,6 +64,17 @@
             };
             return expect(test).toThrow();
           });
+          it("should not throw if already defined with silent options", function() {
+            var test;
+            test = function() {
+              return factory.define("test", (function() {
+                return this.test = false;
+              }), {
+                silent: true
+              });
+            };
+            return expect(test).not.toThrow();
+          });
           it('should concat @baseTags into options.tags', function() {
             factory.define('test', {}, {
               override: true
@@ -364,6 +375,75 @@
             var remixed;
             remixed = factory.get('RemixedObject');
             return expect(remixed.mixinOptions.two.test).toBe(true);
+          });
+        });
+        describe("Definition mixin special cases", function() {
+          beforeEach(function() {
+            this.date = new Date();
+            this.fn = function() {};
+            factory.defineMixin('InheritedMixin', {
+              center: true
+            }, {
+              mixins: null
+            });
+            factory.extend('Base', 'MixinObject', {
+              mixinOptions: {
+                inherited: {
+                  left: true
+                },
+                test: [1],
+                fn: this.fn
+              }
+            }, {
+              mixins: ['InheritedMixin']
+            });
+            factory.extend('MixinObject', 'InheritedMixinObject', {
+              mixinOptions: {
+                inherited: {
+                  right: true
+                },
+                test: [2],
+                date: this.date
+              }
+            }, {
+              mixins: null,
+              inheritMixins: true
+            });
+            factory.extend('MixinObject', 'BadMixinObject', {
+              mixinOptions: null,
+              mixconfig: function() {
+                return {
+                  derp: 'herp'
+                };
+              }
+            }, {
+              mixins: ['DoesntExist']
+            });
+            this.object = factory.get('InheritedMixinObject');
+            return this.failTest = function() {
+              return factory.get('BadMixinObject');
+            };
+          });
+          it("should contain the expected mixinOptions", function() {
+            expect(this.object.mixinOptions.inherited.right).toBe(true);
+            return expect(this.object.mixinOptions.inherited.left).toBe(true);
+          });
+          it("should extend array mixinOptions", function() {
+            expect(this.object.mixinOptions.test).toContain(1);
+            return expect(this.object.mixinOptions.test).toContain(2);
+          });
+          it("should just keep the newest for other types", function() {
+            expect(this.object.mixinOptions.date).toBe(this.date);
+            return expect(this.object.mixinOptions.fn).toBe(this.fn);
+          });
+          it("should inherit mixins when the inheritMixins flag is true", function() {
+            return expect(this.object.center).toBe(true);
+          });
+          it("should give back mixins when __mixins method is invoked", function() {
+            return expect(this.object.__mixins()).toContain('InheritedMixin');
+          });
+          return it("should throw if the mixin isn't defined", function() {
+            return expect(this.failTest).toThrow();
           });
         });
         describe("getConstructor method", function() {
