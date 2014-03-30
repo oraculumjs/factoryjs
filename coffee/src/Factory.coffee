@@ -21,6 +21,30 @@ define [
   #  * dispose of objects
   #  * inject objects onto keys of other objects by name
 
+  # Provide a utility for shallow extension of the mixinOptions object.
+  # This method only supports certain primitives for extension by design.
+  extendMixinOptions = (mixinOptions = {}, mixinDefaults = {}) ->
+    for option, defaultValue of mixinDefaults
+      value = mixinOptions[option] ?= defaultValue
+
+      # Don't do anything if either value is not an object
+      isObject = _.isObject(value) or _.isObject(defaultValue)
+      continue unless isObject
+
+      # Don't do anything if either object is a type we don't support
+      continue if _.isDate(value) or _.isDate(defaultValue) or
+      _.isElement(value) or _.isElement(defaultValue) or
+      _.isFunction(value) or _.isFunction(defaultValue) or
+      _.isRegExp(value) or _.isRegExp(defaultValue)
+
+      # If it's an array, concat the values
+      if _.isArray(value) or _.isArray(defaultValue)
+        mixinOptions[option] = value.concat defaultValue
+        continue
+
+      # Lastly, if it's a bare object, extend it
+      mixinOptions[option] = _.extend {}, defaultValue, value
+
   # Constructor
   # -----------
   # It only takes one argument, the base class implementation
@@ -123,21 +147,35 @@ define [
 
     extend: (base, name, def, options = {}) ->
       bDef = @definitions[base]
-      message = "Base Class Not Available :: #{base}"
-      throw new Error message unless bDef
-      message = """
+
+      throw new Error """
+        Base Class Not Available :: #{base}
+      """ unless bDef
+
+      throw new Error """
         Invalid Parameter Definition ::
         expected object ::
         got #{def.constructor::toString()}
-      """
-      throw new Error message unless _.isObject(def)
-      options.tags = bDef.tags.concat(options.tags)
-      baseMixins = bDef.options.mixins if options.inheritMixins
-      options.mixins = _.chain(baseMixins or [])
-        .union(options.mixins).compact().value()
+      """ unless _.isObject(def)
+
+      options.tags = _.chain([])
+        .union(options.tags)
+        .union(bDef.tags)
+        .compact().value()
+
+      if options.inheritMixins
+        options.mixins = _.chain([])
+          .union(bDef.options.mixins)
+          .union(options.mixins)
+          .compact().value()
+        mixinOptions = def.mixinOptions
+        mixinDefaults = bDef.constructor::mixinOptions
+        extendMixinOptions mixinOptions, mixinDefaults
+
       if options.singleton?
       then options.singleton = options.singleton
       else options.singleton = bDef.options.singleton
+
       return @define name, bDef.constructor.extend(def), options
 
     # Clone
@@ -207,32 +245,13 @@ define [
 
     composeMixinOptions: (instance, mixinName, args) ->
       mixin = @mixins[mixinName]
+      mixinDefaults = mixin.mixinOptions
       mixinOptions = instance.mixinOptions
-      mixinDefaults = mixin.mixinOptions or {}
-      for option, defaultValue of mixinDefaults
-        value = mixinOptions[option] ?= defaultValue
-
-        # Don't do anything if either value is not an object
-        isObject = _.isObject(value) or _.isObject(defaultValue)
-        continue unless isObject
-
-        # Don't do anything if either object is a type we don't support
-        continue if _.isDate(value) or _.isDate(defaultValue) or
-        _.isElement(value) or _.isElement(defaultValue) or
-        _.isFunction(value) or _.isFunction(defaultValue) or
-        _.isRegExp(value) or _.isRegExp(defaultValue)
-
-        # If it's an array, concat the values
-        if _.isArray(value) or _.isArray(defaultValue)
-          mixinOptions[option] = value.concat defaultValue
-          continue
-
-        # Lastly, if it's a bare object, extend it
-        mixinOptions[option] = _.extend {}, defaultValue, value
+      extendMixinOptions mixinOptions, mixinDefaults
 
       # Invoke the mixin's mixconfig method if available, passing through
       # the mixinOptions object so that it can be modified by reference.
-      mixin.mixconfig mixinOptions, args... if _.isFunction mixin.mixconfig
+      mixin.mixconfig? mixinOptions, args...
 
       # Finally, complete the composition of the mixinOptions object by
       # extending a bare object with mixinDefaults and whatever custom
