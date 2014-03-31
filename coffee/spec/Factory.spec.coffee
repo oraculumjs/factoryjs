@@ -46,6 +46,11 @@ require ["Factory"], (Factory) ->
           test = -> factory.define "test", -> @test = false
           expect(test).toThrow()
 
+        it "should not throw if already defined with silent options", ->
+          test = -> factory.define "test", (-> @test = false), {silent: true}
+          expect(test).not.toThrow()
+
+
         it 'should concat @baseTags into options.tags', ->
           factory.define 'test', {}, override: true
           expect(factory.definitions.test.tags).toContain 'BaseTag1'
@@ -289,6 +294,59 @@ require ["Factory"], (Factory) ->
           remixed = factory.get 'RemixedObject'
           expect(remixed.mixinOptions.two.test).toBe(true)
 
+      describe "Definition mixin special cases", ->
+        beforeEach ->
+          @date = new Date()
+          @fn = ->
+          factory.defineMixin 'InheritedMixin', {
+            center: true
+          }, {
+            mixins: null
+          }
+          factory.extend 'Base', 'MixinObject', {
+            mixinOptions:
+              inherited:
+                left: true
+              test: [1]
+              fn: @fn
+          }, {
+            mixins: ['InheritedMixin']
+          }
+          factory.extend 'MixinObject', 'InheritedMixinObject', {
+            mixinOptions:
+              inherited:
+                right:true
+              test: [2]
+              date: @date
+          }, {
+            mixins: null
+            inheritMixins: true
+          }
+          factory.extend 'MixinObject', 'BadMixinObject', {
+            mixinOptions: null
+            mixconfig: ->
+              derp: 'herp'
+          }, {
+            mixins: ['DoesntExist']
+          }
+          @object = factory.get('InheritedMixinObject')
+          @failTest = ->
+            factory.get('BadMixinObject')
+        it "should contain the expected mixinOptions", ->
+          expect(@object.mixinOptions.inherited.right).toBe(true)
+          expect(@object.mixinOptions.inherited.left).toBe(true)
+        it "should extend array mixinOptions", ->
+          expect(@object.mixinOptions.test).toContain(1)
+          expect(@object.mixinOptions.test).toContain(2)
+        it "should just keep the newest for other types", ->
+          expect(@object.mixinOptions.date).toBe(@date)
+          expect(@object.mixinOptions.fn).toBe(@fn)
+        it "should inherit mixins when the inheritMixins flag is true", ->
+          expect(@object.center).toBe(true)
+        it "should give back mixins when __mixins method is invoked", ->
+          expect(@object.__mixins()).toContain 'InheritedMixin'
+        it "should throw if the mixin isn't defined", ->
+          expect(@failTest).toThrow()
       describe "getConstructor method", ->
         beforeEach ->
           factory.define "ConstructorTest", (options) ->
