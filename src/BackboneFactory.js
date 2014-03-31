@@ -1,39 +1,57 @@
 (function() {
-  define(["Factory", "jquery", "underscore", "backbone"], function(Factory, $, _, Backbone) {
+  define(["Factory", "backbone", "underscore"], function(Factory, Backbone, _) {
+    'use strict';
     var BackboneFactory;
-    BackboneFactory = new Factory(function(options) {
+    BackboneFactory = new Factory((function() {
       _.extend(this, Backbone.Events);
-      if (_.isFunction(this.initialize)) {
-        return this.initialize.apply(this, arguments);
-      }
+      return typeof this.initialize === "function" ? this.initialize.apply(this, arguments) : void 0;
+    }), {
+      baseTags: ['Backbone']
     });
-    BackboneFactory.define("View", Backbone.View.extend({
-      initialize: function(options) {
-        if (_.isString(this.model)) {
-          this.model = this.__factory().get(this.model, this.modelData || {});
+    BackboneFactory.define('View', Backbone.View.extend({
+      constructor: function(options) {
+        if (options == null) {
+          options = {};
         }
-        return Backbone.View.prototype.initialize.apply(this, arguments);
+        if (options.model != null) {
+          this.model = options.model;
+          delete options.model;
+        }
+        if (_.isString(this.model)) {
+          this.model = this.__factory().get(this.model);
+        }
+        if (options.collection != null) {
+          this.collection = options.collection;
+          delete options.collection;
+        }
+        if (_.isString(this.collection)) {
+          this.collection = this.__factory().get(this.collection);
+        }
+        return Backbone.View.prototype.constructor.apply(this, arguments);
       }
     }));
-    BackboneFactory.define("Model", Backbone.Model.extend({
+    BackboneFactory.define('Model', Backbone.Model.extend({
       clone: function() {
-        var factory;
-        factory = this.__factory();
-        return factory.get(factory.getType(this), this.attributes);
+        return this.__factory().get(this.__type(), this.attributes);
       }
     }));
-    BackboneFactory.define("Collection", Backbone.Collection.extend({
+    BackboneFactory.define('Collection', Backbone.Collection.extend({
       model: 'Model',
-      initialize: function(options) {
+      constructor: function(models, options) {
+        if (options == null) {
+          options = {};
+        }
+        if (options.model != null) {
+          this.model = options.model;
+          delete options.model;
+        }
         if (_.isString(this.model)) {
           this.model = this.__factory().getConstructor(this.model);
         }
-        return Backbone.Collection.prototype.initialize.apply(this, arguments);
+        return Backbone.Collection.prototype.constructor.apply(this, arguments);
       },
       clone: function() {
-        var factory;
-        factory = this.__factory();
-        return factory.get(factory.getType(this), this.models);
+        return this.__factory().get(this.__type(), this.models);
       }
     }));
     BackboneFactory.define("Router", Backbone.Router);

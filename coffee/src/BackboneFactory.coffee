@@ -1,18 +1,20 @@
 define [
-  "Factory",
-  "jquery",
-  "underscore",
+  "Factory"
   "backbone"
-], (Factory, $, _, Backbone) ->
+  "underscore"
+], (Factory, Backbone, _) ->
+  'use strict'
+
   # Backbone Factory
   # ----------------
   # Returns a plain old object mixed with Backbone Event
   # as the default. You will probably just want to extend
   # the other objects defined below.
 
-  BackboneFactory = new Factory (options) ->
+  BackboneFactory = new Factory (->
     _.extend this, Backbone.Events
-    @initialize.apply this, arguments  if _.isFunction @initialize
+    @initialize? arguments...
+  ), baseTags: ['Backbone']
 
   # View
   # ----
@@ -21,19 +23,26 @@ define [
   # from the factory. Also you can pass in modelData property
   # if you want to hydrate the model with some initial data.
 
-  BackboneFactory.define "View", Backbone.View.extend
-    initialize: (options) ->
-      @model = @__factory().get @model, @modelData or {} if _.isString @model
-      Backbone.View::initialize.apply this, arguments
+  BackboneFactory.define 'View', Backbone.View.extend
+
+    constructor: (options = {}) ->
+      if options.model?
+        @model = options.model
+        delete options.model
+      @model = @__factory().get @model if _.isString @model
+      if options.collection?
+        @collection = options.collection
+        delete options.collection
+      @collection = @__factory().get @collection if _.isString @collection
+      Backbone.View::constructor.apply this, arguments
 
   # Model
   # ----
   # You can extend or get models, no changes.
 
-  BackboneFactory.define "Model", Backbone.Model.extend
-    clone: ->
-      factory = @__factory()
-      factory.get(factory.getType(this), this.attributes)
+  BackboneFactory.define 'Model', Backbone.Model.extend
+
+    clone: -> @__factory().get @__type(), @attributes
 
   # Collection
   # ----
@@ -41,14 +50,17 @@ define [
   # send in the model property as a string to get the model constructor
   # from the factory.
 
-  BackboneFactory.define "Collection", Backbone.Collection.extend
+  BackboneFactory.define 'Collection', Backbone.Collection.extend
     model: 'Model'
-    initialize: (options) ->
-      @model = @__factory().getConstructor @model  if _.isString @model
-      Backbone.Collection::initialize.apply this, arguments
-    clone: ->
-      factory = @__factory()
-      factory.get(factory.getType(this), this.models)
+
+    constructor: (models, options = {}) ->
+      if options.model?
+        @model = options.model
+        delete options.model
+      @model = @__factory().getConstructor @model if _.isString @model
+      Backbone.Collection::constructor.apply this, arguments
+
+    clone: -> @__factory().get @__type(), @models
 
   # Router
   # ------
@@ -61,5 +73,6 @@ define [
   # We statically add the history to the factory.
 
   BackboneFactory.history = Backbone.history
-  BackboneFactory
 
+  # Finally, return the object for use
+  return BackboneFactory
