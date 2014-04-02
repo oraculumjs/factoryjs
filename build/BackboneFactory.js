@@ -13,21 +13,13 @@
         if (options == null) {
           options = {};
         }
-        if (options.model != null) {
-          this.model = options.model;
-          delete options.model;
-        }
+        Backbone.View.prototype.constructor.apply(this, arguments);
         if (_.isString(this.model)) {
           this.model = this.__factory().get(this.model);
         }
-        if (options.collection != null) {
-          this.collection = options.collection;
-          delete options.collection;
-        }
         if (_.isString(this.collection)) {
-          this.collection = this.__factory().get(this.collection);
+          return this.collection = this.__factory().get(this.collection);
         }
-        return Backbone.View.prototype.constructor.apply(this, arguments);
       }
     }));
     BackboneFactory.define('Model', Backbone.Model.extend({
@@ -40,10 +32,6 @@
       constructor: function(models, options) {
         if (options == null) {
           options = {};
-        }
-        if (options.model != null) {
-          this.model = options.model;
-          delete options.model;
         }
         if (_.isString(this.model)) {
           this.model = this.__factory().getConstructor(this.model);

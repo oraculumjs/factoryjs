@@ -26,15 +26,9 @@ define [
   BackboneFactory.define 'View', Backbone.View.extend
 
     constructor: (options = {}) ->
-      if options.model?
-        @model = options.model
-        delete options.model
-      @model = @__factory().get @model if _.isString @model
-      if options.collection?
-        @collection = options.collection
-        delete options.collection
-      @collection = @__factory().get @collection if _.isString @collection
       Backbone.View::constructor.apply this, arguments
+      @model = @__factory().get @model if _.isString @model
+      @collection = @__factory().get @collection if _.isString @collection
 
   # Model
   # ----
@@ -54,9 +48,6 @@ define [
     model: 'Model'
 
     constructor: (models, options = {}) ->
-      if options.model?
-        @model = options.model
-        delete options.model
       @model = @__factory().getConstructor @model if _.isString @model
       Backbone.Collection::constructor.apply this, arguments
 
