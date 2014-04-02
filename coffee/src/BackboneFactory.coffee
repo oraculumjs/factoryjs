@@ -29,6 +29,7 @@ define [
       Backbone.View::constructor.apply this, arguments
       @model = @__factory().get @model if _.isString @model
       @collection = @__factory().get @collection if _.isString @collection
+      return this
 
   # Model
   # ----

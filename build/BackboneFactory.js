@@ -18,8 +18,9 @@
           this.model = this.__factory().get(this.model);
         }
         if (_.isString(this.collection)) {
-          return this.collection = this.__factory().get(this.collection);
+          this.collection = this.__factory().get(this.collection);
         }
+        return this;
       }
     }));
     BackboneFactory.define('Model', Backbone.Model.extend({
