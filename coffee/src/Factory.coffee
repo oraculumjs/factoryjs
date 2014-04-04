@@ -192,7 +192,15 @@ define [
         if key is 'definitions'
           _.each @[key], (def, defname) =>
             @[key][defname].constructor.prototype.__factory = => this
-
+        _.each ["tagCbs","tagMap","promises","instances"], (key) =>
+          @[key] ?= {}
+          for name, payload of factory[key]
+            if _.isArray(payload)
+              @[key][name] ?= []
+              @[key][name] = payload.concat(@[key][name])
+            if _.isFunction payload?.resolve
+              @[key][name] ?= $.Deferred()
+              @[key][name].done(payload.resolve)
     # Mirror
     # ------
     # This is a wrapper for clone that keeps this factory synced with the
@@ -436,6 +444,7 @@ define [
     # hasn't been disposed this will return true, otherwise return false.
 
     verifyTags: (instance) ->
+      return false unless instance.__factoryMap
       _.all instance.__factoryMap(), (arr) -> instance in arr
 
     # Dispose
