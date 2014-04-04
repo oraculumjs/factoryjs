@@ -456,18 +456,30 @@ require ["Factory"], (Factory) ->
           @clonedFactory.define 'NewTest', {test: true}
           expect(@clonedFactory.hasDefinition('NewTest')).toBe true
           expect(factory.hasDefinition('NewTest')).toBe false
-        it "should not share an instance pool with it's clone", ->
+        it "should share an instance pool with it's clone", ->
           factory.define 'Test', {test: true}
           @clonedFactory.clone(factory)
           test1 = factory.get('Test')
-          expect(@clonedFactory.instances['Test']).not.toBeDefined()
+          expect(@clonedFactory.instances['Test']).toBeDefined()
         it "should reattach any instance factory accessors to itself", ->
           @clonedFactory.clone(factory)
           test1 = factory.get('Base')
           test2 = @clonedFactory.get('Base')
           expect(test1.__factory()).toEqual(factory)
           expect(test2.__factory()).toEqual(@clonedFactory)
-
+        it "should share any onTag events", ->
+          method = ->
+          factory.onTag 'Test', method
+          @clonedFactory.clone(factory)
+          expect(@clonedFactory.tagCbs['Test']).toContain method
+        it "should share any define promises", ->
+          method = ->
+          promise = factory.whenDefined 'DeferredTest'
+          @clonedFactory.clone(factory)
+          @clonedFactory.promises['DeferredTest']
+          expect(@clonedFactory.promises['DeferredTest'].state()).toBe 'pending'
+        it "should share the tag map", ->
+          
       describe 'mirror method', ->
         base = clone = baseOn = null
         beforeEach ->

@@ -595,16 +595,16 @@
             expect(this.clonedFactory.hasDefinition('NewTest')).toBe(true);
             return expect(factory.hasDefinition('NewTest')).toBe(false);
           });
-          it("should not share an instance pool with it's clone", function() {
+          it("should share an instance pool with it's clone", function() {
             var test1;
             factory.define('Test', {
               test: true
             });
             this.clonedFactory.clone(factory);
             test1 = factory.get('Test');
-            return expect(this.clonedFactory.instances['Test']).not.toBeDefined();
+            return expect(this.clonedFactory.instances['Test']).toBeDefined();
           });
-          return it("should reattach any instance factory accessors to itself", function() {
+          it("should reattach any instance factory accessors to itself", function() {
             var test1, test2;
             this.clonedFactory.clone(factory);
             test1 = factory.get('Base');
@@ -612,6 +612,22 @@
             expect(test1.__factory()).toEqual(factory);
             return expect(test2.__factory()).toEqual(this.clonedFactory);
           });
+          it("should share any onTag events", function() {
+            var method;
+            method = function() {};
+            factory.onTag('Test', method);
+            this.clonedFactory.clone(factory);
+            return expect(this.clonedFactory.tagCbs['Test']).toContain(method);
+          });
+          it("should share any define promises", function() {
+            var method, promise;
+            method = function() {};
+            promise = factory.whenDefined('DeferredTest');
+            this.clonedFactory.clone(factory);
+            this.clonedFactory.promises['DeferredTest'];
+            return expect(this.clonedFactory.promises['DeferredTest'].state()).toBe('pending');
+          });
+          return it("should share the tag map", function() {});
         });
         describe('mirror method', function() {
           var base, baseOn, clone;

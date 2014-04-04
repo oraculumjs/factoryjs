@@ -160,12 +160,38 @@
           return function(key) {
             _.defaults(_this[key], factory[key]);
             if (key === 'definitions') {
-              return _.each(_this[key], function(def, defname) {
+              _.each(_this[key], function(def, defname) {
                 return _this[key][defname].constructor.prototype.__factory = function() {
                   return _this;
                 };
               });
             }
+            return _.each(["tagCbs", "tagMap", "promises", "instances"], function(key) {
+              var name, payload, _base, _base1, _ref, _results;
+              if (_this[key] == null) {
+                _this[key] = {};
+              }
+              _ref = factory[key];
+              _results = [];
+              for (name in _ref) {
+                payload = _ref[name];
+                if (_.isArray(payload)) {
+                  if ((_base = _this[key])[name] == null) {
+                    _base[name] = [];
+                  }
+                  _this[key][name] = payload.concat(_this[key][name]);
+                }
+                if (_.isFunction(payload != null ? payload.resolve : void 0)) {
+                  if ((_base1 = _this[key])[name] == null) {
+                    _base1[name] = $.Deferred();
+                  }
+                  _results.push(_this[key][name].done(payload.resolve));
+                } else {
+                  _results.push(void 0);
+                }
+              }
+              return _results;
+            });
           };
         })(this));
       };
@@ -390,6 +416,9 @@
       };
 
       Factory.prototype.verifyTags = function(instance) {
+        if (!instance.__factoryMap) {
+          return false;
+        }
         return _.all(instance.__factoryMap(), function(arr) {
           return __indexOf.call(arr, instance) >= 0;
         });
