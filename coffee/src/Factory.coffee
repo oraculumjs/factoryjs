@@ -29,7 +29,6 @@ define [
 
       # Don't do anything if either value is not an object
       isObject = _.isObject(value) or _.isObject(defaultValue)
-      console.log option, value, defaultValue
       continue unless isObject
 
       # Don't do anything if either object is a type we don't support
@@ -39,7 +38,6 @@ define [
       _.isRegExp(value) or _.isRegExp(defaultValue)
 
       # If it's an array, concat the values
-      console.log option, value, defaultValue
       if _.isArray(value) or _.isArray(defaultValue)
         mixinOptions[option] = value.concat defaultValue
         continue
@@ -172,7 +170,6 @@ define [
           .compact().value()
         mixinOptions = def.mixinOptions
         mixinDefaults = bDef.constructor::mixinOptions
-        console.log mixinOptions, mixinDefaults
         extendMixinOptions mixinOptions, mixinDefaults
 
       if options.singleton?

@@ -61,7 +61,6 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
       it "should have extend method", ->
         expect(BackboneFactory).toProvideMethod "extend"
 
-
       it "should return any model extended from the base", ->
         model = BackboneFactory.get("Test.Model")
         expect(model.get("hello")).toEqual "world"
@@ -69,7 +68,6 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
       it "should have methods defined on the implementation", ->
         model = BackboneFactory.get("Test.Model")
         expect(model.test()).toBe true
-
 
       it "should support extended views with features", ->
         master = BackboneFactory.get("Test.View")
