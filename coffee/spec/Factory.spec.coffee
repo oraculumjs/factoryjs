@@ -479,49 +479,59 @@ require ["Factory"], (Factory) ->
           @clonedFactory.promises['DeferredTest']
           expect(@clonedFactory.promises['DeferredTest'].state()).toBe 'pending'
         it "should share the tag map", ->
-          
+
       describe 'mirror method', ->
-        base = clone = baseOn = null
+        base = clone = m = null
+        methods = [
+          "define"
+          "hasDefinition"
+          "whenDefined"
+          "fetchDefinition"
+          "extend"
+          "mirror"
+          "defineMixin"
+          "composeMixinDependencies"
+          "composeMixinOptions"
+          "applyMixin"
+          "mixinitialize"
+          "handleMixins"
+          "handleInjections"
+          "handleCreate"
+          "handleTags"
+          "get"
+          "verifyTags"
+          "dispose"
+          "getConstructor"
+          "onTag"
+          "offTag"
+          "isType"
+          "getType"
+        ]
         beforeEach ->
           base = new Factory -> {}
-          baseOn = sinon.stub base, 'on'
           clone = sinon.stub factory, 'clone'
           factory.mirror base
+          m = {}
+
         afterEach ->
-          baseOn.restore()
           clone.restore()
 
         it 'should invoke clone', ->
           expect(clone).toHaveBeenCalledOnce()
           expect(clone).toHaveBeenCalledWith base
 
-        it 'should bind a method to define', ->
-          expect(baseOn).toHaveBeenCalledTwice()
-          expect(baseOn.firstCall.args[0]).toBe 'define'
-          expect(typeof baseOn.firstCall.args[1]).toBe 'function'
+        _.each methods, (method) ->
+          describe "#{method} shadow", ->
+            beforeEach ->
+              m[method] = sinon.stub factory, method
+              base[method] 'test'
 
-        describe 'define handler', ->
-          mockDefinition = mixin = options = null
-          define = defineMixin = define_handler = null
-          beforeEach ->
-            options = {}
-            mockDefinition = {constructor: Object, options}
-            define = sinon.stub factory, 'define'
-            define_handler = baseOn.firstCall.args[1]
-            define_handler 'test', mockDefinition, options
+            afterEach ->
+              m[method].restore()
 
-          afterEach ->
-            define.restore()
-
-          it 'should invoke define with the new definition', ->
-            expect(define).toHaveBeenCalledOnce()
-            expect(define).toHaveBeenCalledWith 'test', Object
-            expect(define.firstCall.args[2].silent).toBe true
-
-        it 'should bind a method to defineMixin', ->
-          expect(baseOn.secondCall).toHaveBeenCalledWith 'defineMixin',
-            factory.defineMixin,
-            factory
+            it "should bind #{method} to factory", ->
+              expect(m[method]).toHaveBeenCalledOnce()
+              expect(m[method]).toHaveBeenCalledWith('test')
 
       describe "Factory Instance Mapping", ->
         lso = undefined

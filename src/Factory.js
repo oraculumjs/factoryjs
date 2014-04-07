@@ -197,15 +197,20 @@
       };
 
       Factory.prototype.mirror = function(factory) {
-        this.clone(factory);
-        factory.on('define', (function(_this) {
-          return function(name, def, options) {
-            return _this.define(name, def.constructor, _.extend({
-              silent: true
-            }, options));
+        factory.off('create', factory.handleCreate);
+        _.chain(this).methods().each((function(_this) {
+          return function(method) {
+            return factory[method] = function() {
+              return _this[method].apply(_this, arguments);
+            };
           };
         })(this));
-        return factory.on('defineMixin', this.defineMixin, this);
+        this.clone(factory);
+        return _.chain(factory).keys().each(function(key) {
+          if (!_.isFunction(factory[key])) {
+            return delete factory[key];
+          }
+        });
       };
 
       Factory.prototype.defineMixin = function(name, def, options) {
