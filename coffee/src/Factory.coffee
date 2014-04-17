@@ -208,10 +208,13 @@ define [
     # has asynchronous definitions.
 
     mirror: (factory) ->
+      factory.off 'create', factory.handleCreate
+      _.chain(this).methods().each (method) =>
+        factory[method] = =>
+          @[method] arguments...
       @clone factory
-      factory.on 'define', (name, def, options) =>
-        @define name, def.constructor, _.extend({silent: true}, options)
-      factory.on 'defineMixin', @defineMixin, this
+      _.chain(factory).keys().each (key) ->
+        delete factory[key] unless _.isFunction(factory[key])
 
     # Define Mixin
     # ------------
