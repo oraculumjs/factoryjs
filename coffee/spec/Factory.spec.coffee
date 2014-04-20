@@ -430,6 +430,17 @@ require ["Factory"], (Factory) ->
         beforeEach ->
           @clonedFactory = new Factory ()->
             @cloned = true
+
+          @clonedFactory.define 'Test.Util', (->),
+            singleton: true
+            override: true
+          @clonedFactory.get 'Test.Util'
+
+          factory.define 'Test.Util', (->),
+            singleton: true
+            override: true
+          factory.get 'Test.Util'
+
         it "shoud throw when an invalid factory is passed", ->
           test = ->
             factory.clone({})
@@ -478,8 +489,9 @@ require ["Factory"], (Factory) ->
           @clonedFactory.clone(factory)
           @clonedFactory.promises['DeferredTest']
           expect(@clonedFactory.promises['DeferredTest'].state()).toBe 'pending'
-        it "should share the tag map", ->
-
+        it "should maintain the singleton status of cloned instances", ->
+          @clonedFactory.clone(factory)
+          expect(@clonedFactory.instances['Test.Util'].length).toBe 1
       describe 'mirror method', ->
         base = clone = m = null
         methods = [

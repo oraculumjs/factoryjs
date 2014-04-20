@@ -548,9 +548,19 @@
         });
         describe("Clone", function() {
           beforeEach(function() {
-            return this.clonedFactory = new Factory(function() {
+            this.clonedFactory = new Factory(function() {
               return this.cloned = true;
             });
+            this.clonedFactory.define('Test.Util', (function() {}), {
+              singleton: true,
+              override: true
+            });
+            this.clonedFactory.get('Test.Util');
+            factory.define('Test.Util', (function() {}), {
+              singleton: true,
+              override: true
+            });
+            return factory.get('Test.Util');
           });
           it("shoud throw when an invalid factory is passed", function() {
             var test;
@@ -627,7 +637,10 @@
             this.clonedFactory.promises['DeferredTest'];
             return expect(this.clonedFactory.promises['DeferredTest'].state()).toBe('pending');
           });
-          return it("should share the tag map", function() {});
+          return it("should maintain the singleton status of cloned instances", function() {
+            this.clonedFactory.clone(factory);
+            return expect(this.clonedFactory.instances['Test.Util'].length).toBe(1);
+          });
         });
         describe('mirror method', function() {
           var base, clone, m, methods;
