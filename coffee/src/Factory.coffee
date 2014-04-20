@@ -467,7 +467,8 @@ define [
       _.each instance.__factoryMap(), (arr) ->
         message = "Instance Not In Factory :: #{instance} :: disposal failed!"
         throw new Error message if instance not in arr
-        arr.splice arr.indexOf(instance), 1
+        while arr.indexOf(instance) > -1
+          arr.splice arr.indexOf(instance), 1
       @trigger 'dispose', instance
 
     # Get Constructor

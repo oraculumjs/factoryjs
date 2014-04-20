@@ -444,12 +444,16 @@
 
       Factory.prototype.dispose = function(instance) {
         _.each(instance.__factoryMap(), function(arr) {
-          var message;
+          var message, _results;
           message = "Instance Not In Factory :: " + instance + " :: disposal failed!";
           if (__indexOf.call(arr, instance) < 0) {
             throw new Error(message);
           }
-          return arr.splice(arr.indexOf(instance), 1);
+          _results = [];
+          while (arr.indexOf(instance) > -1) {
+            _results.push(arr.splice(arr.indexOf(instance), 1));
+          }
+          return _results;
         });
         return this.trigger('dispose', instance);
       };

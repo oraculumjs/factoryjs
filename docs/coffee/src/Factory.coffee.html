@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Factory.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+              
+                
+                <a class="source" href="BackboneFactory.coffee.html">
+                  BackboneFactory.coffee
+                </a>
+              
+                
+                <a class="source" href="Factory.coffee.html">
+                  Factory.coffee
+                </a>
+              
+            </div>
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Factory.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h2 id="factory-for-object-management">Factory for object management</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>Use require, this depends on underscore, jquery and backbone.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+define [
+  <span class="hljs-string">"underscore"</span>,
+  <span class="hljs-string">"jquery"</span>,
+  <span class="hljs-string">"backbone"</span>
+], <span class="hljs-function"><span class="hljs-params">(_, $, Backbone)</span> -&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Factory objects can</p>
+<ul>
+<li>hold type definitions</li>
+<li>return objects of those types</li>
+<li>hold mixin definitions</li>
+<li>mixin those mixins to defined objects of types</li>
+<li>return singleton type definitions</li>
+<li>extend existing definitions</li>
+<li>tag objects with types and other metadata</li>
+<li>retrieve and manipulate objects by tag</li>
+<li>dispose of objects</li>
+<li>inject objects onto keys of other objects by name</li>
+</ul>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Provide a utility for shallow extension of the mixinOptions object.
+This method only supports certain primitives for extension by design.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-function"><span class="hljs-title">extendMixinOptions</span> = <span class="hljs-params">(mixinOptions = {}, mixinDefaults = {})</span> -&gt;</span>
+    <span class="hljs-keyword">for</span> option, defaultValue <span class="hljs-keyword">of</span> mixinDefaults
+      value = mixinOptions[option] ?= defaultValue</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Don’t do anything if either value is not an object</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      isObject = _.isObject(value) <span class="hljs-keyword">or</span> _.isObject(defaultValue)
+      <span class="hljs-keyword">continue</span> <span class="hljs-keyword">unless</span> isObject</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Don’t do anything if either object is a type we don’t support</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">continue</span> <span class="hljs-keyword">if</span> _.isDate(value) <span class="hljs-keyword">or</span> _.isDate(defaultValue) <span class="hljs-keyword">or</span>
+      _.isElement(value) <span class="hljs-keyword">or</span> _.isElement(defaultValue) <span class="hljs-keyword">or</span>
+      _.isFunction(value) <span class="hljs-keyword">or</span> _.isFunction(defaultValue) <span class="hljs-keyword">or</span>
+      _.isRegExp(value) <span class="hljs-keyword">or</span> _.isRegExp(defaultValue)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>If it’s an array, concat the values</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> _.isArray(value) <span class="hljs-keyword">or</span> _.isArray(defaultValue)
+        mixinOptions[option] = value.concat defaultValue
+        <span class="hljs-keyword">continue</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>Lastly, if it’s a bare object, extend it</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      mixinOptions[option] = _.extend {}, defaultValue, value</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <h2 id="constructor">Constructor</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>It only takes one argument, the base class implementation
+to use as a default. It becomes the ‘Base’ type, you can extend.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Factory</span></span>
+    _.extend <span class="hljs-property">@prototype</span>, Backbone.Events
+
+    <span class="hljs-attribute">constructor</span>: <span class="hljs-function"><span class="hljs-params">(Base, options = {})</span> -&gt;</span>
+      <span class="hljs-property">@mixins</span> = {}
+      <span class="hljs-property">@mixinSettings</span> = {}
+      <span class="hljs-property">@tagCbs</span> = {}
+      <span class="hljs-property">@tagMap</span> = {}
+      <span class="hljs-property">@promises</span> = {}
+      <span class="hljs-property">@instances</span> = {}
+      <span class="hljs-property">@definitions</span> = {}
+      <span class="hljs-property">@define</span> <span class="hljs-string">'Base'</span>, Base
+      <span class="hljs-property">@baseTags</span> = options.baseTags || []
+      <span class="hljs-property">@on</span> <span class="hljs-string">'create'</span>, <span class="hljs-property">@handleCreate</span>, <span class="hljs-keyword">this</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <h2 id="define">Define</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>Use the define method to define a new type (constructor) in the
+factory.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">define</span>: <span class="hljs-function"><span class="hljs-params">(name, def, options = {})</span> -&gt;</span>
+      <span class="hljs-keyword">if</span> <span class="hljs-property">@definitions</span>[name]? <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> options.override
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span> <span class="hljs-keyword">if</span> options.silent
+        message = <span class="hljs-string">"""
+          Definition already exists :: <span class="hljs-subst">#{name}</span> :: user overide option to ignore
+        """</span>
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>whenDefined support.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-property">@promises</span>[name] ?= $.Deferred()
+      definition = { options }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>we borrow extend from Backbone unless you brought your own.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      def.extend = Backbone.Model.extend <span class="hljs-keyword">unless</span> _.isFunction(def.extend)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>we will store an object instead of a function if that is what you need.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> _.isFunction(def)
+        definition.constructor = def
+      <span class="hljs-keyword">else</span>
+        definition.<span class="hljs-function"><span class="hljs-title">constructor</span> = -&gt;</span> _.clone(def)
+      definition.constructor.prototype.<span class="hljs-function"><span class="hljs-title">__factory</span> = =&gt;</span> <span class="hljs-keyword">this</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>tag support</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      tags = [name].concat(options.tags).concat <span class="hljs-property">@baseTags</span>
+      definition.tags = _.uniq<span class="hljs-function"><span class="hljs-params">(tags)</span>.<span class="hljs-title">filter</span> <span class="hljs-params">(i)</span> -&gt;</span> !!i
+      <span class="hljs-property">@instances</span>[name] = []
+      _.each definition.tags, <span class="hljs-function"><span class="hljs-params">(tag)</span> =&gt;</span>
+        <span class="hljs-property">@tagMap</span>[tag] = <span class="hljs-property">@tagMap</span>[tag] <span class="hljs-keyword">or</span> []
+        <span class="hljs-property">@tagCbs</span>[tag] = <span class="hljs-property">@tagCbs</span>[tag] <span class="hljs-keyword">or</span> []
+
+      <span class="hljs-property">@definitions</span>[name] = definition</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>if you need to know when a type is defined you can listen to
+the define event on the factory or ask using whenDefined.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-property">@trigger</span> <span class="hljs-string">'define'</span>, name, definition, options
+      <span class="hljs-property">@promises</span>[name].resolve(<span class="hljs-keyword">this</span>, name)
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <h2 id="has-definition">Has Definition</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Find out if the factory already has a definition by name.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">hasDefinition</span>: <span class="hljs-function"><span class="hljs-params">(name)</span> -&gt;</span>
+      !!<span class="hljs-property">@definitions</span>[name]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <h2 id="when-defined">When Defined</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>Find out when a definition has been loaded into the factory
+by name. This returns a jQuery promise object.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">whenDefined</span>: <span class="hljs-function"><span class="hljs-params">(name)</span> -&gt;</span>
+      <span class="hljs-property">@promises</span>[name] ?= $.Deferred()
+      <span class="hljs-property">@promises</span>[name].promise()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <h2 id="fetch-definition">Fetch Definition</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p>Fetch a definition from the server and callback when done</p>
+<pre><code>WARNING! <span class="hljs-keyword">this</span> will <span class="hljs-keyword">not</span> work <span class="hljs-reserved">with</span> jquery <span class="hljs-keyword">or</span> other polymorphic
+<span class="hljs-reserved">function</span> API<span class="hljs-string">'s. It does expect functions to be constructors!</span>
+</code></pre>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">fetchDefinition</span>: <span class="hljs-function"><span class="hljs-params">(name)</span> -&gt;</span>
+      dfd = <span class="hljs-property">@whenDefined</span>(name)
+      <span class="hljs-built_in">require</span> [name], <span class="hljs-function"><span class="hljs-params">(def)</span> =&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>Just in case the module is not setup to use the factory
+this will get ignored if the module defines itself in the
+factory.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-property">@define</span> name, def
+      <span class="hljs-keyword">return</span> dfd</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <h2 id="extend">Extend</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>Use extend to define a new type that extends another type in the
+factory. It basically uses Backbone.Model extend unless you provide
+your own.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">extend</span>: <span class="hljs-function"><span class="hljs-params">(base, name, def, options = {})</span> -&gt;</span>
+      bDef = <span class="hljs-property">@definitions</span>[base]
+
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error <span class="hljs-string">"""
+        Base Class Not Available :: <span class="hljs-subst">#{base}</span>
+      """</span> <span class="hljs-keyword">unless</span> bDef
+
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error <span class="hljs-string">"""
+        Invalid Parameter Definition ::
+        expected object ::
+        got <span class="hljs-subst">#{def.constructor::toString()}</span>
+      """</span> <span class="hljs-keyword">unless</span> _.isObject(def)
+
+      options.tags = _.chain([])
+        .union(options.tags)
+        .union(bDef.tags)
+        .compact().value()
+
+      <span class="hljs-keyword">if</span> options.inheritMixins
+        options.mixins = _.chain([])
+          .union(bDef.options.mixins)
+          .union(options.mixins)
+          .compact().value()
+        mixinOptions = def.mixinOptions
+        mixinDefaults = bDef.<span class="hljs-attribute">constructor</span>::mixinOptions
+        extendMixinOptions mixinOptions, mixinDefaults
+
+      <span class="hljs-keyword">if</span> options.singleton?
+      <span class="hljs-keyword">then</span> options.singleton = options.singleton
+      <span class="hljs-keyword">else</span> options.singleton = bDef.options.singleton
+
+      <span class="hljs-keyword">return</span> <span class="hljs-property">@define</span> name, bDef.constructor.extend(def), options</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <h2 id="clone">Clone</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>This can be used to add the definitions from one factory to another.
+Use it by creating your new clean factory and call clone passing in
+the factory whose definitions you want to include.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">clone</span>: <span class="hljs-function"><span class="hljs-params">(factory)</span> -&gt;</span>
+      message = <span class="hljs-string">"Invalid Argument :: Expected Factory"</span>
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message <span class="hljs-keyword">unless</span> factory <span class="hljs-keyword">instanceof</span> Factory
+      singletonDefinitions = []
+      _.each [<span class="hljs-string">"definitions"</span>, <span class="hljs-string">"mixins"</span>, <span class="hljs-string">"promises"</span>, <span class="hljs-string">"mixinSettings"</span>], <span class="hljs-function"><span class="hljs-params">(key)</span> =&gt;</span>
+        _.defaults @[key], factory[key]
+        <span class="hljs-keyword">if</span> key <span class="hljs-keyword">is</span> <span class="hljs-string">'definitions'</span>
+          _.each @[key], <span class="hljs-function"><span class="hljs-params">(def, defname)</span> =&gt;</span>
+            singletonDefinitions.push defname <span class="hljs-keyword">if</span> def.options.singleton
+            @[key][defname].constructor.prototype.<span class="hljs-function"><span class="hljs-title">__factory</span> = =&gt;</span> <span class="hljs-keyword">this</span>
+      _.each [<span class="hljs-string">"tagCbs"</span>,<span class="hljs-string">"tagMap"</span>,<span class="hljs-string">"promises"</span>,<span class="hljs-string">"instances"</span>], <span class="hljs-function"><span class="hljs-params">(key)</span> =&gt;</span>
+        @[key] ?= {}
+        <span class="hljs-keyword">for</span> name, payload <span class="hljs-keyword">of</span> factory[key]
+          <span class="hljs-keyword">if</span> key <span class="hljs-keyword">is</span> <span class="hljs-string">'instances'</span> <span class="hljs-keyword">and</span> name <span class="hljs-keyword">in</span> singletonDefinitions
+            singleton = <span class="hljs-literal">true</span>
+          <span class="hljs-keyword">if</span> _.isArray(payload)
+            @[key][name] ?= []
+            <span class="hljs-keyword">if</span> singleton
+              @[key][name] = @[key][name]
+            <span class="hljs-keyword">else</span>
+              @[key][name] = payload.concat(@[key][name])
+          <span class="hljs-keyword">if</span> _.isFunction payload?.resolve
+            @[key][name] ?= $.Deferred()
+            @[key][name].done(payload.resolve)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <h2 id="mirror">Mirror</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>This is a wrapper for clone that keeps this factory synced with the
+cloned factory. Useful for when you have need to clone a factory that
+has asynchronous definitions.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">mirror</span>: <span class="hljs-function"><span class="hljs-params">(factory)</span> -&gt;</span>
+      factory.<span class="hljs-literal">off</span> <span class="hljs-string">'create'</span>, factory.handleCreate
+      _.chain<span class="hljs-function"><span class="hljs-params">(<span class="hljs-keyword">this</span>)</span>.<span class="hljs-title">methods</span><span class="hljs-params">()</span>.<span class="hljs-title">each</span> <span class="hljs-params">(method)</span> =&gt;</span>
+        factory[method] =<span class="hljs-function"> =&gt;</span>
+          @[method] arguments...
+      <span class="hljs-property">@clone</span> factory
+      _.chain<span class="hljs-function"><span class="hljs-params">(factory)</span>.<span class="hljs-title">keys</span><span class="hljs-params">()</span>.<span class="hljs-title">each</span> <span class="hljs-params">(key)</span> -&gt;</span>
+        <span class="hljs-keyword">delete</span> factory[key] <span class="hljs-keyword">unless</span> _.isFunction(factory[key])</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <h2 id="define-mixin">Define Mixin</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <p>Use defineMixin to add mixin definitions to the factory. You can
+use these definitions in the define and extend method by adding
+a mixins array option with the names of the mixins to include.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">defineMixin</span>: <span class="hljs-function"><span class="hljs-params">(name, def, options = {})</span> -&gt;</span>
+      <span class="hljs-keyword">if</span> <span class="hljs-property">@mixins</span>[name]? <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> options.override
+        message = <span class="hljs-string">"""
+          Mixin already defined :: <span class="hljs-subst">#{name}</span> :: use override option to ignore
+        """</span>
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message
+      <span class="hljs-property">@mixins</span>[name] = def
+      <span class="hljs-property">@mixinSettings</span>[name] = options
+      <span class="hljs-property">@trigger</span> <span class="hljs-string">'defineMixin'</span>, name, def, options
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <h2 id="compose-mixin-dependencies">Compose Mixin Dependencies</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>This allows to get all the mixin dependencies as a consolidated list
+in the order we are expecting.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">composeMixinDependencies</span>: <span class="hljs-function"><span class="hljs-params">(mixins = [])</span> -&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>mixins is the top level mixins</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      result = []
+      <span class="hljs-keyword">for</span> mixin <span class="hljs-keyword">in</span> mixins
+        deps = <span class="hljs-property">@mixinSettings</span>[mixin].mixins <span class="hljs-keyword">or</span> []
+        result = result.concat <span class="hljs-property">@composeMixinDependencies</span> deps
+        result.push mixin
+      <span class="hljs-keyword">return</span> _.uniq result</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <h2 id="compose-mixin-options">Compose Mixin Options</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-37">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-37">&#182;</a>
+              </div>
+              <p>By introducing mixin inheritence we inadvertently made the possible
+option sets way more complicated since a mixin can depend on another
+mixin and give some defaults that should override the depended mixins
+defaults.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">composeMixinOptions</span>: <span class="hljs-function"><span class="hljs-params">(instance, mixinName, args)</span> -&gt;</span>
+      mixin = <span class="hljs-property">@mixins</span>[mixinName]
+      mixinDefaults = mixin.mixinOptions
+      mixinOptions = instance.mixinOptions
+      extendMixinOptions mixinOptions, mixinDefaults</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <p>Invoke the mixin’s mixconfig method if available, passing through
+the mixinOptions object so that it can be modified by reference.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      mixin.mixconfig? mixinOptions, args...</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <p>Finally, complete the composition of the mixinOptions object by
+extending a bare object with mixinDefaults and whatever custom
+options the mixconfig method may have assigned before assigning
+it back onto the instance.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      instance.mixinOptions = _.extend {}, mixinDefaults, mixinOptions</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
+              </div>
+              <h2 id="apply-mixin">Apply Mixin</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <p>Apply a mixin by name to an object. Options that are on the object
+will be supported by passed in defaults then by mixin defaults. Will
+invoke mixinitialize and empty mixinitialize method after invocation.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">applyMixin</span>: <span class="hljs-function"><span class="hljs-params">(instance, mixinName)</span> -&gt;</span>
+      mixin = <span class="hljs-property">@mixins</span>[mixinName]
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error(<span class="hljs-string">"Mixin Not Defined :: <span class="hljs-subst">#{mixinName}</span>"</span>) <span class="hljs-keyword">unless</span> mixin
+
+      <span class="hljs-keyword">unless</span> instance.____mixed</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-42">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-42">&#182;</a>
+              </div>
+              <p>we are in a late mix, use transient loop protection</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        late_mix = <span class="hljs-literal">true</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              <p>ignore tags</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        ignore_tags = <span class="hljs-literal">true</span>
+        instance.____mixed = []
+
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">if</span> mixinName <span class="hljs-keyword">in</span> instance.____mixed
+
+      mixinSettings = <span class="hljs-property">@mixinSettings</span>[mixinName]
+      <span class="hljs-keyword">if</span> mixinSettings.tags <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> ignore_tags
+        instance.____tags <span class="hljs-keyword">or</span>= []
+        instance.____tags = instance.____tags.concat(mixinSettings.tags)
+
+      props = _.omit mixin, <span class="hljs-string">'mixinOptions'</span>, <span class="hljs-string">'mixinitialize'</span>, <span class="hljs-string">'mixconfig'</span>
+      _.extend instance, props
+
+      <span class="hljs-keyword">if</span> late_mix
+        <span class="hljs-property">@mixinitialize</span> instance, mixinName
+        <span class="hljs-keyword">delete</span> instance.____mixed
+      <span class="hljs-keyword">else</span> instance.____mixed.push mixinName
+
+      <span class="hljs-keyword">return</span> instance</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-44">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-44">&#182;</a>
+              </div>
+              <h2 id="mixinitialize">Mixinitialize</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-45">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-45">&#182;</a>
+              </div>
+              <p>Invoke the mixin’s mixinitialize method on the instance, if it exists.
+This is done after the mixin’s options are composed and its methods
+applied so that the instance is fully composed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">mixinitialize</span>: <span class="hljs-function"><span class="hljs-params">(instance, mixinName)</span> -&gt;</span>
+      mixin = <span class="hljs-property">@mixins</span>[mixinName]
+      mixinitialize = mixin.mixinitialize
+      mixinitialize.call instance <span class="hljs-keyword">if</span> _.isFunction mixinitialize</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-46">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <h2 id="handle-mixins">Handle Mixins</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-47">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-47">&#182;</a>
+              </div>
+              <p>Gets called when an object is created to mixin anything you said
+to include in the definition. If the mixin defines a mixinitialize
+method it will get called after initialize and before constructed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">handleMixins</span>: <span class="hljs-function"><span class="hljs-params">(instance, mixins, args)</span> -&gt;</span>
+      instance.____mixed = []</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-48">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-48">&#182;</a>
+              </div>
+              <p>clone the instance’s mixinOptions to avoid overwriting the defaults</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+      instance.mixinOptions = _.extend {}, instance.mixinOptions
+
+      resolvedMixins = <span class="hljs-property">@composeMixinDependencies</span> mixins
+
+      instance.<span class="hljs-function"><span class="hljs-title">__mixins</span> = -&gt;</span>
+        resolvedMixins.slice()
+
+      <span class="hljs-property">@applyMixin</span> instance, mixinName <span class="hljs-keyword">for</span> mixinName <span class="hljs-keyword">in</span> resolvedMixins</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-49">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-49">&#182;</a>
+              </div>
+              <p>because it considers instance.mixinOptions to be canonical
+this needs to execute in reverse order so higher level mixins
+take configuration precedence.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+      reverseMixins = resolvedMixins.slice().reverse()
+      <span class="hljs-keyword">for</span> mixinName <span class="hljs-keyword">in</span> reverseMixins
+        <span class="hljs-property">@composeMixinOptions</span> instance, mixinName, args
+
+      <span class="hljs-property">@mixinitialize</span> instance, mixinName <span class="hljs-keyword">for</span> mixinName <span class="hljs-keyword">in</span> resolvedMixins
+
+      instance.__mixin = _.chain<span class="hljs-function"><span class="hljs-params">((obj, mixin, mixinOptions) -&gt;
+        obj.____mixed = []
+        <span class="hljs-property">@handleMixins</span> obj, [mixin], mixinOptions
+        <span class="hljs-keyword">delete</span> obj.____mixed
+      )</span>.<span class="hljs-title">bind</span><span class="hljs-params">(<span class="hljs-keyword">this</span>)</span>.<span class="hljs-title">partial</span><span class="hljs-params">(instance)</span>.<span class="hljs-title">value</span><span class="hljs-params">()</span>
+
+      <span class="hljs-title">delete</span> <span class="hljs-title">instance</span>.<span class="hljs-title">____mixed</span>
+
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-50">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-50">&#182;</a>
+              </div>
+              <h2 id="handle-injections">Handle Injections</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-51">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-51">&#182;</a>
+              </div>
+              <p>Gets called then an object is created to add anything you said
+to include in the definition.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">handleInjections</span>: <span class="hljs-function"><span class="hljs-params">(instance, injections)</span> -&gt;</span>
+      instance[name] = <span class="hljs-property">@get</span>(type) <span class="hljs-keyword">for</span> name, type <span class="hljs-keyword">of</span> injections</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-52">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-52">&#182;</a>
+              </div>
+              <h2 id="handle-create">Handle Create</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-53">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-53">&#182;</a>
+              </div>
+              <p>Gets called when an object is created to handle any events based
+on tags. This is the engine for doing AOP style Dependency Injection.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">handleCreate</span>: <span class="hljs-function"><span class="hljs-params">(instance)</span> -&gt;</span>
+      <span class="hljs-keyword">for</span> tag <span class="hljs-keyword">in</span> instance.__tags()
+        <span class="hljs-property">@tagCbs</span>[tag] = [] <span class="hljs-keyword">unless</span> <span class="hljs-property">@tagCbs</span>[tag]?
+        cbs = <span class="hljs-property">@tagCbs</span>[tag]
+        <span class="hljs-keyword">continue</span> <span class="hljs-keyword">if</span> cbs.length <span class="hljs-keyword">is</span> <span class="hljs-number">0</span>
+        <span class="hljs-keyword">for</span> cb <span class="hljs-keyword">in</span> cbs
+          cb instance <span class="hljs-keyword">if</span> _.isFunction(cb)
+      <span class="hljs-literal">true</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-54">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-54">&#182;</a>
+              </div>
+              <h2 id="handle-tags">Handle Tags</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-55">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-55">&#182;</a>
+              </div>
+              <p>Gets called when an object is created to wire the instance up with
+all of it’s tags. Any type that the object inherits from, any of those
+types tags and any user defined tags are put into this list for use.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">handleTags</span>: <span class="hljs-function"><span class="hljs-params">(name, instance, tags)</span> -&gt;</span>
+      <span class="hljs-property">@instances</span>[name].push instance
+      fullTags = _.toArray(tags).concat(instance.____tags <span class="hljs-keyword">or</span> [])
+      <span class="hljs-keyword">delete</span> instance.____tags <span class="hljs-keyword">if</span> instance.____tags
+      instance.<span class="hljs-function"><span class="hljs-title">__type</span> = -&gt;</span> name
+      instance.<span class="hljs-function"><span class="hljs-title">__tags</span> = -&gt;</span> _.toArray fullTags
+
+      factoryMap = [<span class="hljs-property">@instances</span>[name]]
+      <span class="hljs-keyword">for</span> tag <span class="hljs-keyword">in</span> fullTags
+        <span class="hljs-property">@tagMap</span>[tag] = [] <span class="hljs-keyword">unless</span> <span class="hljs-property">@tagMap</span>[tag]?
+        <span class="hljs-property">@tagMap</span>[tag].push instance
+        factoryMap.push <span class="hljs-property">@tagMap</span>[tag]
+      instance.<span class="hljs-function"><span class="hljs-title">__factoryMap</span> = -&gt;</span> [].slice.call factoryMap</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-56">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-56">&#182;</a>
+              </div>
+              <h2 id="get">Get</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-57">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-57">&#182;</a>
+              </div>
+              <p>Call this with the name of the object type you want to get. You will
+definitely get that kind of object back. This is a pretty big function
+but it’s just generally making decisions about the options you defined
+earlier.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">get</span>: <span class="hljs-function"><span class="hljs-params">(name, args...)</span> -&gt;</span>
+      instances = <span class="hljs-property">@instances</span>[name] ?= []
+      instance = <span class="hljs-property">@instances</span>[name][<span class="hljs-number">0</span>]
+      def = <span class="hljs-property">@definitions</span>[name]
+      message = <span class="hljs-string">"Invalid Definition :: <span class="hljs-subst">#{name}</span> :: not defined"</span>
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message <span class="hljs-keyword">unless</span> def?
+      constructor = def.constructor
+
+      options = def.options <span class="hljs-keyword">or</span> {}
+      singleton = !!options.singleton
+      mixins = options.mixins <span class="hljs-keyword">or</span> []
+      injections = options.injections <span class="hljs-keyword">or</span> []</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-58">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-58">&#182;</a>
+              </div>
+              <p>singleton support</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">return</span> instance <span class="hljs-keyword">if</span> singleton <span class="hljs-keyword">and</span> instance</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-59">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-59">&#182;</a>
+              </div>
+              <p>arbitrary arguments length on the constructor</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      instance = <span class="hljs-keyword">new</span> constructor args...</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-60">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-60">&#182;</a>
+              </div>
+              <p>mixin support</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-property">@handleMixins</span> instance, mixins, args</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-61">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-61">&#182;</a>
+              </div>
+              <p>injection support</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-property">@handleInjections</span> instance, injections</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-62">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-62">&#182;</a>
+              </div>
+              <p>tag support</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-property">@handleTags</span> name, instance, def.tags</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-63">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-63">&#182;</a>
+              </div>
+              <p>late initialization support</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      instance.constructed args... <span class="hljs-keyword">if</span> _.isFunction instance.constructed</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-64">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-64">&#182;</a>
+              </div>
+              <p>we shortcut the dispose functionality so we can wire it into other
+frameworks and stuff easily</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      instance.<span class="hljs-function"><span class="hljs-title">__dispose</span> = <span class="hljs-params">((factory) -&gt;
+        <span class="hljs-keyword">return</span> -&gt; factory.dispose <span class="hljs-keyword">this</span>
+      )(<span class="hljs-keyword">this</span>)</span>
+
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-65">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-65">&#182;</a>
+              </div>
+              <p>we trigger a create event on the factory so we can handle tag listeners
+but the user can use this for other purposes as well.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-property">@trigger</span> <span class="hljs-string">'create'</span>, instance
+
+      <span class="hljs-keyword">return</span> instance</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-66">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-66">&#182;</a>
+              </div>
+              <h2 id="verify-tags">Verify Tags</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-67">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-67">&#182;</a>
+              </div>
+              <p>Call this to make sure that the instance hasn’t yet been disposed. If it
+hasn’t been disposed this will return true, otherwise return false.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">verifyTags</span>: <span class="hljs-function"><span class="hljs-params">(instance)</span> -&gt;</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span> <span class="hljs-keyword">unless</span> instance.__factoryMap
+      _.all instance.__factoryMap<span class="hljs-function"><span class="hljs-params">()</span>, <span class="hljs-params">(arr)</span> -&gt;</span> instance <span class="hljs-keyword">in</span> arr</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-68">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-68">&#182;</a>
+              </div>
+              <h2 id="dispose">Dispose</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-69">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-69">&#182;</a>
+              </div>
+              <p>Call this to remove the instance from the factories memory.
+Note that this will destroy singletons allowing a singleton
+object to be constructed again.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">dispose</span>: <span class="hljs-function"><span class="hljs-params">(instance)</span> -&gt;</span>
+      _.each instance.__factoryMap<span class="hljs-function"><span class="hljs-params">()</span>, <span class="hljs-params">(arr)</span> -&gt;</span>
+        message = <span class="hljs-string">"Instance Not In Factory :: <span class="hljs-subst">#{instance}</span> :: disposal failed!"</span>
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message <span class="hljs-keyword">if</span> instance <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> arr
+        <span class="hljs-keyword">while</span> arr.indexOf(instance) &gt; -<span class="hljs-number">1</span>
+          arr.splice arr.indexOf(instance), <span class="hljs-number">1</span>
+      <span class="hljs-property">@trigger</span> <span class="hljs-string">'dispose'</span>, instance</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-70">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-70">&#182;</a>
+              </div>
+              <h2 id="get-constructor">Get Constructor</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-71">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-71">&#182;</a>
+              </div>
+              <p>This allows you to use the factory in contexts where a constructor
+function is expected. The instances returned from this constructor will
+support all the functionality of the factory including mixins, tags and
+singleton. Optionally you can pass in the original flag to get the
+original constructor method. Use this for instance of checks.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">getConstructor</span>: <span class="hljs-function"><span class="hljs-params">(name, original = <span class="hljs-literal">false</span>)</span> -&gt;</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-property">@definitions</span>[name].constructor <span class="hljs-keyword">if</span> original
+      result = _.chain(<span class="hljs-property">@get</span>).bind(<span class="hljs-keyword">this</span>).partial(name).value()
+      result.prototype = <span class="hljs-property">@definitions</span>[name].constructor.prototype
+      <span class="hljs-keyword">return</span> result</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-72">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-72">&#182;</a>
+              </div>
+              <h2 id="on-tag">On Tag</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-73">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-73">&#182;</a>
+              </div>
+              <p>Call to run a function on all existing instances that relate to a tag and
+bind that same function to any future instances created.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">onTag</span>: <span class="hljs-function"><span class="hljs-params">(tag, cb)</span> -&gt;</span>
+      message = <span class="hljs-string">"Invalid Argument :: <span class="hljs-subst">#{<span class="hljs-keyword">typeof</span> tag}</span> provided :: expected String"</span>
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message <span class="hljs-keyword">unless</span> _.isString(tag)
+      message = <span class="hljs-string">"Invalid Argument :: <span class="hljs-subst">#{<span class="hljs-keyword">typeof</span> cb}</span> provided :: expected Function"</span>
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message <span class="hljs-keyword">unless</span> _.isFunction(cb)
+      cb instance <span class="hljs-keyword">for</span> instance <span class="hljs-keyword">in</span> <span class="hljs-property">@tagMap</span>[tag] <span class="hljs-keyword">or</span> []
+      <span class="hljs-property">@tagCbs</span>[tag] ?= []
+      <span class="hljs-property">@tagCbs</span>[tag].push cb
+      <span class="hljs-literal">true</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-74">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-74">&#182;</a>
+              </div>
+              <h2 id="off-tag">Off Tag</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-75">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-75">&#182;</a>
+              </div>
+              <p>Call to remove a function from calling on all future instances of an
+instance that relates to a tag.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">offTag</span>: <span class="hljs-function"><span class="hljs-params">(tag, cb)</span> -&gt;</span>
+      message = <span class="hljs-string">"Invalid Argument :: <span class="hljs-subst">#{<span class="hljs-keyword">typeof</span> tag}</span> provided :: expected String"</span>
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message <span class="hljs-keyword">unless</span> _.isString(tag)
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">unless</span> <span class="hljs-property">@tagCbs</span>[tag]?
+      <span class="hljs-keyword">unless</span> _.isFunction(cb)
+        <span class="hljs-property">@tagCbs</span>[tag] = []
+        <span class="hljs-keyword">return</span>
+      cbIdx = <span class="hljs-property">@tagCbs</span>[tag].indexOf(cb)
+      message = <span class="hljs-string">"Callback Not Found :: <span class="hljs-subst">#{cb}</span> :: for tag <span class="hljs-subst">#{tag}</span>"</span>
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error message <span class="hljs-keyword">if</span> cbIdx <span class="hljs-keyword">is</span> -<span class="hljs-number">1</span>
+      <span class="hljs-property">@tagCbs</span>[tag].splice cbIdx, <span class="hljs-number">1</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-76">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-76">&#182;</a>
+              </div>
+              <h2 id="is-type">Is Type</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-77">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-77">&#182;</a>
+              </div>
+              <p>Call this to check if the instance passed in if of the passed in type.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">isType</span>: <span class="hljs-function"><span class="hljs-params">(instance, type)</span> -&gt;</span>
+      <span class="hljs-keyword">return</span> instance.__type() <span class="hljs-keyword">is</span> type</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-78">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-78">&#182;</a>
+              </div>
+              <h2 id="get-type">Get Type</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-79">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-79">&#182;</a>
+              </div>
+              <p>Call this to get the type of the instance as a string.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-attribute">getType</span>: <span class="hljs-function"><span class="hljs-params">(instance)</span> -&gt;</span>
+      <span class="hljs-keyword">return</span> instance.__type()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-80">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-80">&#182;</a>
+              </div>
+              <p>And there you go, have fun with it.</p>
+
+            </div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
