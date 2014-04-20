@@ -1,6 +1,6 @@
 (function() {
-  var __slice = [].slice,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __slice = [].slice;
 
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
     var Factory, extendMixinOptions;
@@ -151,47 +151,60 @@
       };
 
       Factory.prototype.clone = function(factory) {
-        var message;
+        var message, singletonDefinitions;
         message = "Invalid Argument :: Expected Factory";
         if (!(factory instanceof Factory)) {
           throw new Error(message);
         }
-        return _.each(["definitions", "mixins", "promises", "mixinSettings"], (function(_this) {
+        singletonDefinitions = [];
+        _.each(["definitions", "mixins", "promises", "mixinSettings"], (function(_this) {
           return function(key) {
             _.defaults(_this[key], factory[key]);
             if (key === 'definitions') {
-              _.each(_this[key], function(def, defname) {
+              return _.each(_this[key], function(def, defname) {
+                if (def.options.singleton) {
+                  singletonDefinitions.push(defname);
+                }
                 return _this[key][defname].constructor.prototype.__factory = function() {
                   return _this;
                 };
               });
             }
-            return _.each(["tagCbs", "tagMap", "promises", "instances"], function(key) {
-              var name, payload, _base, _base1, _ref, _results;
-              if (_this[key] == null) {
-                _this[key] = {};
+          };
+        })(this));
+        return _.each(["tagCbs", "tagMap", "promises", "instances"], (function(_this) {
+          return function(key) {
+            var name, payload, singleton, _base, _base1, _ref, _results;
+            if (_this[key] == null) {
+              _this[key] = {};
+            }
+            _ref = factory[key];
+            _results = [];
+            for (name in _ref) {
+              payload = _ref[name];
+              if (key === 'instances' && __indexOf.call(singletonDefinitions, name) >= 0) {
+                singleton = true;
               }
-              _ref = factory[key];
-              _results = [];
-              for (name in _ref) {
-                payload = _ref[name];
-                if (_.isArray(payload)) {
-                  if ((_base = _this[key])[name] == null) {
-                    _base[name] = [];
-                  }
+              if (_.isArray(payload)) {
+                if ((_base = _this[key])[name] == null) {
+                  _base[name] = [];
+                }
+                if (singleton) {
+                  _this[key][name] = _this[key][name];
+                } else {
                   _this[key][name] = payload.concat(_this[key][name]);
                 }
-                if (_.isFunction(payload != null ? payload.resolve : void 0)) {
-                  if ((_base1 = _this[key])[name] == null) {
-                    _base1[name] = $.Deferred();
-                  }
-                  _results.push(_this[key][name].done(payload.resolve));
-                } else {
-                  _results.push(void 0);
-                }
               }
-              return _results;
-            });
+              if (_.isFunction(payload != null ? payload.resolve : void 0)) {
+                if ((_base1 = _this[key])[name] == null) {
+                  _base1[name] = $.Deferred();
+                }
+                _results.push(_this[key][name].done(payload.resolve));
+              } else {
+                _results.push(void 0);
+              }
+            }
+            return _results;
           };
         })(this));
       };
@@ -431,12 +444,16 @@
 
       Factory.prototype.dispose = function(instance) {
         _.each(instance.__factoryMap(), function(arr) {
-          var message;
+          var message, _results;
           message = "Instance Not In Factory :: " + instance + " :: disposal failed!";
           if (__indexOf.call(arr, instance) < 0) {
             throw new Error(message);
           }
-          return arr.splice(arr.indexOf(instance), 1);
+          _results = [];
+          while (arr.indexOf(instance) > -1) {
+            _results.push(arr.splice(arr.indexOf(instance), 1));
+          }
+          return _results;
         });
         return this.trigger('dispose', instance);
       };

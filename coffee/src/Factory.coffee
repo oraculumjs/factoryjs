@@ -187,20 +187,27 @@ define [
     clone: (factory) ->
       message = "Invalid Argument :: Expected Factory"
       throw new Error message unless factory instanceof Factory
+      singletonDefinitions = []
       _.each ["definitions", "mixins", "promises", "mixinSettings"], (key) =>
         _.defaults @[key], factory[key]
         if key is 'definitions'
           _.each @[key], (def, defname) =>
+            singletonDefinitions.push defname if def.options.singleton
             @[key][defname].constructor.prototype.__factory = => this
-        _.each ["tagCbs","tagMap","promises","instances"], (key) =>
-          @[key] ?= {}
-          for name, payload of factory[key]
-            if _.isArray(payload)
-              @[key][name] ?= []
+      _.each ["tagCbs","tagMap","promises","instances"], (key) =>
+        @[key] ?= {}
+        for name, payload of factory[key]
+          if key is 'instances' and name in singletonDefinitions
+            singleton = true
+          if _.isArray(payload)
+            @[key][name] ?= []
+            if singleton
+              @[key][name] = @[key][name]
+            else
               @[key][name] = payload.concat(@[key][name])
-            if _.isFunction payload?.resolve
-              @[key][name] ?= $.Deferred()
-              @[key][name].done(payload.resolve)
+          if _.isFunction payload?.resolve
+            @[key][name] ?= $.Deferred()
+            @[key][name].done(payload.resolve)
     # Mirror
     # ------
     # This is a wrapper for clone that keeps this factory synced with the
@@ -460,7 +467,8 @@ define [
       _.each instance.__factoryMap(), (arr) ->
         message = "Instance Not In Factory :: #{instance} :: disposal failed!"
         throw new Error message if instance not in arr
-        arr.splice arr.indexOf(instance), 1
+        while arr.indexOf(instance) > -1
+          arr.splice arr.indexOf(instance), 1
       @trigger 'dispose', instance
 
     # Get Constructor

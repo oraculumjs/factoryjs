@@ -10,7 +10,7 @@ module.exports = function (grunt) {
       }
     },
     clean: {
-      build: ['build', 'docs', 'src-cov']
+      build: ['build', 'docs/coffee/src/*', 'src-cov']
     },
     coffee: {
       src: {
@@ -143,7 +143,7 @@ module.exports = function (grunt) {
       coffee: {
         src: ['coffee/src/Factory.coffee', 'coffee/src/BackboneFactory.coffee'],
         options: {
-          output: 'docs/coffee/'
+          output: 'docs/'
         }
       }
     },
