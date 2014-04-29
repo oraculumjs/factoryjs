@@ -1092,6 +1092,7 @@ types tags and any user defined tags are put into this list for use.</p>
         <span class="hljs-property">@tagMap</span>[tag] = [] <span class="hljs-keyword">unless</span> <span class="hljs-property">@tagMap</span>[tag]?
         <span class="hljs-property">@tagMap</span>[tag].push instance
         factoryMap.push <span class="hljs-property">@tagMap</span>[tag]
+      factoryMap = _.uniq(factoryMap)
       instance.<span class="hljs-function"><span class="hljs-title">__factoryMap</span> = -&gt;</span> [].slice.call factoryMap</pre></div></div>
             
         </li>

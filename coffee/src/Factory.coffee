@@ -400,6 +400,7 @@ define [
         @tagMap[tag] = [] unless @tagMap[tag]?
         @tagMap[tag].push instance
         factoryMap.push @tagMap[tag]
+      factoryMap = _.uniq(factoryMap)
       instance.__factoryMap = -> [].slice.call factoryMap
 
     # Get
