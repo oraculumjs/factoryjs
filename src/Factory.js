@@ -390,6 +390,7 @@
           this.tagMap[tag].push(instance);
           factoryMap.push(this.tagMap[tag]);
         }
+        factoryMap = _.uniq(factoryMap);
         return instance.__factoryMap = function() {
           return [].slice.call(factoryMap);
         };
