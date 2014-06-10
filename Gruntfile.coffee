@@ -29,6 +29,7 @@ requirejsTemplate = require 'grunt-template-jasmine-requirejs'
 
 module.exports = (grunt) ->
 
+  grunt.loadNpmTasks 'grunt-bump'
   grunt.loadNpmTasks 'grunt-docker'
   grunt.loadNpmTasks 'grunt-blanket'
   grunt.loadNpmTasks 'grunt-coffeelint'
@@ -109,6 +110,7 @@ module.exports = (grunt) ->
         options:
           host: 'http://localhost:9002'
           specs: [
+            'lib/jscoverage/jscoverage.js'
             'build/spec/**/*.helper.js'
             'build/spec/**/*.spec.js'
           ]
@@ -123,7 +125,6 @@ module.exports = (grunt) ->
           helpers: [
             'components/sinonjs/sinon.js'
             'components/jasmine-sinon/lib/jasmine-sinon.js'
-            # 'lib/jscoverage/jscoverage.js'
           ]
 
     concat:
@@ -173,6 +174,14 @@ module.exports = (grunt) ->
           '*.md'
           'src/**/*.coffee'
         ]
+
+    bump:
+      options:
+        push: false
+        commit: false
+        createTag: false
+        files: ['package.json', 'bower.json']
+        updateConfigs: ['pkg', 'component']
 
   grunt.registerTask 'build', [
     'clean:build'
