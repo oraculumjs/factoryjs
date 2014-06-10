@@ -1,0 +1,24 @@
+{
+  "baseUrl": "build/src-cov",
+
+  "paths": {
+    "jquery": "../../components/jquery/dist/jquery",
+    "backbone": "../../components/backbone/backbone",
+    "underscore": "../../components/underscore/underscore"
+  },
+
+  "shim": {
+    "jquery": {
+      "exports": "jQuery"
+    },
+
+    "underscore": {
+      "exports": "_"
+    },
+
+    "backbone": {
+      "deps": ["underscore", "jquery"],
+      "exports": "Backbone"
+    }
+  }
+}

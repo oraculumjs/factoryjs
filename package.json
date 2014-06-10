@@ -2,14 +2,16 @@
   "name": "FactoryJS",
   "version": "0.5.0",
   "repository": "git://github.com/lookout/factoryjs.git",
+
   "author": "Gabriel Hernandez <gabriel.hernandez@lookout.com>",
-  "contributors": [{
-    "name": "Steven Regester",
-    "email": "steven.regester@lookout.com"
-  }],
+  "contributors": [
+    "Steve (Egesté) Regester <egeste@lookout.com> (http://egeste.net/)"
+  ],
+
   "devDependencies": {
     "bower": "latest",
     "grunt-cli": "latest",
+    "grunt-docker": "0.0.8",
     "grunt-blanket": "latest",
     "grunt-markdown": "latest",
     "grunt-coffeelint": "latest",
@@ -19,9 +21,8 @@
     "grunt-contrib-jshint": "latest",
     "grunt-contrib-uglify": "latest",
     "grunt-contrib-concat": "latest",
-    "grunt-contrib-jasmine": "~ 0.5",
+    "grunt-contrib-jasmine": "latest",
     "grunt-contrib-connect": "latest",
-    "grunt-docco": "git://github.com/webspinner/grunt-docco.git",
-    "grunt-template-jasmine-requirejs": "egeste/grunt-template-jasmine-requirejs#0.1.6-modules"
+    "grunt-template-jasmine-requirejs": "latest"
   }
 }

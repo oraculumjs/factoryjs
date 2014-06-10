@@ -1,8 +1,10 @@
+*.DS_Store
+/dist
+/build
+
 /components
 /node_modules
+
 /.grunt
-/index.html
-/src-cov
-/README.html
 /specs.html
-/index.html
+/_SpecRunner.html

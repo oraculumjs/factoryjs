@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>example.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="../doc-style.css" />
+  <script src="../doc-filelist.js"></script>
+  <script>
+    var relativeDir = "../", thisFile = "src/example.coffee", defaultSidebar = true;
+  </script>
+  <script src="../doc-script.js"></script>
+  <link rel="stylesheet" href="../docker.css" />
+</head>
+<body>
+  <div id="sidebar_wrapper">
+    <div id="sidebar_switch">
+      <span class="tree">Files</span>
+      <span class="headings">Headings</span>
+    </div>
+    <div id="tree"></div>
+    <div id="headings">
+      <div class="heading h2">
+        <a href="#entirely%20contrived%20example!!">ENTIRELY CONTRIVED EXAMPLE!!</a>
+      </div>
+    </div>
+  </div>
+  <div id="sidebar-toggle"></div>
+  <div id="container"><div class="background highlight"></div>
+<table cellpadding="0" cellspacing="0">
+  <tbody>
+      <tr>
+        <td class="docs"><div class="dox">
+  <div class="summary">
+<div class="pilwrap" id="entirely%20contrived%20example!!">
+  <h2>
+    <a href="#entirely%20contrived%20example!!" name="entirely%20contrived%20example!!" class="pilcrow">&#182;</a>
+    ENTIRELY CONTRIVED EXAMPLE!!
+  </h2>
+</div>
+
+  </div>
+  <div class="body">
+  </div>
+</div>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre><span class="nx">define</span> <span class="p">[</span><span class="s">&quot;Factory&quot;</span><span class="p">],</span> <span class="nf">(Factory) -&gt;</span>
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-2" id="section-2">&#182;</a>
+</div>
+<p>this explicitly supposes a single options hash constructor</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+  <span class="nv">TestObject = </span><span class="nf">(options) -&gt;</span>
+    <span class="nv">options = </span><span class="p">{}</span>  <span class="k">unless</span> <span class="nx">options</span>
+    <span class="vi">@name = </span><span class="nx">options</span><span class="p">.</span><span class="nx">name</span> <span class="o">or</span> <span class="nx">@defaults</span><span class="p">.</span><span class="nx">name</span>
+    <span class="vi">@passed = </span><span class="kc">false</span>
+    <span class="vi">@execute = </span><span class="nx">options</span><span class="p">.</span><span class="nx">execute</span> <span class="o">or</span> <span class="nx">@defaults</span><span class="p">.</span><span class="nx">execute</span>
+    <span class="nx">@construct</span> <span class="nx">options</span>  <span class="k">if</span> <span class="k">typeof</span> <span class="nx">@construct</span> <span class="o">is</span> <span class="s">&quot;function&quot;</span>
+
+  <span class="nv">TestObject:: =</span>
+    <span class="nv">name: </span><span class="s">&quot;NONE&quot;</span>
+    <span class="nv">defaults:</span>
+      <span class="nv">execute: </span><span class="nf">-&gt;</span>
+
+  <span class="nv">TestFactory = </span><span class="k">new</span> <span class="nx">Factory</span><span class="p">(</span><span class="nx">TestObject</span><span class="p">)</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-3" id="section-3">&#182;</a>
+</div>
+<p>from here on out you can define new object types or extend your original
+object type in the container</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">extend</span> <span class="s">&quot;Base&quot;</span><span class="p">,</span> <span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">defaults:</span>
+      <span class="nv">name: </span><span class="s">&quot;Unamed Test Object&quot;</span>
+      <span class="nv">execute: </span><span class="nf">-&gt;</span>
+
+    <span class="nv">run: </span><span class="nf">-&gt;</span>
+      <span class="vi">@passed = </span><span class="nx">@execute</span><span class="p">()</span>
+      <span class="nx">@passed</span>
+
+    <span class="nv">clean: </span><span class="nf">-&gt;</span>
+      <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">dispose</span> <span class="k">this</span>
+  <span class="p">,</span>
+    <span class="nv">mixins: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+    <span class="nv">tags: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">extend</span> <span class="s">&quot;Test&quot;</span><span class="p">,</span> <span class="s">&quot;Suite&quot;</span><span class="p">,</span>
+    <span class="nv">construct: </span><span class="nf">(options) -&gt;</span>
+      <span class="vi">@tests = </span><span class="p">[]</span>
+      <span class="k">this</span>
+
+    <span class="nv">addTest: </span><span class="nf">(test) -&gt;</span>
+      <span class="nx">@tests</span><span class="p">.</span><span class="nx">push</span> <span class="nx">test</span>
+      <span class="k">this</span>
+
+    <span class="nv">clean: </span><span class="nf">-&gt;</span>
+      <span class="nv">test = </span><span class="kc">undefined</span>
+      <span class="nx">test</span><span class="p">.</span><span class="nx">clean</span><span class="p">()</span>  <span class="k">while</span> <span class="nv">test = </span><span class="nx">@tests</span><span class="p">.</span><span class="nx">shift</span><span class="p">()</span>
+      <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">dispose</span> <span class="k">this</span>
+
+    <span class="nv">defaults:</span>
+      <span class="nv">name: </span><span class="s">&quot;Unnamed Test Suite&quot;</span>
+      <span class="nv">execute: </span><span class="nf">-&gt;</span>
+        <span class="nv">result = </span><span class="mi">0</span>
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-4" id="section-4">&#182;</a>
+</div>
+<p>Here are using the Runner injection to access the runner for the page,
+good for accessing singletons that have commone reusable
+functionality.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+        <span class="nx">@log</span> <span class="s">&#39;log&#39;</span><span class="p">,</span> <span class="nx">@runner</span><span class="p">.</span><span class="nx">url</span><span class="p">()</span>
+        <span class="nx">@tests</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(test) -&gt;</span>
+          <span class="nx">test</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;log&quot;</span><span class="p">,</span> <span class="nx">test</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">test</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+          <span class="nx">result</span><span class="o">++</span>  <span class="k">if</span> <span class="nx">test</span><span class="p">.</span><span class="nx">passed</span>
+
+        <span class="nx">result</span> <span class="o">is</span> <span class="nx">@tests</span><span class="p">.</span><span class="nx">length</span>
+  <span class="p">,</span>
+    <span class="nv">mixins: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+    <span class="nv">tags: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">],</span>
+    <span class="nv">injections: </span><span class="p">{</span>
+      <span class="nv">runner: </span><span class="s">&#39;Runner&#39;</span>
+    <span class="p">}</span>
+
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-5" id="section-5">&#182;</a>
+</div>
+<p>now you can get a Suite object out of the factory</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-6" id="section-6">&#182;</a>
+</div>
+<p>there are three options that can additionally be passed in to the define or
+extend methods:
+mixins: Array
+tags: Array
+singleton: Boolean</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">defineMixin</span> <span class="s">&quot;Logging&quot;</span><span class="p">,</span>
+    <span class="nv">log: </span><span class="nf">(severity) -&gt;</span>
+      <span class="nv">args = </span><span class="p">[].</span><span class="nx">slice</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">arguments</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="nx">console</span><span class="p">[</span><span class="nx">severity</span><span class="p">].</span><span class="nx">apply</span> <span class="nx">console</span><span class="p">,</span> <span class="nx">args</span>
+
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&quot;Runner&quot;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+    <span class="nv">url = </span><span class="nb">window</span><span class="p">.</span><span class="nx">location</span>
+    <span class="nv">suites = </span><span class="p">[]</span>
+    <span class="vi">@url = </span><span class="p">()</span><span class="nf">-&gt;</span>
+      <span class="k">return</span> <span class="nx">url</span>
+    <span class="vi">@addSuite = </span><span class="nf">(suite) -&gt;</span>
+      <span class="nx">suites</span><span class="p">.</span><span class="nx">push</span> <span class="nx">suite</span>
+      <span class="k">return</span> <span class="k">this</span>
+    <span class="vi">@run = </span><span class="nf">-&gt;</span>
+      <span class="nx">suites</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(suite) -&gt;</span>
+        <span class="nx">suite</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;log&quot;</span><span class="p">,</span> <span class="nx">suite</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">suite</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+      <span class="k">return</span> <span class="k">this</span>
+
+    <span class="vi">@clean = </span><span class="nf">-&gt;</span>
+      <span class="nv">suite = </span><span class="kc">undefined</span>
+      <span class="nx">suite</span><span class="p">.</span><span class="nx">clean</span><span class="p">()</span> <span class="k">while</span> <span class="nv">suite = </span><span class="nx">suites</span><span class="p">.</span><span class="nx">shift</span><span class="p">()</span>
+      <span class="k">return</span> <span class="k">this</span>
+    <span class="k">return</span> <span class="k">this</span>
+  <span class="p">,</span>
+    <span class="nv">singleton: </span><span class="kc">true</span>
+    <span class="nv">mixins: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+    <span class="nv">tags: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span> <span class="c1"># because mixins don&#39;t infer type</span>
+
+  <span class="nv">runner = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Runner&quot;</span><span class="p">)</span>
+  <span class="nv">firstSuite = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Suite&quot;</span><span class="p">)</span>
+  <span class="nv">firstTest = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">name: </span><span class="s">&quot;0 is 0&quot;</span>
+    <span class="nv">execute: </span><span class="nf">-&gt;</span>
+      <span class="nv">x = </span><span class="mi">0</span>
+      <span class="nv">y = </span><span class="mi">0</span>
+      <span class="nx">x</span> <span class="o">is</span> <span class="nx">y</span>
+  <span class="p">)</span>
+  <span class="nv">secondTest = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">name: </span><span class="s">&quot;0 is 1&quot;</span>
+    <span class="nv">execute: </span><span class="nf">-&gt;</span>
+      <span class="nv">x = </span><span class="mi">1</span>
+      <span class="nv">y = </span><span class="mi">0</span>
+      <span class="nx">x</span> <span class="o">is</span> <span class="nx">y</span>
+  <span class="p">)</span>
+  <span class="nx">firstSuite</span><span class="p">.</span><span class="nx">addTest</span><span class="p">(</span><span class="nx">firstTest</span><span class="p">).</span><span class="nx">addTest</span> <span class="nx">secondTest</span>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">addSuite</span> <span class="nx">firstSuite</span>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-7" id="section-7">&#182;</a>
+</div>
+<p>now let's do something interesting with logging</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">onTag</span> <span class="s">&quot;Logging&quot;</span><span class="p">,</span> <span class="nf">(instance) -&gt;</span>
+    <span class="nv">oLog = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">log</span>
+    <span class="nv">instance.log = </span><span class="nf">-&gt;</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-8" id="section-8">&#182;</a>
+</div>
+<p>pretend to make an ajax call</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;MAKING AN AJAX CALL HAR HAR&quot;</span>
+      <span class="nx">oLog</span><span class="p">.</span><span class="nx">apply</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">arguments</span>
+
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-9" id="section-9">&#182;</a>
+</div>
+<p>now any existing instance that supports logging (tagged) will post the log
+to a server endpoint</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+  <span class="nv">thirdTest = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">name: </span><span class="s">&quot;True is False&quot;</span>
+    <span class="nv">execute: </span><span class="nf">-&gt;</span>
+      <span class="kc">true</span> <span class="o">is</span> <span class="kc">false</span>
+  <span class="p">)</span>
+  <span class="nx">firstSuite</span><span class="p">.</span><span class="nx">addTest</span> <span class="nx">thirdTest</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-10" id="section-10">&#182;</a>
+</div>
+<p>even if they are created after the logging was modified</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">clean</span><span class="p">()</span>
+</pre></div>
+        </td>
+      </tr>
+  </tbody>
+</table>
+  </div>
+</body>
+</html>

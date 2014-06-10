@@ -1,15 +1,17 @@
 {
   "name": "Factory",
   "version": "0.5.0",
-  "main": "src/Factory.js",
+  "main": "dist/Factory.js",
   "dependencies": {
-    "jquery": "*",
-    "backbone": "*",
-    "requirejs": "*",
-    "underscore": "*"
+    "jquery": "latest",
+    "backbone": "latest",
+    "requirejs": "latest",
+    "underscore": "latest"
   }
 , "devDependencies": {
-    "sinon": "~1.7",
-    "jasmine-sinon": "latest"
+    "sinon": "latest",
+    "jasmine-sinon": "latest",
+    "jasmine-matchers": "uxebu/jasmine-matchers",
+    "jasmine-matchers-util": "JamieMason/Jasmine-Matchers"
   }
 }
