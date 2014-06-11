@@ -1,0 +1,10 @@
+#sidebar_wrapper {
+  background-image: url('../assets/img/logo_horiz_250.png');
+  background-repeat: no-repeat;
+  background-position: 50% 5px;
+}
+
+#sidebar_switch { top: 60px; }
+#tree, #headings { top: 90px; }
+
+.code pre { white-space: pre; }

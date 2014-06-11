@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>README.md</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="doc-style.css" />
+  <script src="doc-filelist.js"></script>
+  <script>
+    var relativeDir = "", thisFile = "README.md", defaultSidebar = true;
+  </script>
+  <script src="doc-script.js"></script>
+  <link rel="stylesheet" href="docker.css" />
+</head>
+<body>
+  <div id="sidebar_wrapper">
+    <div id="sidebar_switch">
+      <span class="tree">Files</span>
+      <span class="headings">Headings</span>
+    </div>
+    <div id="tree"></div>
+    <div id="headings">
+      <div class="heading h1">
+        <a href="#factory%20js%20">Factory JS </a>
+      </div>
+    </div>
+  </div>
+  <div id="sidebar-toggle"></div>
+  <div id="container"><div class="docs markdown"><p><link href="docs/public/stylesheets/normalize.css" rel="stylesheet"></link></p>
+
+
+<div class="pilwrap" id="factory%20js%20">
+  <h1>
+    <a href="#factory%20js%20" name="factory%20js%20" class="pilcrow">&#182;</a>
+    Factory JS <img src="https://travis-ci.org/lookout/factoryjs.png" alt="build status" title="" />
+  </h1>
+</div>
+
+
+<p><a href="http://localhost:9002/specs.html">tests</a>
+<a href="http://localhost:9002/docs/coffee/Factory.html">docs</a></p>
+
+<p>You can install from Bower: <code>bower install factoryjs</code></p>
+
+<p>Factory tool for standardizing object definition and retrieval in various systems. To use this in your code you would describe the Factory of objects you are going to be creating, this is usually a domain of object definitions that have reasonable similarity.</p>
+
+
+<div class="highlight"><pre><code><span class="cm">###</span>
+<span class="cm">ENTIRELY CONTRIVED EXAMPLE!!</span>
+<span class="cm">----------------------------</span>
+<span class="cm">###</span>
+<span class="nx">define</span> <span class="p">[</span><span class="s">&quot;Factory&quot;</span><span class="p">],</span> <span class="nf">(Factory) -&gt;</span>
+  <span class="c1"># this explicitly supposes a single options hash constructor</span>
+  <span class="nv">TestObject = </span><span class="nf">(options) -&gt;</span>
+    <span class="nv">options = </span><span class="p">{}</span>  <span class="k">unless</span> <span class="nx">options</span>
+    <span class="vi">@name = </span><span class="nx">options</span><span class="p">.</span><span class="nx">name</span> <span class="o">or</span> <span class="nx">@defaults</span><span class="p">.</span><span class="nx">name</span>
+    <span class="vi">@passed = </span><span class="kc">false</span>
+    <span class="vi">@execute = </span><span class="nx">options</span><span class="p">.</span><span class="nx">execute</span> <span class="o">or</span> <span class="nx">@defaults</span><span class="p">.</span><span class="nx">execute</span>
+    <span class="nx">@construct</span> <span class="nx">options</span>  <span class="k">if</span> <span class="k">typeof</span> <span class="nx">@construct</span> <span class="o">is</span> <span class="s">&quot;function&quot;</span>
+
+  <span class="nv">TestObject:: =</span>
+    <span class="nv">name: </span><span class="s">&quot;NONE&quot;</span>
+    <span class="nv">defaults:</span>
+      <span class="nv">execute: </span><span class="nf">-&gt;</span>
+
+  <span class="nv">TestFactory = </span><span class="k">new</span> <span class="nx">Factory</span><span class="p">(</span><span class="nx">TestObject</span><span class="p">)</span>
+
+  <span class="c1"># from here on out you can define new object types or extend your original object type in the container</span>
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">extend</span> <span class="s">&quot;Base&quot;</span><span class="p">,</span> <span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">defaults:</span>
+      <span class="nv">name: </span><span class="s">&quot;Unamed Test Object&quot;</span>
+      <span class="nv">execute: </span><span class="nf">-&gt;</span>
+
+    <span class="nv">run: </span><span class="nf">-&gt;</span>
+      <span class="vi">@passed = </span><span class="nx">@execute</span><span class="p">()</span>
+      <span class="nx">@passed</span>
+
+    <span class="nv">clean: </span><span class="nf">-&gt;</span>
+      <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">dispose</span> <span class="k">this</span>
+  <span class="p">,</span>
+    <span class="nv">mixins: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+    <span class="nv">tags: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">extend</span> <span class="s">&quot;Test&quot;</span><span class="p">,</span> <span class="s">&quot;Suite&quot;</span><span class="p">,</span>
+    <span class="nv">construct: </span><span class="nf">(options) -&gt;</span>
+      <span class="vi">@tests = </span><span class="p">[]</span>
+      <span class="k">this</span>
+
+    <span class="nv">addTest: </span><span class="nf">(test) -&gt;</span>
+      <span class="nx">@tests</span><span class="p">.</span><span class="nx">push</span> <span class="nx">test</span>
+      <span class="k">this</span>
+
+    <span class="nv">clean: </span><span class="nf">-&gt;</span>
+      <span class="nv">test = </span><span class="kc">undefined</span>
+      <span class="nx">test</span><span class="p">.</span><span class="nx">clean</span><span class="p">()</span>  <span class="k">while</span> <span class="nv">test = </span><span class="nx">@tests</span><span class="p">.</span><span class="nx">shift</span><span class="p">()</span>
+      <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">dispose</span> <span class="k">this</span>
+
+    <span class="nv">defaults:</span>
+      <span class="nv">name: </span><span class="s">&quot;Unnamed Test Suite&quot;</span>
+      <span class="nv">execute: </span><span class="nf">-&gt;</span>
+        <span class="nv">result = </span><span class="mi">0</span>
+        <span class="c1"># Here are using the Runner injection to access the runner for the page,</span>
+        <span class="c1"># good for accessing singletons that have commone reusable functionality.</span>
+        <span class="nx">@log</span> <span class="s">&#39;log&#39;</span><span class="p">,</span> <span class="nx">@Runner</span><span class="p">.</span><span class="nx">url</span><span class="p">()</span>
+        <span class="nx">@tests</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(test) -&gt;</span>
+          <span class="nx">test</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;log&quot;</span><span class="p">,</span> <span class="nx">test</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">test</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+          <span class="nx">result</span><span class="o">++</span>  <span class="k">if</span> <span class="nx">test</span><span class="p">.</span><span class="nx">passed</span>
+
+        <span class="nx">result</span> <span class="o">is</span> <span class="nx">@tests</span><span class="p">.</span><span class="nx">length</span>
+  <span class="p">,</span>
+    <span class="nv">mixins: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+    <span class="nv">tags: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">],</span>
+    <span class="nv">injections: </span><span class="p">[</span><span class="s">&#39;Runner&#39;</span><span class="p">]</span>
+
+
+  <span class="c1"># now you can get a Suite object out of the factory</span>
+
+  <span class="c1"># there are three options that can additionally be passed in to the define or extend methods:</span>
+  <span class="c1"># mixins: Array</span>
+  <span class="c1"># tags: Array</span>
+  <span class="c1"># singleton: Boolean</span>
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">defineMixin</span> <span class="s">&quot;Logging&quot;</span><span class="p">,</span>
+    <span class="nv">log: </span><span class="nf">(severity) -&gt;</span>
+      <span class="nv">args = </span><span class="p">[].</span><span class="nx">slice</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">arguments</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="nx">console</span><span class="p">[</span><span class="nx">severity</span><span class="p">].</span><span class="nx">apply</span> <span class="nx">console</span><span class="p">,</span> <span class="nx">args</span>
+
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&quot;Runner&quot;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+    <span class="nv">url = </span><span class="nb">window</span><span class="p">.</span><span class="nx">location</span>
+    <span class="nv">suites = </span><span class="p">[]</span>
+    <span class="vi">@url = </span><span class="p">()</span><span class="nf">-&gt;</span>
+      <span class="k">return</span> <span class="nx">url</span>
+    <span class="vi">@addSuite = </span><span class="nf">(suite) -&gt;</span>
+      <span class="nx">suites</span><span class="p">.</span><span class="nx">push</span> <span class="nx">suite</span>
+      <span class="k">return</span> <span class="k">this</span>
+    <span class="vi">@run = </span><span class="nf">-&gt;</span>
+      <span class="nx">suites</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(suite) -&gt;</span>
+        <span class="nx">suite</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;log&quot;</span><span class="p">,</span> <span class="nx">suite</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">suite</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+      <span class="k">return</span> <span class="k">this</span>
+
+    <span class="vi">@clean = </span><span class="nf">-&gt;</span>
+      <span class="nv">suite = </span><span class="kc">undefined</span>
+      <span class="nx">suite</span><span class="p">.</span><span class="nx">clean</span><span class="p">()</span> <span class="k">while</span> <span class="nv">suite = </span><span class="nx">suites</span><span class="p">.</span><span class="nx">shift</span><span class="p">()</span>
+      <span class="k">return</span> <span class="k">this</span>
+    <span class="k">return</span> <span class="k">this</span>
+  <span class="p">,</span>
+    <span class="nv">singleton: </span><span class="kc">true</span>
+    <span class="nv">mixins: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span>
+    <span class="nv">tags: </span><span class="p">[</span><span class="s">&quot;Logging&quot;</span><span class="p">]</span> <span class="c1"># because mixins don&#39;t infer type</span>
+
+  <span class="nv">runner = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Runner&quot;</span><span class="p">)</span>
+  <span class="nv">firstSuite = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Suite&quot;</span><span class="p">)</span>
+  <span class="nv">firstTest = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">name: </span><span class="s">&quot;0 is 0&quot;</span>
+    <span class="nv">execute: </span><span class="nf">-&gt;</span>
+      <span class="nv">x = </span><span class="mi">0</span>
+      <span class="nv">y = </span><span class="mi">0</span>
+      <span class="nx">x</span> <span class="o">is</span> <span class="nx">y</span>
+  <span class="p">)</span>
+  <span class="nv">secondTest = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">name: </span><span class="s">&quot;0 is 1&quot;</span>
+    <span class="nv">execute: </span><span class="nf">-&gt;</span>
+      <span class="nv">x = </span><span class="mi">1</span>
+      <span class="nv">y = </span><span class="mi">0</span>
+      <span class="nx">x</span> <span class="o">is</span> <span class="nx">y</span>
+  <span class="p">)</span>
+  <span class="nx">firstSuite</span><span class="p">.</span><span class="nx">addTest</span><span class="p">(</span><span class="nx">firstTest</span><span class="p">).</span><span class="nx">addTest</span> <span class="nx">secondTest</span>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">addSuite</span> <span class="nx">firstSuite</span>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+
+  <span class="c1"># now let&#39;s do something interesting with logging</span>
+  <span class="nx">TestFactory</span><span class="p">.</span><span class="nx">onTag</span> <span class="s">&quot;Logging&quot;</span><span class="p">,</span> <span class="nf">(instance) -&gt;</span>
+    <span class="nv">oLog = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">log</span>
+    <span class="nv">instance.log = </span><span class="nf">-&gt;</span>
+
+      <span class="c1"># pretend to make an ajax call</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;MAKING AN AJAX CALL HAR HAR&quot;</span>
+      <span class="nx">oLog</span><span class="p">.</span><span class="nx">apply</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">arguments</span>
+
+
+  <span class="c1"># now any existing instance that supports logging (tagged) will post the log to a server endpoint</span>
+  <span class="nv">thirdTest = </span><span class="nx">TestFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Test&quot;</span><span class="p">,</span>
+    <span class="nv">name: </span><span class="s">&quot;True is False&quot;</span>
+    <span class="nv">execute: </span><span class="nf">-&gt;</span>
+      <span class="kc">true</span> <span class="o">is</span> <span class="kc">false</span>
+  <span class="p">)</span>
+  <span class="nx">firstSuite</span><span class="p">.</span><span class="nx">addTest</span> <span class="nx">thirdTest</span>
+
+  <span class="c1"># even if they are created after the logging was modified</span>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+  <span class="nx">runner</span><span class="p">.</span><span class="nx">clean</span><span class="p">()</span>
+</code></pre></div>
+
+
+
+<p>To get this up and running:</p>
+
+
+<div class="highlight"><pre><code>npm install
+./node_modules/.bin/bower install
+./node_modules/.bin/grunt
+</code></pre></div>
+
+
+
+<p>You can then navigate to <a href='http://localhost:9001'>http://localhost:9001</a> and view the tests there or see them run in the console.</p></div>
+  </div>
+</body>
+</html>
