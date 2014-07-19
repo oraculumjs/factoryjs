@@ -1,12 +1,12 @@
 require ["Factory"], (Factory) ->
+
   describe "Factory", ->
+
     it "should exist when referenced", ->
       expect(Factory).toBeDefined()
 
     it "should allow the creation of a new Factory", ->
-      factory = new Factory(->
-        @x = true
-      )
+      factory = new Factory(-> @x = true )
       expect(factory).toBeDefined()
 
     it 'should allow the baseTags property to be set in the constructor', ->
@@ -50,7 +50,6 @@ require ["Factory"], (Factory) ->
           test = -> factory.define "test", (-> @test = false), {silent: true}
           expect(test).not.toThrow()
 
-
         it 'should concat @baseTags into options.tags', ->
           factory.define 'test', {}, override: true
           expect(factory.definitions.test.tags).toContain 'BaseTag1'
@@ -69,7 +68,6 @@ require ["Factory"], (Factory) ->
           expect(test).not.toThrow()
           t = factory.get('test')
           expect(t.test).toEqual(t)
-
 
       describe "hasDefinition method", ->
         beforeEach ->
@@ -154,16 +152,17 @@ require ["Factory"], (Factory) ->
 
 
       describe "get method", ->
+
         Test = (options) ->
           @initialize options
-          this
-        Test:: =
-          initialize: (options) ->
-            for option of options
-              this[option] = options[option]
-            this
+          return this
 
-          constructed: sinon.stub()
+        Test:: = {
+          initialize: (options = {}) ->
+            @constructed = options.constructed or sinon.stub()
+            this[option] = options[option] for option of options
+            return this
+        }
 
         beforeEach ->
           factory.defineMixin "one",
@@ -193,8 +192,15 @@ require ["Factory"], (Factory) ->
           test = factory.get("Test", {})
           expect(test.__factory()).toEqual(factory)
 
+        it "should make __type available immediately after construction", ->
+          factory.get "Test", constructed: -> expect(@__type()).toBe 'Test'
+
         it "should return the appropriate object instance", ->
           expect(factory.get("Test", {})).toBeInstanceOf Test
+
+        it 'should have a wrapped constructor', ->
+          test = factory.get("Test", {})
+          expect(test.constructor).not.toBe Test
 
         it "should return a singleton if that is the option passed", ->
           expect(factory.get("Test")).toEqual factory.get("Test")
@@ -207,8 +213,7 @@ require ["Factory"], (Factory) ->
         it "should throw if you provide in invalid mixin", ->
           factory.define 'BadMixin', ->
             @herp = true
-          ,
-            mixins: ["Doesn't Exist"]
+          , mixins: ["Doesn't Exist"]
 
           tester = ()->
             factory.get 'BadMixin'

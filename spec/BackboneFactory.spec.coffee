@@ -92,8 +92,7 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
           model = @model.clone()
           expect(model.get('test')).toBe true
           expect(BackboneFactory.verifyTags(model)).toBe true
-          disposeTest = ->
-            BackboneFactory.dispose model
+          disposeTest = -> BackboneFactory.dispose model
           expect(disposeTest).not.toThrow()
 
     describe "Collection Support", ->

@@ -392,7 +392,6 @@ define [
       @instances[name].push instance
       fullTags = _.toArray(tags).concat(instance.____tags or [])
       delete instance.____tags if instance.____tags
-      instance.__type = -> name
       instance.__tags = -> _.toArray fullTags
 
       factoryMap = [@instances[name]]
@@ -428,6 +427,10 @@ define [
 
       # arbitrary arguments length on the constructor
       instance = new constructor args...
+      # Set the type immediately
+      instance.__type = -> name
+      # Set the constructor of the instance to one that's factory wrapped
+      instance.constructor = @getConstructor name
       # mixin support
       @handleMixins instance, mixins, args
       # injection support

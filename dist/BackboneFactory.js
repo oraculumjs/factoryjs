@@ -23,11 +23,7 @@
         return this;
       }
     }));
-    BackboneFactory.define('Model', Backbone.Model.extend({
-      clone: function() {
-        return this.__factory().get(this.__type(), this.attributes);
-      }
-    }));
+    BackboneFactory.define('Model', Backbone.Model);
     BackboneFactory.define('Collection', Backbone.Collection.extend({
       model: 'Model',
       constructor: function(models, options) {
@@ -38,9 +34,6 @@
           this.model = this.__factory().getConstructor(this.model);
         }
         return Backbone.Collection.prototype.constructor.apply(this, arguments);
-      },
-      clone: function() {
-        return this.__factory().get(this.__type(), this.models);
       }
     }));
     BackboneFactory.define("Router", Backbone.Router);

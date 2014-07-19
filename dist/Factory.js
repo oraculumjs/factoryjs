@@ -375,9 +375,6 @@
         if (instance.____tags) {
           delete instance.____tags;
         }
-        instance.__type = function() {
-          return name;
-        };
         instance.__tags = function() {
           return _.toArray(fullTags);
         };
@@ -419,6 +416,10 @@
           var child = new ctor, result = func.apply(child, args);
           return Object(result) === result ? result : child;
         })(constructor, args, function(){});
+        instance.__type = function() {
+          return name;
+        };
+        instance.constructor = this.getConstructor(name);
         this.handleMixins(instance, mixins, args);
         this.handleInjections(instance, injections);
         this.handleTags(name, instance, def.tags);
