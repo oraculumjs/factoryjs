@@ -150,7 +150,7 @@ module.exports = class Factory extends events.EventEmitter
     if @definitions[name]? and not options.override
       return this if options.silent
       message = """
-        Definition already exists :: #{name} :: user overide option to ignore
+        Definition already exists [#{name}] use the override option to ignore
       """
       throw new Error message
 
