@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BackboneFactory.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="../doc-style.css" />
+  <script src="../doc-filelist.js"></script>
+  <script>
+    var relativeDir = "../", thisFile = "src/BackboneFactory.coffee", defaultSidebar = true;
+  </script>
+  <script src="../doc-script.js"></script>
+  <link rel="stylesheet" href="../docker.css" />
+</head>
+<body>
+  <div id="sidebar_wrapper">
+    <div id="sidebar_switch">
+      <span class="tree">Files</span>
+      <span class="headings">Headings</span>
+    </div>
+    <div id="tree"></div>
+    <div id="headings">
+      <div class="heading h2">
+        <a href="#backbone%20factory">Backbone Factory</a>
+      </div>
+      <div class="heading h2">
+        <a href="#view">View</a>
+      </div>
+      <div class="heading h2">
+        <a href="#model">Model</a>
+      </div>
+      <div class="heading h2">
+        <a href="#collection">Collection</a>
+      </div>
+      <div class="heading h2">
+        <a href="#router">Router</a>
+      </div>
+      <div class="heading h2">
+        <a href="#history">History</a>
+      </div>
+    </div>
+  </div>
+  <div id="sidebar-toggle"></div>
+  <div id="container"><div class="background highlight"></div>
+<table cellpadding="0" cellspacing="0">
+  <tbody>
+      <tr>
+        <td class="docs">
+          <h1>BackboneFactory.coffee</h1>
+        </td>
+        <td class="code highlight"></td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-1" id="section-1">&#182;</a>
+</div>
+
+        </td>
+        <td class="code highlight"><div class="highlight"><pre><span class="nx">define</span> <span class="p">[</span>
+  <span class="s">&quot;Factory&quot;</span>
+  <span class="s">&quot;backbone&quot;</span>
+  <span class="s">&quot;underscore&quot;</span>
+<span class="p">],</span> <span class="nf">(Factory, Backbone, _) -&gt;</span>
+  <span class="s">&#39;use strict&#39;</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap" id="backbone%20factory">
+  <h2>
+    <a href="#backbone%20factory" name="backbone%20factory" class="pilcrow">&#182;</a>
+    Backbone Factory
+  </h2>
+</div>
+
+
+<p>Returns a plain old object mixed with Backbone Event
+as the default. You will probably just want to extend
+the other objects defined below.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+
+  <span class="nv">BackboneFactory = </span><span class="k">new</span> <span class="nx">Factory</span> <span class="p">(</span><span class="nf">-&gt;</span>
+    <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="k">this</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Events</span>
+    <span class="nx">@initialize</span><span class="o">?</span> <span class="nx">arguments</span><span class="p">...</span>
+  <span class="p">),</span> <span class="nv">baseTags: </span><span class="p">[</span><span class="s">&#39;Backbone&#39;</span><span class="p">]</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap" id="view">
+  <h2>
+    <a href="#view" name="view" class="pilcrow">&#182;</a>
+    View
+  </h2>
+</div>
+
+
+<p>You can extend or get views and if you want you can now
+send in the model property as a string to get the model
+from the factory. Also you can pass in modelData property
+if you want to hydrate the model with some initial data.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+
+  <span class="nx">BackboneFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&#39;View&#39;</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span>
+
+    <span class="nv">constructor: </span><span class="nf">(options = {}) -&gt;</span>
+      <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="o">::</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">apply</span> <span class="k">this</span><span class="p">,</span> <span class="nx">arguments</span>
+      <span class="vi">@model = </span><span class="nx">@__factory</span><span class="p">().</span><span class="nx">get</span> <span class="nx">@model</span> <span class="k">if</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span> <span class="nx">@model</span>
+      <span class="vi">@collection = </span><span class="nx">@__factory</span><span class="p">().</span><span class="nx">get</span> <span class="nx">@collection</span> <span class="k">if</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span> <span class="nx">@collection</span>
+      <span class="k">return</span> <span class="k">this</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap" id="model">
+  <h2>
+    <a href="#model" name="model" class="pilcrow">&#182;</a>
+    Model
+  </h2>
+</div>
+
+
+<p>You can extend or get models, no changes.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+
+  <span class="nx">BackboneFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&#39;Model&#39;</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span>
+
+    <span class="nv">clone: </span><span class="nf">-&gt;</span> <span class="nx">@__factory</span><span class="p">().</span><span class="nx">get</span> <span class="nx">@__type</span><span class="p">(),</span> <span class="nx">@attributes</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap" id="collection">
+  <h2>
+    <a href="#collection" name="collection" class="pilcrow">&#182;</a>
+    Collection
+  </h2>
+</div>
+
+
+<p>You can extend or get collections and if you want you can now
+send in the model property as a string to get the model constructor
+from the factory.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+
+  <span class="nx">BackboneFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&#39;Collection&#39;</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">extend</span>
+    <span class="nv">model: </span><span class="s">&#39;Model&#39;</span>
+
+    <span class="nv">constructor: </span><span class="nf">(models, options = {}) -&gt;</span>
+      <span class="vi">@model = </span><span class="nx">@__factory</span><span class="p">().</span><span class="nx">getConstructor</span> <span class="nx">@model</span> <span class="k">if</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span> <span class="nx">@model</span>
+      <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="o">::</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">apply</span> <span class="k">this</span><span class="p">,</span> <span class="nx">arguments</span>
+
+    <span class="nv">clone: </span><span class="nf">-&gt;</span> <span class="nx">@__factory</span><span class="p">().</span><span class="nx">get</span> <span class="nx">@__type</span><span class="p">(),</span> <span class="nx">@models</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap" id="router">
+  <h2>
+    <a href="#router" name="router" class="pilcrow">&#182;</a>
+    Router
+  </h2>
+</div>
+
+
+<p>Plain old router.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+
+  <span class="nx">BackboneFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&quot;Router&quot;</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Router</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap" id="history">
+  <h2>
+    <a href="#history" name="history" class="pilcrow">&#182;</a>
+    History
+  </h2>
+</div>
+
+
+<p>We statically add the history to the factory.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+
+  <span class="nv">BackboneFactory.history = </span><span class="nx">Backbone</span><span class="p">.</span><span class="nx">history</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-8" id="section-8">&#182;</a>
+</div>
+<p>Finally, return the object for use</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+  <span class="k">return</span> <span class="nx">BackboneFactory</span>
+</pre></div>
+        </td>
+      </tr>
+  </tbody>
+</table>
+  </div>
+</body>
+</html>
