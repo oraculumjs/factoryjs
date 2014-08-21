@@ -53,9 +53,6 @@
         <a href="#compose%20mixin%20dependencies">Compose Mixin Dependencies</a>
       </div>
       <div class="heading h2">
-        <a href="#compose%20mixin%20options">Compose Mixin Options</a>
-      </div>
-      <div class="heading h2">
         <a href="#apply%20mixin">Apply Mixin</a>
       </div>
       <div class="heading h2">
@@ -662,65 +659,6 @@ in the order we are expecting.</p>
       </tr>
       <tr>
         <td class="docs">
-<div class="pilwrap" id="compose%20mixin%20options">
-  <h2>
-    <a href="#compose%20mixin%20options" name="compose%20mixin%20options" class="pilcrow">&#182;</a>
-    Compose Mixin Options
-  </h2>
-</div>
-
-
-<p>By introducing mixin inheritence we inadvertently made the possible
-option sets way more complicated since a mixin can depend on another
-mixin and give some defaults that should override the depended mixins
-defaults.</p>
-        </td>
-        <td class="code highlight"><div class="highlight"><pre>
-
-    <span class="nv">composeMixinOptions: </span><span class="nf">(instance, mixinName, args) -&gt;</span>
-      <span class="nv">mixin = </span><span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
-      <span class="nv">mixinDefaults = </span><span class="nx">mixin</span><span class="p">.</span><span class="nx">mixinOptions</span>
-      <span class="nv">mixinOptions = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">mixinOptions</span>
-      <span class="nx">extendMixinOptions</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">mixinDefaults</span>
-
-
-</pre></div>
-        </td>
-      </tr>
-      <tr>
-        <td class="docs">
-<div class="pilwrap">
-  <a class="pilcrow" href="#section-26" id="section-26">&#182;</a>
-</div>
-<p>Invoke the mixin's mixconfig method if available, passing through
-the mixinOptions object so that it can be modified by reference.</p>
-        </td>
-        <td class="code highlight"><div class="highlight"><pre>
-      <span class="nx">mixin</span><span class="p">.</span><span class="nx">mixconfig</span><span class="o">?</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">args</span><span class="p">...</span>
-
-
-</pre></div>
-        </td>
-      </tr>
-      <tr>
-        <td class="docs">
-<div class="pilwrap">
-  <a class="pilcrow" href="#section-27" id="section-27">&#182;</a>
-</div>
-<p>Finally, complete the composition of the mixinOptions object by
-extending a bare object with mixinDefaults and whatever custom
-options the mixconfig method may have assigned before assigning
-it back onto the instance.</p>
-        </td>
-        <td class="code highlight"><div class="highlight"><pre>
-      <span class="nv">instance.mixinOptions = </span><span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{},</span> <span class="nx">mixinDefaults</span><span class="p">,</span> <span class="nx">mixinOptions</span>
-
-
-</pre></div>
-        </td>
-      </tr>
-      <tr>
-        <td class="docs">
 <div class="pilwrap" id="apply%20mixin">
   <h2>
     <a href="#apply%20mixin" name="apply%20mixin" class="pilcrow">&#182;</a>
@@ -747,7 +685,7 @@ invoke mixinitialize and empty mixinitialize method after invocation.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-29" id="section-29">&#182;</a>
+  <a class="pilcrow" href="#section-26" id="section-26">&#182;</a>
 </div>
 <p>we are in a late mix, use transient loop protection</p>
         </td>
@@ -760,7 +698,7 @@ invoke mixinitialize and empty mixinitialize method after invocation.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-30" id="section-30">&#182;</a>
+  <a class="pilcrow" href="#section-27" id="section-27">&#182;</a>
 </div>
 <p>ignore tags</p>
         </td>
@@ -840,7 +778,7 @@ method it will get called after initialize and before constructed.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-33" id="section-33">&#182;</a>
+  <a class="pilcrow" href="#section-30" id="section-30">&#182;</a>
 </div>
 <p>clone the instance's mixinOptions to avoid overwriting the defaults</p>
         </td>
@@ -853,7 +791,56 @@ method it will get called after initialize and before constructed.</p>
       <span class="nv">instance.__mixins = </span><span class="nf">-&gt;</span>
         <span class="nx">resolvedMixins</span><span class="p">.</span><span class="nx">slice</span><span class="p">()</span>
 
-      <span class="nx">@applyMixin</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixinName</span> <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span>
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-31" id="section-31">&#182;</a>
+</div>
+<p>Iterate over all of our resolved mixins, applying their implementation
+to the current instance.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+      <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span>
+        <span class="nx">@applyMixin</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixinName</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-32" id="section-32">&#182;</a>
+</div>
+<p>Because it considers instance.mixinOptions to be canonical
+this needs to execute in reverse order so higher level mixins
+take configuration precedence.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+      <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span><span class="p">.</span><span class="nx">slice</span><span class="p">().</span><span class="nx">reverse</span><span class="p">()</span>
+        <span class="nv">mixin = </span><span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
+        <span class="nv">mixinDefaults = </span><span class="nx">mixin</span><span class="p">.</span><span class="nx">mixinOptions</span>
+        <span class="nv">mixinOptions = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">mixinOptions</span>
+        <span class="nx">extendMixinOptions</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">mixinDefaults</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-33" id="section-33">&#182;</a>
+</div>
+<p>Complete the composition of the mixinOptions object by
+extending a bare object with mixinDefaults.</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+        <span class="nv">instance.mixinOptions = </span><span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{},</span> <span class="nx">mixinDefaults</span><span class="p">,</span> <span class="nx">mixinOptions</span>
 
 
 </pre></div>
@@ -864,17 +851,29 @@ method it will get called after initialize and before constructed.</p>
 <div class="pilwrap">
   <a class="pilcrow" href="#section-34" id="section-34">&#182;</a>
 </div>
-<p>because it considers instance.mixinOptions to be canonical
-this needs to execute in reverse order so higher level mixins
-take configuration precedence.</p>
+<p>Invoke the mixin's mixconfig method if available, passing through
+the mixinOptions object so that it can be modified by reference.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
+      <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span>
+        <span class="nv">mixin = </span><span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
+        <span class="nv">mixinOptions = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">mixinOptions</span>
+        <span class="nx">mixin</span><span class="p">.</span><span class="nx">mixconfig</span><span class="o">?</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">args</span><span class="p">...</span>
 
-      <span class="nv">reverseMixins = </span><span class="nx">resolvedMixins</span><span class="p">.</span><span class="nx">slice</span><span class="p">().</span><span class="nx">reverse</span><span class="p">()</span>
-      <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">reverseMixins</span>
-        <span class="nx">@composeMixinOptions</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixinName</span><span class="p">,</span> <span class="nx">args</span>
 
-      <span class="nx">@mixinitialize</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixinName</span> <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span>
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-35" id="section-35">&#182;</a>
+</div>
+
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+      <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span>
+        <span class="nx">@mixinitialize</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixinName</span>
 
       <span class="nv">instance.__mixin = </span><span class="nx">_</span><span class="p">.</span><span class="nx">chain</span><span class="p">(</span><span class="nf">(obj, mixin, mixinOptions) -&gt;</span>
         <span class="nv">obj.____mixed = </span><span class="p">[]</span>
@@ -958,7 +957,6 @@ types tags and any user defined tags are put into this list for use.</p>
       <span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">].</span><span class="nx">push</span> <span class="nx">instance</span>
       <span class="nv">fullTags = </span><span class="nx">_</span><span class="p">.</span><span class="nx">toArray</span><span class="p">(</span><span class="nx">tags</span><span class="p">).</span><span class="nx">concat</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span> <span class="o">or</span> <span class="p">[])</span>
       <span class="k">delete</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span> <span class="k">if</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span>
-      <span class="nv">instance.__type = </span><span class="nf">-&gt;</span> <span class="nx">name</span>
       <span class="nv">instance.__tags = </span><span class="nf">-&gt;</span> <span class="nx">_</span><span class="p">.</span><span class="nx">toArray</span> <span class="nx">fullTags</span>
 
       <span class="nv">factoryMap = </span><span class="p">[</span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]]</span>
@@ -1010,7 +1008,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-39" id="section-39">&#182;</a>
+  <a class="pilcrow" href="#section-40" id="section-40">&#182;</a>
 </div>
 <p>singleton support</p>
         </td>
@@ -1024,7 +1022,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-40" id="section-40">&#182;</a>
+  <a class="pilcrow" href="#section-41" id="section-41">&#182;</a>
 </div>
 <p>arbitrary arguments length on the constructor</p>
         </td>
@@ -1037,7 +1035,33 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-41" id="section-41">&#182;</a>
+  <a class="pilcrow" href="#section-42" id="section-42">&#182;</a>
+</div>
+<p>Set the type immediately</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+      <span class="nv">instance.__type = </span><span class="nf">-&gt;</span> <span class="nx">name</span>
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-43" id="section-43">&#182;</a>
+</div>
+<p>Set the constructor of the instance to one that's factory wrapped</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+      <span class="nv">instance.constructor = </span><span class="nx">@getConstructor</span> <span class="nx">name</span>
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-44" id="section-44">&#182;</a>
 </div>
 <p>mixin support</p>
         </td>
@@ -1050,7 +1074,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-42" id="section-42">&#182;</a>
+  <a class="pilcrow" href="#section-45" id="section-45">&#182;</a>
 </div>
 <p>injection support</p>
         </td>
@@ -1063,7 +1087,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-43" id="section-43">&#182;</a>
+  <a class="pilcrow" href="#section-46" id="section-46">&#182;</a>
 </div>
 <p>tag support</p>
         </td>
@@ -1076,7 +1100,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-44" id="section-44">&#182;</a>
+  <a class="pilcrow" href="#section-47" id="section-47">&#182;</a>
 </div>
 <p>late initialization support</p>
         </td>
@@ -1090,7 +1114,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-45" id="section-45">&#182;</a>
+  <a class="pilcrow" href="#section-48" id="section-48">&#182;</a>
 </div>
 <p>we shortcut the dispose functionality so we can wire it into other
 frameworks and stuff easily</p>
@@ -1107,7 +1131,7 @@ frameworks and stuff easily</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-46" id="section-46">&#182;</a>
+  <a class="pilcrow" href="#section-49" id="section-49">&#182;</a>
 </div>
 <p>we trigger a create event on the factory so we can handle tag listeners
 but the user can use this for other purposes as well.</p>
@@ -1305,7 +1329,7 @@ instance that relates to a tag.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-54" id="section-54">&#182;</a>
+  <a class="pilcrow" href="#section-57" id="section-57">&#182;</a>
 </div>
 <p>And there you go, have fun with it.</p>
         </td>

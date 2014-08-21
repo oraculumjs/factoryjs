@@ -135,9 +135,8 @@ if you want to hydrate the model with some initial data.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
 
-  <span class="nx">BackboneFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&#39;Model&#39;</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span>
+  <span class="nx">BackboneFactory</span><span class="p">.</span><span class="nx">define</span> <span class="s">&#39;Model&#39;</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span>
 
-    <span class="nv">clone: </span><span class="nf">-&gt;</span> <span class="nx">@__factory</span><span class="p">().</span><span class="nx">get</span> <span class="nx">@__type</span><span class="p">(),</span> <span class="nx">@attributes</span>
 
 
 </pre></div>
@@ -165,8 +164,6 @@ from the factory.</p>
     <span class="nv">constructor: </span><span class="nf">(models, options = {}) -&gt;</span>
       <span class="vi">@model = </span><span class="nx">@__factory</span><span class="p">().</span><span class="nx">getConstructor</span> <span class="nx">@model</span> <span class="k">if</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span> <span class="nx">@model</span>
       <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="o">::</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">apply</span> <span class="k">this</span><span class="p">,</span> <span class="nx">arguments</span>
-
-    <span class="nv">clone: </span><span class="nf">-&gt;</span> <span class="nx">@__factory</span><span class="p">().</span><span class="nx">get</span> <span class="nx">@__type</span><span class="p">(),</span> <span class="nx">@models</span>
 
 
 </pre></div>

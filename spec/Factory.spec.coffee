@@ -16,6 +16,7 @@ require ["Factory"], (Factory) ->
 
     describe "factory instance", ->
       factory = null
+
       beforeEach ->
         factory = new Factory (->
           @x = true
@@ -24,6 +25,7 @@ require ["Factory"], (Factory) ->
 
       describe "define method", ->
         trigger = null
+
         beforeEach ->
           trigger = sinon.stub factory, 'trigger'
           factory.define "test", ->
@@ -70,6 +72,7 @@ require ["Factory"], (Factory) ->
           expect(t.test).toEqual(t)
 
       describe "hasDefinition method", ->
+
         beforeEach ->
           factory.define "test", ->
             @test = true
@@ -118,6 +121,7 @@ require ["Factory"], (Factory) ->
 
       describe "defineMixin method", ->
         trigger = mixin = null
+
         beforeEach ->
           mixin = { 'test' }
           trigger = sinon.stub factory, 'trigger'
@@ -149,7 +153,6 @@ require ["Factory"], (Factory) ->
         it 'should trigger an event', ->
           expect(trigger).toHaveBeenCalledOnce()
           expect(trigger).toHaveBeenCalledWith 'defineMixin', 'test', mixin
-
 
       describe "get method", ->
 
@@ -211,13 +214,10 @@ require ["Factory"], (Factory) ->
           expect(test.two).toBe true
 
         it "should throw if you provide in invalid mixin", ->
-          factory.define 'BadMixin', ->
+          factory.define 'BadMixin', (->
             @herp = true
-          , mixins: ["Doesn't Exist"]
-
-          tester = ()->
-            factory.get 'BadMixin'
-
+          ), mixins: ["Doesn't Exist"]
+          tester = -> factory.get 'BadMixin'
           expect(tester).toThrow()
 
         it "should support late mixing via the apply mixin method", ->
@@ -249,38 +249,31 @@ require ["Factory"], (Factory) ->
           expect(test.constructed).toHaveBeenCalledOn(test)
 
       describe "mixinOptions special cases", ->
+
         beforeEach ->
           factory.defineMixin 'one', {
-            mixinOptions: {
-              one: {
+            mixinOptions:
+              one:
                 test: false
                 flat: false
-              },
-              two: {
+              two:
                 test: false
                 flat: false
-              }
-            }
           }, mixins: ['two']
 
-          factory.defineMixin 'two', {
-            mixinOptions: {
-              two: {
+          factory.defineMixin 'two',
+            mixinOptions:
+              two:
                 test: true
                 flat: true
-              }
-            }
-          }
 
-          factory.define 'MixedObject', (options) ->
-            @options = ->
-              options
-          , mixins: ['one']
+          factory.define 'MixedObject', ((options) ->
+            @options = -> options
+          ), mixins: ['one']
 
-          factory.define 'RemixedObject', (options) ->
-            @options = ->
-              options
-          , mixins: ['two']
+          factory.define 'RemixedObject', ((options) ->
+            @options = -> options
+          ), mixins: ['two']
 
         it "should have the right mixinOptions", ->
           mixed = factory.get 'MixedObject'
@@ -292,64 +285,85 @@ require ["Factory"], (Factory) ->
           expect(remixed.mixinOptions.two.test).toBe(true)
 
       describe "Definition mixin special cases", ->
+
         beforeEach ->
           @date = new Date()
           @fn = ->
+
           factory.defineMixin 'InheritedMixin', {
+            mixinOptions:
+              mixconfig:
+                inherited: false
             center: true
-          }, {
-            mixins: null
-          }
+          }, mixins: null
+
+          factory.defineMixin 'MixconfigMixin', {
+            mixconfig: ({mixconfig}) ->
+              mixconfig.inherited = true
+          }, mixins: ['InheritedMixin']
+
           factory.extend 'Base', 'MixinObject', {
             mixinOptions:
               inherited:
                 left: true
               test: [1]
               fn: @fn
-          }, {
-            mixins: ['InheritedMixin']
-          }
+          }, mixins: ['InheritedMixin']
+
           factory.extend 'MixinObject', 'InheritedMixinObject', {
             mixinOptions:
               inherited:
-                right:true
+                right: true
               test: [2]
               date: @date
           }, {
             mixins: null
             inheritMixins: true
           }
+
+          factory.extend 'MixinObject', 'MixconfigObject', {
+          }, mixins: ['MixconfigMixin']
+
           factory.extend 'MixinObject', 'BadMixinObject', {
             mixinOptions: null
             mixconfig: ->
               derp: 'herp'
-          }, {
-            mixins: ['DoesntExist']
-          }
+          }, mixins: ['DoesntExist']
+
           @object = factory.get('InheritedMixinObject')
-          @failTest = ->
-            factory.get('BadMixinObject')
+          @failTest = -> factory.get('BadMixinObject')
+
         it "should contain the expected mixinOptions", ->
           expect(@object.mixinOptions.inherited.right).toBe(true)
           expect(@object.mixinOptions.inherited.left).toBe(true)
+
         it "should extend array mixinOptions", ->
           expect(@object.mixinOptions.test).toContain(1)
           expect(@object.mixinOptions.test).toContain(2)
+
         it "should just keep the newest for other types", ->
           expect(@object.mixinOptions.date).toBe(@date)
           expect(@object.mixinOptions.fn).toBe(@fn)
+
         it "should inherit mixins when the inheritMixins flag is true", ->
           expect(@object.center).toBe(true)
+
         it "should give back mixins when __mixins method is invoked", ->
           expect(@object.__mixins()).toContain 'InheritedMixin'
+
         it "should throw if the mixin isn't defined", ->
           expect(@failTest).toThrow()
+
+        it 'should allow modification of mixinOptions from depended mixins', ->
+          mixconfigObject = factory.get 'MixconfigObject'
+          expect(mixconfigObject.mixinOptions.mixconfig.inherited).toBe true
+
       describe "getConstructor method", ->
+
         beforeEach ->
           factory.define "ConstructorTest", (options) ->
             @x = true
             @y = options.y
-
 
         it "should return a function", ->
           expect(factory.getConstructor("ConstructorTest")).toBeFunction()
@@ -358,13 +372,6 @@ require ["Factory"], (Factory) ->
           cptype = factory.getConstructor('ConstructorTest').prototype
           ptype = factory.definitions.ConstructorTest.constructor.prototype
           expect(cptype).toBe(ptype)
-
-        describe "optional original argument", ->
-          it "should return the original constructor", ->
-            ctor = factory.getConstructor "ConstructorTest", true
-            obj = factory.get "ConstructorTest", y: true
-            expect(obj).toBeInstanceOf(ctor)
-
 
         it "should create the expected object when invoked", ->
           ctor = factory.getConstructor("ConstructorTest")
@@ -382,11 +389,17 @@ require ["Factory"], (Factory) ->
           factory.define "SingletonTest", (->
             @x = true
             @y = false
-          ),
-            singleton: true
+          ), singleton: true
 
           ctor = factory.getConstructor("SingletonTest")
           expect(new ctor()).toEqual new ctor()
+
+        describe "optional original argument", ->
+
+          it "should return the original constructor", ->
+            ctor = factory.getConstructor "ConstructorTest", true
+            obj = factory.get "ConstructorTest", y: true
+            expect(obj).toBeInstanceOf(ctor)
 
         it "should support mixins", ->
           factory.defineMixin "Mixin.One",
@@ -424,6 +437,7 @@ require ["Factory"], (Factory) ->
           expect(tester).toThrow()
 
       describe "Clone", ->
+
         beforeEach ->
           @clonedFactory = new Factory ()->
             @cloned = true
@@ -442,53 +456,63 @@ require ["Factory"], (Factory) ->
           test = ->
             factory.clone({})
           expect(test).toThrow()
+
         it "should support cloning of the factory", ->
           factory.define 'Test', test: true
           @clonedFactory.clone(factory)
           expect(@clonedFactory).not.toEqual(factory)
+
         it "should retain it's own core implementations", ->
           @clonedFactory.clone(factory)
           test1 = factory.get('Base')
           test2 = @clonedFactory.get('Base')
           expect(test1.cloned).not.toBeDefined()
           expect(test2.cloned).toBe true
+
         it "should support getting definitions from the cloned factory", ->
           factory.define 'Test', {test: true}
           @clonedFactory.clone(factory)
           expect(@clonedFactory.hasDefinition('Test')).toBe true
           test = @clonedFactory.get('Test', {})
           expect(test).toBeDefined()
+
         it "should have it's own definition hash as well", ->
           factory.define 'Test', {test: true}
           @clonedFactory.clone(factory)
           @clonedFactory.define 'NewTest', {test: true}
           expect(@clonedFactory.hasDefinition('NewTest')).toBe true
           expect(factory.hasDefinition('NewTest')).toBe false
+
         it "should share an instance pool with it's clone", ->
           factory.define 'Test', {test: true}
           @clonedFactory.clone(factory)
           test1 = factory.get('Test')
           expect(@clonedFactory.instances['Test']).toBeDefined()
+
         it "should reattach any instance factory accessors to itself", ->
           @clonedFactory.clone(factory)
           test1 = factory.get('Base')
           test2 = @clonedFactory.get('Base')
           expect(test1.__factory()).toEqual(factory)
           expect(test2.__factory()).toEqual(@clonedFactory)
+
         it "should share any onTag events", ->
           method = ->
           factory.onTag 'Test', method
           @clonedFactory.clone(factory)
           expect(@clonedFactory.tagCbs['Test']).toContain method
+
         it "should share any define promises", ->
           method = ->
           promise = factory.whenDefined 'DeferredTest'
           @clonedFactory.clone(factory)
           @clonedFactory.promises['DeferredTest']
           expect(@clonedFactory.promises['DeferredTest'].state()).toBe 'pending'
+
         it "should maintain the singleton status of cloned instances", ->
           @clonedFactory.clone(factory)
           expect(@clonedFactory.instances['Test.Util'].length).toBe 1
+
       describe 'mirror method', ->
         base = clone = m = null
         methods = [
@@ -500,7 +524,6 @@ require ["Factory"], (Factory) ->
           "mirror"
           "defineMixin"
           "composeMixinDependencies"
-          "composeMixinOptions"
           "applyMixin"
           "mixinitialize"
           "handleMixins"
@@ -544,6 +567,7 @@ require ["Factory"], (Factory) ->
 
       describe "Factory Instance Mapping", ->
         lso = undefined
+
         beforeEach ->
           factory.defineMixin 'TagMixin', {}, {
             tags: ['MixedInto']
@@ -586,7 +610,6 @@ require ["Factory"], (Factory) ->
           tester = ->
             factory.dispose(lso)
           expect(tester).toThrow()
-
 
         describe "onTag", ->
           instances = undefined
@@ -663,26 +686,31 @@ require ["Factory"], (Factory) ->
             expect(factory.get("SimpleObject").test).toBe true
 
         describe "offTag", ->
+
           it "should ignore requests to remove callbacks if no tag", ->
             test = ->
               factory.offTag('UndeclaredTag')
             expect(test).not.toThrow()
+
           it "should remove the callback passed in", ->
             tester = (i)->
               i.test = true
             factory.onTag "SimpleObject", tester
             factory.offTag "SimpleObject", tester
             expect(factory.get('SimpleObject').test).not.toBeDefined()
+
           it "should remove all callbacks if one isn't provided", ->
             tester = (i)->
               i.test = true
             factory.onTag "SimpleObject", tester
             factory.offTag "SimpleObject"
             expect(factory.get('SimpleObject').test).not.toBeDefined()
+
           it "should throw if no tag is provided", ->
             tester = ->
               factory.offTag()
             expect(tester).toThrow()
+
           it "should throw if in the callback is not found", ->
             tester = ->
               factory.onTag "SimpleObject", (i)->
@@ -692,18 +720,23 @@ require ["Factory"], (Factory) ->
             expect(tester).toThrow()
 
         describe "isType", ->
+
           beforeEach ->
             factory.define 'aType', ()-> @test = true
+
           it "should return true if the type matches", ->
             instance = factory.get 'aType'
             expect(factory.isType(instance, 'aType')).toBe true
+
           it "should return false if the type doesn't match", ->
             instance = factory.get 'aType'
             expect(factory.isType(instance, 'bType')).toBe false
 
         describe "getType", ->
+
           beforeEach ->
             factory.define 'aType', ()-> @test = true
+
           it "should return the type as a string", ->
             instance = factory.get 'aType'
             expect(factory.getType(instance)).toEqual('aType')
