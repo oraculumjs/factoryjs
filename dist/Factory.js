@@ -256,18 +256,6 @@
         return _.uniq(result);
       };
 
-      Factory.prototype.composeMixinOptions = function(instance, mixinName, args) {
-        var mixin, mixinDefaults, mixinOptions;
-        mixin = this.mixins[mixinName];
-        mixinDefaults = mixin.mixinOptions;
-        mixinOptions = instance.mixinOptions;
-        extendMixinOptions(mixinOptions, mixinDefaults);
-        if (typeof mixin.mixconfig === "function") {
-          mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));
-        }
-        return instance.mixinOptions = _.extend({}, mixinDefaults, mixinOptions);
-      };
-
       Factory.prototype.applyMixin = function(instance, mixinName) {
         var ignore_tags, late_mix, mixin, mixinSettings, props;
         mixin = this.mixins[mixinName];
@@ -308,7 +296,7 @@
       };
 
       Factory.prototype.handleMixins = function(instance, mixins, args) {
-        var mixinName, resolvedMixins, reverseMixins, _i, _j, _k, _len, _len1, _len2;
+        var mixin, mixinDefaults, mixinName, mixinOptions, resolvedMixins, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref;
         instance.____mixed = [];
         instance.mixinOptions = _.extend({}, instance.mixinOptions);
         resolvedMixins = this.composeMixinDependencies(mixins);
@@ -319,13 +307,25 @@
           mixinName = resolvedMixins[_i];
           this.applyMixin(instance, mixinName);
         }
-        reverseMixins = resolvedMixins.slice().reverse();
-        for (_j = 0, _len1 = reverseMixins.length; _j < _len1; _j++) {
-          mixinName = reverseMixins[_j];
-          this.composeMixinOptions(instance, mixinName, args);
+        _ref = resolvedMixins.slice().reverse();
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          mixinName = _ref[_j];
+          mixin = this.mixins[mixinName];
+          mixinDefaults = mixin.mixinOptions;
+          mixinOptions = instance.mixinOptions;
+          extendMixinOptions(mixinOptions, mixinDefaults);
+          instance.mixinOptions = _.extend({}, mixinDefaults, mixinOptions);
         }
         for (_k = 0, _len2 = resolvedMixins.length; _k < _len2; _k++) {
           mixinName = resolvedMixins[_k];
+          mixin = this.mixins[mixinName];
+          mixinOptions = instance.mixinOptions;
+          if (typeof mixin.mixconfig === "function") {
+            mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));
+          }
+        }
+        for (_l = 0, _len3 = resolvedMixins.length; _l < _len3; _l++) {
+          mixinName = resolvedMixins[_l];
           this.mixinitialize(instance, mixinName);
         }
         instance.__mixin = _.chain(function(obj, mixin, mixinOptions) {
