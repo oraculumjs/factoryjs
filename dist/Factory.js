@@ -1,18 +1,18 @@
 (function() {
-  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
-    __slice = [].slice;
+  var indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    slice = [].slice;
 
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
     var Factory, extendMixinOptions;
     extendMixinOptions = function(mixinOptions, mixinDefaults) {
-      var defaultValue, isObject, option, value, _results;
+      var defaultValue, isObject, option, results, value;
       if (mixinOptions == null) {
         mixinOptions = {};
       }
       if (mixinDefaults == null) {
         mixinDefaults = {};
       }
-      _results = [];
+      results = [];
       for (option in mixinDefaults) {
         defaultValue = mixinDefaults[option];
         value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
@@ -27,9 +27,9 @@
           mixinOptions[option] = value.concat(defaultValue);
           continue;
         }
-        _results.push(mixinOptions[option] = _.extend({}, defaultValue, value));
+        results.push(mixinOptions[option] = _.extend({}, defaultValue, value));
       }
-      return _results;
+      return results;
     };
     return Factory = (function() {
       _.extend(Factory.prototype, Backbone.Events);
@@ -39,7 +39,6 @@
           options = {};
         }
         this.mixins = {};
-        this.mixinSettings = {};
         this.tagCbs = {};
         this.tagMap = {};
         this.promises = {};
@@ -51,7 +50,7 @@
       }
 
       Factory.prototype.define = function(name, def, options) {
-        var definition, message, tags, _base;
+        var base1, definition, tags;
         if (options == null) {
           options = {};
         }
@@ -59,11 +58,10 @@
           if (options.silent) {
             return this;
           }
-          message = "Definition already exists :: " + name + " :: user overide option to ignore";
-          throw new Error(message);
+          throw new InternalError("Factory#define Definition \"" + name + "\" already exists.\nUse override option to ignore.");
         }
-        if ((_base = this.promises)[name] == null) {
-          _base[name] = $.Deferred();
+        if ((base1 = this.promises)[name] == null) {
+          base1[name] = $.Deferred();
         }
         definition = {
           options: options
@@ -105,9 +103,9 @@
       };
 
       Factory.prototype.whenDefined = function(name) {
-        var _base;
-        if ((_base = this.promises)[name] == null) {
-          _base[name] = $.Deferred();
+        var base1;
+        if ((base1 = this.promises)[name] == null) {
+          base1[name] = $.Deferred();
         }
         return this.promises[name].promise();
       };
@@ -123,41 +121,41 @@
         return dfd;
       };
 
-      Factory.prototype.extend = function(base, name, def, options) {
-        var bDef, mixinDefaults, mixinOptions;
+      Factory.prototype.extend = function(base, name, definition, options) {
+        var baseDefinition, extendedDefinition, mixinDefaults, mixinOptions;
         if (options == null) {
           options = {};
         }
-        bDef = this.definitions[base];
-        if (!bDef) {
-          throw new Error("Base Class Not Available :: " + base);
+        baseDefinition = this.definitions[base];
+        if (!baseDefinition) {
+          throw new ReferenceError("Factory#extend Base Class \"" + base + "\" Not Available.");
         }
-        if (!_.isObject(def)) {
-          throw new Error("Invalid Parameter Definition ::\nexpected object ::\ngot " + (def.constructor.prototype.toString()));
+        if (!_.isObject(definition)) {
+          throw new TypeError("Factory#extend Invalid Argument.\n`definition` must be an Object.");
         }
-        options.tags = _.chain([]).union(options.tags).union(bDef.tags).compact().value();
+        options.tags = _.chain([]).union(options.tags).union(baseDefinition.tags).compact().value();
         if (options.inheritMixins) {
-          options.mixins = _.chain([]).union(bDef.options.mixins).union(options.mixins).compact().value();
-          mixinOptions = def.mixinOptions;
-          mixinDefaults = bDef.constructor.prototype.mixinOptions;
+          options.mixins = _.chain([]).union(baseDefinition.options.mixins).union(options.mixins).compact().value();
+          mixinOptions = definition.mixinOptions;
+          mixinDefaults = baseDefinition.constructor.prototype.mixinOptions;
           extendMixinOptions(mixinOptions, mixinDefaults);
         }
         if (options.singleton != null) {
           options.singleton = options.singleton;
         } else {
-          options.singleton = bDef.options.singleton;
+          options.singleton = baseDefinition.options.singleton;
         }
-        return this.define(name, bDef.constructor.extend(def), options);
+        extendedDefinition = baseDefinition.constructor.extend(definition);
+        return this.define(name, extendedDefinition, options);
       };
 
       Factory.prototype.clone = function(factory) {
-        var message, singletonDefinitions;
-        message = "Invalid Argument :: Expected Factory";
+        var singletonDefinitions;
         if (!(factory instanceof Factory)) {
-          throw new Error(message);
+          throw new TypeError('Factory#clone Invalid Argument.\n`factory` must be an instance of Factory.');
         }
         singletonDefinitions = [];
-        _.each(["definitions", "mixins", "promises", "mixinSettings"], (function(_this) {
+        _.each(["definitions", "mixins", "promises"], (function(_this) {
           return function(key) {
             _.defaults(_this[key], factory[key]);
             if (key === 'definitions') {
@@ -174,20 +172,20 @@
         })(this));
         return _.each(["tagCbs", "tagMap", "promises", "instances"], (function(_this) {
           return function(key) {
-            var name, payload, singleton, _base, _base1, _ref, _results;
+            var base1, base2, name, payload, ref, results, singleton;
             if (_this[key] == null) {
               _this[key] = {};
             }
-            _ref = factory[key];
-            _results = [];
-            for (name in _ref) {
-              payload = _ref[name];
-              if (key === 'instances' && __indexOf.call(singletonDefinitions, name) >= 0) {
+            ref = factory[key];
+            results = [];
+            for (name in ref) {
+              payload = ref[name];
+              if (key === 'instances' && indexOf.call(singletonDefinitions, name) >= 0) {
                 singleton = true;
               }
               if (_.isArray(payload)) {
-                if ((_base = _this[key])[name] == null) {
-                  _base[name] = [];
+                if ((base1 = _this[key])[name] == null) {
+                  base1[name] = [];
                 }
                 if (singleton) {
                   _this[key][name] = _this[key][name];
@@ -196,15 +194,15 @@
                 }
               }
               if (_.isFunction(payload != null ? payload.resolve : void 0)) {
-                if ((_base1 = _this[key])[name] == null) {
-                  _base1[name] = $.Deferred();
+                if ((base2 = _this[key])[name] == null) {
+                  base2[name] = $.Deferred();
                 }
-                _results.push(_this[key][name].done(payload.resolve));
+                results.push(_this[key][name].done(payload.resolve));
               } else {
-                _results.push(void 0);
+                results.push(void 0);
               }
             }
-            return _results;
+            return results;
           };
         })(this));
       };
@@ -226,57 +224,55 @@
         });
       };
 
-      Factory.prototype.defineMixin = function(name, def, options) {
-        var message;
+      Factory.prototype.defineMixin = function(mixinName, definition, options) {
         if (options == null) {
           options = {};
         }
-        if ((this.mixins[name] != null) && !options.override) {
-          message = "Mixin already defined :: " + name + " :: use override option to ignore";
-          throw new Error(message);
+        if ((this.mixins[mixinName] != null) && !options.override) {
+          throw new InternalError("Factory#defineMixin Mixin " + mixinName + " already defined.\nUse `override` option to ignore.");
         }
-        this.mixins[name] = def;
-        this.mixinSettings[name] = options;
-        this.trigger('defineMixin', name, def, options);
+        this.mixins[mixinName] = {
+          definition: definition,
+          options: options
+        };
+        this.trigger('defineMixin', mixinName, definition, options);
         return this;
       };
 
       Factory.prototype.composeMixinDependencies = function(mixins) {
-        var deps, mixin, result, _i, _len;
+        var j, len, mixinName, options, result;
         if (mixins == null) {
           mixins = [];
         }
         result = [];
-        for (_i = 0, _len = mixins.length; _i < _len; _i++) {
-          mixin = mixins[_i];
-          deps = this.mixinSettings[mixin].mixins || [];
-          result = result.concat(this.composeMixinDependencies(deps));
-          result.push(mixin);
+        for (j = 0, len = mixins.length; j < len; j++) {
+          mixinName = mixins[j];
+          options = this.mixins[mixinName].options;
+          result = result.concat(this.composeMixinDependencies(options.mixins));
+          result.push(mixinName);
         }
         return _.uniq(result);
       };
 
       Factory.prototype.applyMixin = function(instance, mixinName) {
-        var ignore_tags, late_mix, mixin, mixinSettings, props;
-        mixin = this.mixins[mixinName];
-        if (!mixin) {
-          throw new Error("Mixin Not Defined :: " + mixinName);
+        var definition, ignore_tags, late_mix, options, ref;
+        ref = this.mixins[mixinName], definition = ref.definition, options = ref.options;
+        if (!definition) {
+          throw new TypeError("Factory#applyMixin Mixin " + mixinName + " not defined");
         }
         if (!instance.____mixed) {
           late_mix = true;
           ignore_tags = true;
           instance.____mixed = [];
         }
-        if (__indexOf.call(instance.____mixed, mixinName) >= 0) {
+        if (indexOf.call(instance.____mixed, mixinName) >= 0) {
           return;
         }
-        mixinSettings = this.mixinSettings[mixinName];
-        if (mixinSettings.tags && !ignore_tags) {
+        if (options.tags && !ignore_tags) {
           instance.____tags || (instance.____tags = []);
-          instance.____tags = instance.____tags.concat(mixinSettings.tags);
+          instance.____tags = instance.____tags.concat(options.tags);
         }
-        props = _.omit(mixin, 'mixinOptions', 'mixinitialize', 'mixconfig');
-        _.extend(instance, props);
+        _.extend(instance, _.omit(definition, ['mixinOptions', 'mixinitialize', 'mixconfig']));
         if (late_mix) {
           this.mixinitialize(instance, mixinName);
           delete instance.____mixed;
@@ -287,45 +283,45 @@
       };
 
       Factory.prototype.mixinitialize = function(instance, mixinName) {
-        var mixin, mixinitialize;
-        mixin = this.mixins[mixinName];
-        mixinitialize = mixin.mixinitialize;
+        var definition, mixinitialize;
+        definition = this.mixins[mixinName].definition;
+        mixinitialize = definition.mixinitialize;
         if (_.isFunction(mixinitialize)) {
           return mixinitialize.call(instance);
         }
       };
 
       Factory.prototype.handleMixins = function(instance, mixins, args) {
-        var mixin, mixinDefaults, mixinName, mixinOptions, resolvedMixins, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref;
+        var definition, j, k, l, len, len1, len2, len3, m, mixinDefaults, mixinName, mixinOptions, ref, resolvedMixins;
         instance.____mixed = [];
         instance.mixinOptions = _.extend({}, instance.mixinOptions);
         resolvedMixins = this.composeMixinDependencies(mixins);
         instance.__mixins = function() {
           return resolvedMixins.slice();
         };
-        for (_i = 0, _len = resolvedMixins.length; _i < _len; _i++) {
-          mixinName = resolvedMixins[_i];
+        for (j = 0, len = resolvedMixins.length; j < len; j++) {
+          mixinName = resolvedMixins[j];
           this.applyMixin(instance, mixinName);
         }
-        _ref = resolvedMixins.slice().reverse();
-        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-          mixinName = _ref[_j];
-          mixin = this.mixins[mixinName];
-          mixinDefaults = mixin.mixinOptions;
+        ref = resolvedMixins.slice().reverse();
+        for (k = 0, len1 = ref.length; k < len1; k++) {
+          mixinName = ref[k];
+          definition = this.mixins[mixinName].definition;
+          mixinDefaults = definition.mixinOptions;
           mixinOptions = instance.mixinOptions;
           extendMixinOptions(mixinOptions, mixinDefaults);
           instance.mixinOptions = _.extend({}, mixinDefaults, mixinOptions);
         }
-        for (_k = 0, _len2 = resolvedMixins.length; _k < _len2; _k++) {
-          mixinName = resolvedMixins[_k];
-          mixin = this.mixins[mixinName];
+        for (l = 0, len2 = resolvedMixins.length; l < len2; l++) {
+          mixinName = resolvedMixins[l];
+          definition = this.mixins[mixinName].definition;
           mixinOptions = instance.mixinOptions;
-          if (typeof mixin.mixconfig === "function") {
-            mixin.mixconfig.apply(mixin, [mixinOptions].concat(__slice.call(args)));
+          if (typeof definition.mixconfig === "function") {
+            definition.mixconfig.apply(definition, [mixinOptions].concat(slice.call(args)));
           }
         }
-        for (_l = 0, _len3 = resolvedMixins.length; _l < _len3; _l++) {
-          mixinName = resolvedMixins[_l];
+        for (m = 0, len3 = resolvedMixins.length; m < len3; m++) {
+          mixinName = resolvedMixins[m];
           this.mixinitialize(instance, mixinName);
         }
         instance.__mixin = _.chain(function(obj, mixin, mixinOptions) {
@@ -337,20 +333,20 @@
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {
-        var name, type, _results;
-        _results = [];
+        var name, results, type;
+        results = [];
         for (name in injections) {
           type = injections[name];
-          _results.push(instance[name] = this.get(type));
+          results.push(instance[name] = this.get(type));
         }
-        return _results;
+        return results;
       };
 
       Factory.prototype.handleCreate = function(instance) {
-        var cb, cbs, tag, _i, _j, _len, _len1, _ref;
-        _ref = instance.__tags();
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          tag = _ref[_i];
+        var cb, cbs, j, k, len, len1, ref, tag;
+        ref = instance.__tags();
+        for (j = 0, len = ref.length; j < len; j++) {
+          tag = ref[j];
           if (this.tagCbs[tag] == null) {
             this.tagCbs[tag] = [];
           }
@@ -358,8 +354,8 @@
           if (cbs.length === 0) {
             continue;
           }
-          for (_j = 0, _len1 = cbs.length; _j < _len1; _j++) {
-            cb = cbs[_j];
+          for (k = 0, len1 = cbs.length; k < len1; k++) {
+            cb = cbs[k];
             if (_.isFunction(cb)) {
               cb(instance);
             }
@@ -369,7 +365,7 @@
       };
 
       Factory.prototype.handleTags = function(name, instance, tags) {
-        var factoryMap, fullTags, tag, _i, _len;
+        var factoryMap, fullTags, j, len, tag;
         this.instances[name].push(instance);
         fullTags = _.toArray(tags).concat(instance.____tags || []);
         if (instance.____tags) {
@@ -379,8 +375,8 @@
           return _.toArray(fullTags);
         };
         factoryMap = [this.instances[name]];
-        for (_i = 0, _len = fullTags.length; _i < _len; _i++) {
-          tag = fullTags[_i];
+        for (j = 0, len = fullTags.length; j < len; j++) {
+          tag = fullTags[j];
           if (this.tagMap[tag] == null) {
             this.tagMap[tag] = [];
           }
@@ -394,14 +390,13 @@
       };
 
       Factory.prototype.get = function() {
-        var args, constructor, def, injections, instance, instances, message, mixins, name, options, singleton, _base;
-        name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        instances = (_base = this.instances)[name] != null ? _base[name] : _base[name] = [];
+        var args, base1, constructor, def, injections, instance, instances, mixins, name, options, singleton;
+        name = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+        instances = (base1 = this.instances)[name] != null ? base1[name] : base1[name] = [];
         instance = this.instances[name][0];
         def = this.definitions[name];
-        message = "Invalid Definition :: " + name + " :: not defined";
         if (def == null) {
-          throw new Error(message);
+          throw new InternalError("Factory#get Definition " + name + " is not defined.");
         }
         constructor = def.constructor;
         options = def.options || {};
@@ -440,22 +435,21 @@
           return false;
         }
         return _.all(instance.__factoryMap(), function(arr) {
-          return __indexOf.call(arr, instance) >= 0;
+          return indexOf.call(arr, instance) >= 0;
         });
       };
 
       Factory.prototype.dispose = function(instance) {
         _.each(instance.__factoryMap(), function(arr) {
-          var message, _results;
-          message = "Instance Not In Factory :: " + instance + " :: disposal failed!";
-          if (__indexOf.call(arr, instance) < 0) {
-            throw new Error(message);
+          var results;
+          if (indexOf.call(arr, instance) < 0) {
+            throw new InternalError("Factory#dispose Instance Not In Factory.\nDisposal failed!");
           }
-          _results = [];
+          results = [];
           while (arr.indexOf(instance) > -1) {
-            _results.push(arr.splice(arr.indexOf(instance), 1));
+            results.push(arr.splice(arr.indexOf(instance), 1));
           }
-          return _results;
+          return results;
         });
         return this.trigger('dispose', instance);
       };
@@ -474,32 +468,29 @@
       };
 
       Factory.prototype.onTag = function(tag, cb) {
-        var instance, message, _base, _i, _len, _ref;
-        message = "Invalid Argument :: " + (typeof tag) + " provided :: expected String";
+        var base1, instance, j, len, ref;
         if (!_.isString(tag)) {
-          throw new Error(message);
+          throw new TypeError("Factory#onTag Invalid Argument.\n`tag` must be a String.");
         }
-        message = "Invalid Argument :: " + (typeof cb) + " provided :: expected Function";
         if (!_.isFunction(cb)) {
-          throw new Error(message);
+          throw new TypeError("Factory#onTag Invalid Argument.\n`cb` must be a Function.");
         }
-        _ref = this.tagMap[tag] || [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          instance = _ref[_i];
+        ref = this.tagMap[tag] || [];
+        for (j = 0, len = ref.length; j < len; j++) {
+          instance = ref[j];
           cb(instance);
         }
-        if ((_base = this.tagCbs)[tag] == null) {
-          _base[tag] = [];
+        if ((base1 = this.tagCbs)[tag] == null) {
+          base1[tag] = [];
         }
         this.tagCbs[tag].push(cb);
         return true;
       };
 
       Factory.prototype.offTag = function(tag, cb) {
-        var cbIdx, message;
-        message = "Invalid Argument :: " + (typeof tag) + " provided :: expected String";
+        var cbIdx;
         if (!_.isString(tag)) {
-          throw new Error(message);
+          throw new TypeError("Factory#offTag Invalid Argument.\n`tag` must be a String.");
         }
         if (this.tagCbs[tag] == null) {
           return;
@@ -509,9 +500,8 @@
           return;
         }
         cbIdx = this.tagCbs[tag].indexOf(cb);
-        message = "Callback Not Found :: " + cb + " :: for tag " + tag;
         if (cbIdx === -1) {
-          throw new Error(message);
+          throw new ReferenceError("Factory#offTag Callback Not Found for " + tag + ".");
         }
         return this.tagCbs[tag].splice(cbIdx, 1);
       };

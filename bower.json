@@ -3,15 +3,14 @@
   "version": "1.0.1",
   "main": "dist/Factory.js",
   "dependencies": {
-    "jquery": "latest",
-    "backbone": "latest",
-    "requirejs": "latest",
-    "underscore": "latest"
-  }
-, "devDependencies": {
-    "sinon": "latest",
-    "jasmine-sinon": "latest",
-    "jasmine-matchers": "uxebu/jasmine-matchers",
-    "jasmine-matchers-util": "JamieMason/Jasmine-Matchers"
+    "jquery": "~2.1.4",
+    "underscore": "~1.7.0",
+    "backbone": "~1.2.0",
+    "requirejs": "~2.1.18"
+  },
+  "devDependencies": {
+    "sinonjs": "1.10.2",
+    "jasmine-sinon": "~0.4.0",
+    "jasmine-expect": "~1.22.3"
   }
 }

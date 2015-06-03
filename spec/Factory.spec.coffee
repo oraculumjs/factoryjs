@@ -137,10 +137,10 @@ require ["Factory"], (Factory) ->
           expect(factory.mixins.test).toBeDefined()
 
         it "should have the defined mixin dependency", ->
-          expect(factory.mixinSettings.test.mixins).toEqual(['test1'])
+          expect(factory.mixins.test.options.mixins).toEqual(['test1'])
 
         it "should have the defined mixin tags", ->
-          expect(factory.mixinSettings.test.tags).toEqual(['test1'])
+          expect(factory.mixins.test.options.tags).toEqual(['test1'])
 
         it "should throw if that mixin is already defined", ->
           test = -> factory.defineMixin 'test', mixin
