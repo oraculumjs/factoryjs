@@ -1,27 +1,3 @@
-console?.log? '''\033[1;32m
-\x20            ▁▂▃▄▅▆▆▇▇▇▇▇▆▆▅▄▃▂▁
-\x20        ▁▄▆████████▀▀▀▀▀████████▆▄▁
-\x20       ▟███▀▀▔▔             ▔▔▀▀███▙
-\x20       ███                       ███
-\x20       ▐██▏    ▁▃▅▆▆▇▇▇▆▆▅▃▁    ▕██▌
-\x20       ▕██▙▂▄▇█████▀▀▀▀▀█████▇▄▁▟██▏
-\x20        ▜████▀▀▔▔         ▔▔▀▀████▛
-\x20         ▜█▙                   ▟█▛
-\x20          ▜█▙    ▁▄▅▆▆▆▅▄▁    ▟█▛
-\x20           ▜██▄▆███████████▆▄██▛
-\x20            ▜████▀▔     ▔▀████▛
-\x20             ▔▜██▃       ▃██▛▔
-\x20               ▀███▄▁ ▁▄███▀
-\x20                 ▀▀█████▀▀
-\x20                    ▔▀▔
-\033[1;37m    _                _               _
-\x20  | |    ___   ___ | | _____  _   _| |_
-\x20  | |   / _ \\ / _ \\| |/ / _ \\| | | | __|
-\x20  | |__| (_) | (_) |   < (_) | |_| | |_
-\x20  |_____\\___/ \\___/|_|\\_\\___/ \\__,_|\\__|
-\x20
-'''
-
 pkg = require './package.json'
 component = require './bower.json'
 requireConfig = require './require-config.json'
@@ -31,7 +7,6 @@ module.exports = (grunt) ->
 
   grunt.loadNpmTasks 'grunt-bump'
   grunt.loadNpmTasks 'grunt-docker'
-  grunt.loadNpmTasks 'grunt-blanket'
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-clean'
   grunt.loadNpmTasks 'grunt-contrib-watch'
@@ -82,14 +57,9 @@ module.exports = (grunt) ->
     coffeelint:
       app: ['src/**/*.coffee']
 
-    blanket:
-      instrument:
-        files:
-          'build/src-cov/': ['build/src/']
-
     jasmine:
       normal:
-        src: ['build/src-cov/**/*.js']
+        src: ['build/src/**/*.js']
         options:
           specs: [
             'build/spec/**/*.helper.js'
@@ -102,15 +72,15 @@ module.exports = (grunt) ->
             requireConfig: requireConfig
           }
           helpers: [
-            'components/sinonjs/sinon.js'
-            'components/jasmine-sinon/lib/jasmine-sinon.js'
+            'bower_components/sinonjs/sinon.js'
+            'bower_components/jasmine-sinon/lib/jasmine-sinon.js'
+            'bower_components/jasmine-expect/dist/jasmine-matchers.js'
           ]
       live:
-        src: ['build/src-cov/**/*.js']
+        src: ['build/src/**/*.js']
         options:
           host: 'http://localhost:9002'
           specs: [
-            'lib/jscoverage/jscoverage.js'
             'build/spec/**/*.helper.js'
             'build/spec/**/*.spec.js'
           ]
@@ -123,8 +93,9 @@ module.exports = (grunt) ->
           }
           keepRunner: true
           helpers: [
-            'components/sinonjs/sinon.js'
-            'components/jasmine-sinon/lib/jasmine-sinon.js'
+            'bower_components/sinonjs/sinon.js'
+            'bower_components/jasmine-sinon/lib/jasmine-sinon.js'
+            'bower_components/jasmine-expect/dist/jasmine-matchers.js'
           ]
 
     concat:
@@ -152,7 +123,7 @@ module.exports = (grunt) ->
         tasks: ['coffeelint', 'build', 'docs']
       scripts:
         files: ['build/src/**/*.js']
-        tasks: ['jshint', 'blanket', 'jasmine:live', 'dist']
+        tasks: ['jshint', 'jasmine:live', 'dist']
         options: livereload: true
 
     jshint:
@@ -203,7 +174,6 @@ module.exports = (grunt) ->
     'coffeelint'
     'build'
     'jshint'
-    'blanket'
     'jasmine:normal'
     'dist'
   ]
@@ -212,7 +182,6 @@ module.exports = (grunt) ->
     'coffeelint'
     'build'
     'jshint'
-    'blanket'
     'connect'
     'jasmine:live'
     'watch'

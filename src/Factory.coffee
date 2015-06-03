@@ -55,7 +55,6 @@ define [
 
     constructor: (Base, options = {}) ->
       @mixins = {}
-      @mixinSettings = {}
       @tagCbs = {}
       @tagMap = {}
       @promises = {}
@@ -73,10 +72,10 @@ define [
     define: (name, def, options = {}) ->
       if @definitions[name]? and not options.override
         return this if options.silent
-        message = """
-          Definition already exists :: #{name} :: user overide option to ignore
+        throw new InternalError """
+          Factory#define Definition "#{name}" already exists.
+          Use override option to ignore.
         """
-        throw new Error message
 
       # whenDefined support.
       @promises[name] ?= $.Deferred()
@@ -145,38 +144,38 @@ define [
     # factory. It basically uses Backbone.Model extend unless you provide
     # your own.
 
-    extend: (base, name, def, options = {}) ->
-      bDef = @definitions[base]
+    extend: (base, name, definition, options = {}) ->
+      baseDefinition = @definitions[base]
 
-      throw new Error """
-        Base Class Not Available :: #{base}
-      """ unless bDef
+      throw new ReferenceError """
+        Factory#extend Base Class "#{base}" Not Available.
+      """ unless baseDefinition
 
-      throw new Error """
-        Invalid Parameter Definition ::
-        expected object ::
-        got #{def.constructor::toString()}
-      """ unless _.isObject(def)
+      throw new TypeError """
+        Factory#extend Invalid Argument.
+        `definition` must be an Object.
+      """ unless _.isObject definition
 
       options.tags = _.chain([])
         .union(options.tags)
-        .union(bDef.tags)
+        .union(baseDefinition.tags)
         .compact().value()
 
       if options.inheritMixins
         options.mixins = _.chain([])
-          .union(bDef.options.mixins)
+          .union(baseDefinition.options.mixins)
           .union(options.mixins)
           .compact().value()
-        mixinOptions = def.mixinOptions
-        mixinDefaults = bDef.constructor::mixinOptions
+        mixinOptions = definition.mixinOptions
+        mixinDefaults = baseDefinition.constructor::mixinOptions
         extendMixinOptions mixinOptions, mixinDefaults
 
       if options.singleton?
       then options.singleton = options.singleton
-      else options.singleton = bDef.options.singleton
+      else options.singleton = baseDefinition.options.singleton
 
-      return @define name, bDef.constructor.extend(def), options
+      extendedDefinition = baseDefinition.constructor.extend definition
+      return @define name, extendedDefinition, options
 
     # Clone
     # -----
@@ -185,15 +184,20 @@ define [
     # the factory whose definitions you want to include.
 
     clone: (factory) ->
-      message = "Invalid Argument :: Expected Factory"
-      throw new Error message unless factory instanceof Factory
+      throw new TypeError '''
+        Factory#clone Invalid Argument.
+        `factory` must be an instance of Factory.
+      ''' unless factory instanceof Factory
+
       singletonDefinitions = []
-      _.each ["definitions", "mixins", "promises", "mixinSettings"], (key) =>
+
+      _.each ["definitions", "mixins", "promises"], (key) =>
         _.defaults @[key], factory[key]
         if key is 'definitions'
           _.each @[key], (def, defname) =>
             singletonDefinitions.push defname if def.options.singleton
             @[key][defname].constructor.prototype.__factory = => this
+
       _.each ["tagCbs","tagMap","promises","instances"], (key) =>
         @[key] ?= {}
         for name, payload of factory[key]
@@ -229,15 +233,13 @@ define [
     # use these definitions in the define and extend method by adding
     # a mixins array option with the names of the mixins to include.
 
-    defineMixin: (name, def, options = {}) ->
-      if @mixins[name]? and not options.override
-        message = """
-          Mixin already defined :: #{name} :: use override option to ignore
-        """
-        throw new Error message
-      @mixins[name] = def
-      @mixinSettings[name] = options
-      @trigger 'defineMixin', name, def, options
+    defineMixin: (mixinName, definition, options = {}) ->
+      throw new InternalError """
+        Factory#defineMixin Mixin #{mixinName} already defined.
+        Use `override` option to ignore.
+      """ if @mixins[mixinName]? and not options.override
+      @mixins[mixinName] = {definition, options}
+      @trigger 'defineMixin', mixinName, definition, options
       return this
 
     # Compose Mixin Dependencies
@@ -248,10 +250,10 @@ define [
     composeMixinDependencies: (mixins = []) ->
       # mixins is the top level mixins
       result = []
-      for mixin in mixins
-        deps = @mixinSettings[mixin].mixins or []
-        result = result.concat @composeMixinDependencies deps
-        result.push mixin
+      for mixinName in mixins
+        {options} = @mixins[mixinName]
+        result = result.concat @composeMixinDependencies options.mixins
+        result.push mixinName
       return _.uniq result
 
     # Apply Mixin
@@ -261,25 +263,25 @@ define [
     # invoke mixinitialize and empty mixinitialize method after invocation.
 
     applyMixin: (instance, mixinName) ->
-      mixin = @mixins[mixinName]
-      throw new Error("Mixin Not Defined :: #{mixinName}") unless mixin
+      {definition, options} = @mixins[mixinName]
+      throw new TypeError """
+        Factory#applyMixin Mixin #{mixinName} not defined
+      """ unless definition
 
       unless instance.____mixed
-        # we are in a late mix, use transient loop protection
-        late_mix = true
-        # ignore tags
-        ignore_tags = true
+        late_mix = true # we are in a late mix, use transient loop protection
+        ignore_tags = true # ignore tags
         instance.____mixed = []
 
       return if mixinName in instance.____mixed
 
-      mixinSettings = @mixinSettings[mixinName]
-      if mixinSettings.tags and not ignore_tags
+      if options.tags and not ignore_tags
         instance.____tags or= []
-        instance.____tags = instance.____tags.concat(mixinSettings.tags)
+        instance.____tags = instance.____tags.concat options.tags
 
-      props = _.omit mixin, 'mixinOptions', 'mixinitialize', 'mixconfig'
-      _.extend instance, props
+      _.extend instance, _.omit definition, [
+        'mixinOptions', 'mixinitialize', 'mixconfig'
+      ]
 
       if late_mix
         @mixinitialize instance, mixinName
@@ -295,8 +297,8 @@ define [
     # applied so that the instance is fully composed.
 
     mixinitialize: (instance, mixinName) ->
-      mixin = @mixins[mixinName]
-      mixinitialize = mixin.mixinitialize
+      {definition} = @mixins[mixinName]
+      mixinitialize = definition.mixinitialize
       mixinitialize.call instance if _.isFunction mixinitialize
 
     # Handle Mixins
@@ -326,8 +328,8 @@ define [
       # this needs to execute in reverse order so higher level mixins
       # take configuration precedence.
       for mixinName in resolvedMixins.slice().reverse()
-        mixin = @mixins[mixinName]
-        mixinDefaults = mixin.mixinOptions
+        {definition} = @mixins[mixinName]
+        mixinDefaults = definition.mixinOptions
         mixinOptions = instance.mixinOptions
         extendMixinOptions mixinOptions, mixinDefaults
 
@@ -338,11 +340,11 @@ define [
       # Invoke the mixin's mixconfig method if available, passing through
       # the mixinOptions object so that it can be modified by reference.
       for mixinName in resolvedMixins
-        mixin = @mixins[mixinName]
+        {definition} = @mixins[mixinName]
         mixinOptions = instance.mixinOptions
-        mixin.mixconfig? mixinOptions, args...
+        definition.mixconfig? mixinOptions, args...
 
-      #
+      # Finally, ensure the mixin(s) get initialized
       for mixinName in resolvedMixins
         @mixinitialize instance, mixinName
 
@@ -407,8 +409,9 @@ define [
       instances = @instances[name] ?= []
       instance = @instances[name][0]
       def = @definitions[name]
-      message = "Invalid Definition :: #{name} :: not defined"
-      throw new Error message unless def?
+      throw new InternalError """
+        Factory#get Definition #{name} is not defined.
+      """ unless def?
       constructor = def.constructor
 
       options = def.options or {}
@@ -463,8 +466,10 @@ define [
 
     dispose: (instance) ->
       _.each instance.__factoryMap(), (arr) ->
-        message = "Instance Not In Factory :: #{instance} :: disposal failed!"
-        throw new Error message if instance not in arr
+        throw new InternalError """
+          Factory#dispose Instance Not In Factory.
+          Disposal failed!
+        """ if instance not in arr
         while arr.indexOf(instance) > -1
           arr.splice arr.indexOf(instance), 1
       @trigger 'dispose', instance
@@ -489,14 +494,18 @@ define [
     # bind that same function to any future instances created.
 
     onTag: (tag, cb) ->
-      message = "Invalid Argument :: #{typeof tag} provided :: expected String"
-      throw new Error message unless _.isString(tag)
-      message = "Invalid Argument :: #{typeof cb} provided :: expected Function"
-      throw new Error message unless _.isFunction(cb)
+      throw new TypeError """
+        Factory#onTag Invalid Argument.
+        `tag` must be a String.
+      """ unless _.isString tag
+      throw new TypeError """
+        Factory#onTag Invalid Argument.
+        `cb` must be a Function.
+      """ unless _.isFunction cb
       cb instance for instance in @tagMap[tag] or []
       @tagCbs[tag] ?= []
       @tagCbs[tag].push cb
-      true
+      return true
 
     # Off Tag
     # -------
@@ -504,15 +513,18 @@ define [
     # instance that relates to a tag.
 
     offTag: (tag, cb) ->
-      message = "Invalid Argument :: #{typeof tag} provided :: expected String"
-      throw new Error message unless _.isString(tag)
+      throw new TypeError """
+        Factory#offTag Invalid Argument.
+        `tag` must be a String.
+      """ unless _.isString tag
       return unless @tagCbs[tag]?
       unless _.isFunction(cb)
         @tagCbs[tag] = []
         return
       cbIdx = @tagCbs[tag].indexOf(cb)
-      message = "Callback Not Found :: #{cb} :: for tag #{tag}"
-      throw new Error message if cbIdx is -1
+      throw new ReferenceError """
+        Factory#offTag Callback Not Found for #{tag}.
+      """ if cbIdx is -1
       @tagCbs[tag].splice cbIdx, 1
 
     # Is Type

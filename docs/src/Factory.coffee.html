@@ -247,7 +247,6 @@ to use as a default. It becomes the 'Base' type, you can extend.</p>
 
     <span class="nv">constructor: </span><span class="nf">(Base, options = {}) -&gt;</span>
       <span class="vi">@mixins = </span><span class="p">{}</span>
-      <span class="vi">@mixinSettings = </span><span class="p">{}</span>
       <span class="vi">@tagCbs = </span><span class="p">{}</span>
       <span class="vi">@tagMap = </span><span class="p">{}</span>
       <span class="vi">@promises = </span><span class="p">{}</span>
@@ -279,10 +278,10 @@ factory.</p>
     <span class="nv">define: </span><span class="nf">(name, def, options = {}) -&gt;</span>
       <span class="k">if</span> <span class="nx">@definitions</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span> <span class="o">and</span> <span class="o">not</span> <span class="nx">options</span><span class="p">.</span><span class="nx">override</span>
         <span class="k">return</span> <span class="k">this</span> <span class="k">if</span> <span class="nx">options</span><span class="p">.</span><span class="nx">silent</span>
-        <span class="nv">message = </span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">          Definition already exists :: </span><span class="si">#{</span><span class="nx">name</span><span class="si">}</span><span class="s"> :: user overide option to ignore</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nx">InternalError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">          Factory</span><span class="err">#</span><span class="s">define Definition &quot;</span><span class="si">#{</span><span class="nx">name</span><span class="si">}</span><span class="s">&quot; already exists.</span>
+<span class="s">          Use override option to ignore.</span>
 <span class="s">        &quot;&quot;&quot;</span>
-        <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span>
 
 
 </pre></div>
@@ -477,38 +476,38 @@ your own.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
 
-    <span class="nv">extend: </span><span class="nf">(base, name, def, options = {}) -&gt;</span>
-      <span class="nv">bDef = </span><span class="nx">@definitions</span><span class="p">[</span><span class="nx">base</span><span class="p">]</span>
+    <span class="nv">extend: </span><span class="nf">(base, name, definition, options = {}) -&gt;</span>
+      <span class="nv">baseDefinition = </span><span class="nx">@definitions</span><span class="p">[</span><span class="nx">base</span><span class="p">]</span>
 
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s">&quot;&quot;&quot;</span>
-<span class="s">        Base Class Not Available :: </span><span class="si">#{</span><span class="nx">base</span><span class="si">}</span><span class="s"></span>
-<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">bDef</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">ReferenceError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">extend Base Class &quot;</span><span class="si">#{</span><span class="nx">base</span><span class="si">}</span><span class="s">&quot; Not Available.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">baseDefinition</span>
 
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s">&quot;&quot;&quot;</span>
-<span class="s">        Invalid Parameter Definition ::</span>
-<span class="s">        expected object ::</span>
-<span class="s">        got </span><span class="si">#{</span><span class="nx">def</span><span class="p">.</span><span class="nx">constructor</span><span class="o">::</span><span class="nx">toString</span><span class="p">()</span><span class="si">}</span><span class="s"></span>
-<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isObject</span><span class="p">(</span><span class="nx">def</span><span class="p">)</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">extend Invalid Argument.</span>
+<span class="s">        `definition` must be an Object.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isObject</span> <span class="nx">definition</span>
 
       <span class="nv">options.tags = </span><span class="nx">_</span><span class="p">.</span><span class="nx">chain</span><span class="p">([])</span>
         <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">tags</span><span class="p">)</span>
-        <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">bDef</span><span class="p">.</span><span class="nx">tags</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">baseDefinition</span><span class="p">.</span><span class="nx">tags</span><span class="p">)</span>
         <span class="p">.</span><span class="nx">compact</span><span class="p">().</span><span class="nx">value</span><span class="p">()</span>
 
       <span class="k">if</span> <span class="nx">options</span><span class="p">.</span><span class="nx">inheritMixins</span>
         <span class="nv">options.mixins = </span><span class="nx">_</span><span class="p">.</span><span class="nx">chain</span><span class="p">([])</span>
-          <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">bDef</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">mixins</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">baseDefinition</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">mixins</span><span class="p">)</span>
           <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">mixins</span><span class="p">)</span>
           <span class="p">.</span><span class="nx">compact</span><span class="p">().</span><span class="nx">value</span><span class="p">()</span>
-        <span class="nv">mixinOptions = </span><span class="nx">def</span><span class="p">.</span><span class="nx">mixinOptions</span>
-        <span class="nv">mixinDefaults = </span><span class="nx">bDef</span><span class="p">.</span><span class="nx">constructor</span><span class="o">::</span><span class="nx">mixinOptions</span>
+        <span class="nv">mixinOptions = </span><span class="nx">definition</span><span class="p">.</span><span class="nx">mixinOptions</span>
+        <span class="nv">mixinDefaults = </span><span class="nx">baseDefinition</span><span class="p">.</span><span class="nx">constructor</span><span class="o">::</span><span class="nx">mixinOptions</span>
         <span class="nx">extendMixinOptions</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">mixinDefaults</span>
 
       <span class="k">if</span> <span class="nx">options</span><span class="p">.</span><span class="nx">singleton</span><span class="o">?</span>
       <span class="k">then</span> <span class="nv">options.singleton = </span><span class="nx">options</span><span class="p">.</span><span class="nx">singleton</span>
-      <span class="k">else</span> <span class="nv">options.singleton = </span><span class="nx">bDef</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">singleton</span>
+      <span class="k">else</span> <span class="nv">options.singleton = </span><span class="nx">baseDefinition</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">singleton</span>
 
-      <span class="k">return</span> <span class="nx">@define</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">bDef</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">def</span><span class="p">),</span> <span class="nx">options</span>
+      <span class="nv">extendedDefinition = </span><span class="nx">baseDefinition</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">definition</span>
+      <span class="k">return</span> <span class="nx">@define</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">extendedDefinition</span><span class="p">,</span> <span class="nx">options</span>
 
 
 </pre></div>
@@ -531,15 +530,20 @@ the factory whose definitions you want to include.</p>
         <td class="code highlight"><div class="highlight"><pre>
 
     <span class="nv">clone: </span><span class="nf">(factory) -&gt;</span>
-      <span class="nv">message = </span><span class="s">&quot;Invalid Argument :: Expected Factory&quot;</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span> <span class="k">unless</span> <span class="nx">factory</span> <span class="k">instanceof</span> <span class="nx">Factory</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span> <span class="s">&#39;&#39;&#39;</span>
+<span class="s">        Factory#clone Invalid Argument.</span>
+<span class="s">        `factory` must be an instance of Factory.</span>
+<span class="s">      &#39;&#39;&#39;</span> <span class="k">unless</span> <span class="nx">factory</span> <span class="k">instanceof</span> <span class="nx">Factory</span>
+
       <span class="nv">singletonDefinitions = </span><span class="p">[]</span>
-      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="p">[</span><span class="s">&quot;definitions&quot;</span><span class="p">,</span> <span class="s">&quot;mixins&quot;</span><span class="p">,</span> <span class="s">&quot;promises&quot;</span><span class="p">,</span> <span class="s">&quot;mixinSettings&quot;</span><span class="p">],</span> <span class="nf">(key) =&gt;</span>
+
+      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="p">[</span><span class="s">&quot;definitions&quot;</span><span class="p">,</span> <span class="s">&quot;mixins&quot;</span><span class="p">,</span> <span class="s">&quot;promises&quot;</span><span class="p">],</span> <span class="nf">(key) =&gt;</span>
         <span class="nx">_</span><span class="p">.</span><span class="nx">defaults</span> <span class="nx">@</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nx">factory</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
         <span class="k">if</span> <span class="nx">key</span> <span class="o">is</span> <span class="s">&#39;definitions&#39;</span>
           <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="nx">@</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span> <span class="nf">(def, defname) =&gt;</span>
             <span class="nx">singletonDefinitions</span><span class="p">.</span><span class="nx">push</span> <span class="nx">defname</span> <span class="k">if</span> <span class="nx">def</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">singleton</span>
             <span class="nx">@</span><span class="p">[</span><span class="nx">key</span><span class="p">][</span><span class="nx">defname</span><span class="p">].</span><span class="nv">constructor.prototype.__factory = </span><span class="o">=&gt;</span> <span class="k">this</span>
+
       <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="p">[</span><span class="s">&quot;tagCbs&quot;</span><span class="p">,</span><span class="s">&quot;tagMap&quot;</span><span class="p">,</span><span class="s">&quot;promises&quot;</span><span class="p">,</span><span class="s">&quot;instances&quot;</span><span class="p">],</span> <span class="nf">(key) =&gt;</span>
         <span class="nx">@</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">?=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">payload</span> <span class="k">of</span> <span class="nx">factory</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
@@ -603,15 +607,13 @@ a mixins array option with the names of the mixins to include.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
 
-    <span class="nv">defineMixin: </span><span class="nf">(name, def, options = {}) -&gt;</span>
-      <span class="k">if</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span> <span class="o">and</span> <span class="o">not</span> <span class="nx">options</span><span class="p">.</span><span class="nx">override</span>
-        <span class="nv">message = </span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">          Mixin already defined :: </span><span class="si">#{</span><span class="nx">name</span><span class="si">}</span><span class="s"> :: use override option to ignore</span>
-<span class="s">        &quot;&quot;&quot;</span>
-        <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span>
-      <span class="nx">@mixins</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">def</span>
-      <span class="nx">@mixinSettings</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">options</span>
-      <span class="nx">@trigger</span> <span class="s">&#39;defineMixin&#39;</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">def</span><span class="p">,</span> <span class="nx">options</span>
+    <span class="nv">defineMixin: </span><span class="nf">(mixinName, definition, options = {}) -&gt;</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">InternalError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">defineMixin Mixin </span><span class="si">#{</span><span class="nx">mixinName</span><span class="si">}</span><span class="s"> already defined.</span>
+<span class="s">        Use `override` option to ignore.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">if</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span><span class="o">?</span> <span class="o">and</span> <span class="o">not</span> <span class="nx">options</span><span class="p">.</span><span class="nx">override</span>
+      <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nx">definition</span><span class="p">,</span> <span class="nx">options</span><span class="p">}</span>
+      <span class="nx">@trigger</span> <span class="s">&#39;defineMixin&#39;</span><span class="p">,</span> <span class="nx">mixinName</span><span class="p">,</span> <span class="nx">definition</span><span class="p">,</span> <span class="nx">options</span>
       <span class="k">return</span> <span class="k">this</span>
 
 
@@ -647,10 +649,10 @@ in the order we are expecting.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="nv">result = </span><span class="p">[]</span>
-      <span class="k">for</span> <span class="nx">mixin</span> <span class="k">in</span> <span class="nx">mixins</span>
-        <span class="nv">deps = </span><span class="nx">@mixinSettings</span><span class="p">[</span><span class="nx">mixin</span><span class="p">].</span><span class="nx">mixins</span> <span class="o">or</span> <span class="p">[]</span>
-        <span class="nv">result = </span><span class="nx">result</span><span class="p">.</span><span class="nx">concat</span> <span class="nx">@composeMixinDependencies</span> <span class="nx">deps</span>
-        <span class="nx">result</span><span class="p">.</span><span class="nx">push</span> <span class="nx">mixin</span>
+      <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">mixins</span>
+        <span class="p">{</span><span class="nx">options</span><span class="p">}</span> <span class="o">=</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
+        <span class="nv">result = </span><span class="nx">result</span><span class="p">.</span><span class="nx">concat</span> <span class="nx">@composeMixinDependencies</span> <span class="nx">options</span><span class="p">.</span><span class="nx">mixins</span>
+        <span class="nx">result</span><span class="p">.</span><span class="nx">push</span> <span class="nx">mixinName</span>
       <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">uniq</span> <span class="nx">result</span>
 
 
@@ -674,47 +676,25 @@ invoke mixinitialize and empty mixinitialize method after invocation.</p>
         <td class="code highlight"><div class="highlight"><pre>
 
     <span class="nv">applyMixin: </span><span class="nf">(instance, mixinName) -&gt;</span>
-      <span class="nv">mixin = </span><span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s">&quot;Mixin Not Defined :: </span><span class="si">#{</span><span class="nx">mixinName</span><span class="si">}</span><span class="s">&quot;</span><span class="p">)</span> <span class="k">unless</span> <span class="nx">mixin</span>
+      <span class="p">{</span><span class="nx">definition</span><span class="p">,</span> <span class="nx">options</span><span class="p">}</span> <span class="o">=</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">applyMixin Mixin </span><span class="si">#{</span><span class="nx">mixinName</span><span class="si">}</span><span class="s"> not defined</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">definition</span>
 
       <span class="k">unless</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">____mixed</span>
-
-</pre></div>
-        </td>
-      </tr>
-      <tr>
-        <td class="docs">
-<div class="pilwrap">
-  <a class="pilcrow" href="#section-26" id="section-26">&#182;</a>
-</div>
-<p>we are in a late mix, use transient loop protection</p>
-        </td>
-        <td class="code highlight"><div class="highlight"><pre>
-        <span class="nv">late_mix = </span><span class="kc">true</span>
-
-</pre></div>
-        </td>
-      </tr>
-      <tr>
-        <td class="docs">
-<div class="pilwrap">
-  <a class="pilcrow" href="#section-27" id="section-27">&#182;</a>
-</div>
-<p>ignore tags</p>
-        </td>
-        <td class="code highlight"><div class="highlight"><pre>
-        <span class="nv">ignore_tags = </span><span class="kc">true</span>
+        <span class="nv">late_mix = </span><span class="kc">true</span> <span class="c1"># we are in a late mix, use transient loop protection</span>
+        <span class="nv">ignore_tags = </span><span class="kc">true</span> <span class="c1"># ignore tags</span>
         <span class="nv">instance.____mixed = </span><span class="p">[]</span>
 
       <span class="k">return</span> <span class="k">if</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">____mixed</span>
 
-      <span class="nv">mixinSettings = </span><span class="nx">@mixinSettings</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
-      <span class="k">if</span> <span class="nx">mixinSettings</span><span class="p">.</span><span class="nx">tags</span> <span class="o">and</span> <span class="o">not</span> <span class="nx">ignore_tags</span>
+      <span class="k">if</span> <span class="nx">options</span><span class="p">.</span><span class="nx">tags</span> <span class="o">and</span> <span class="o">not</span> <span class="nx">ignore_tags</span>
         <span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span> <span class="o">or=</span> <span class="p">[]</span>
-        <span class="nv">instance.____tags = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">mixinSettings</span><span class="p">.</span><span class="nx">tags</span><span class="p">)</span>
+        <span class="nv">instance.____tags = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span><span class="p">.</span><span class="nx">concat</span> <span class="nx">options</span><span class="p">.</span><span class="nx">tags</span>
 
-      <span class="nv">props = </span><span class="nx">_</span><span class="p">.</span><span class="nx">omit</span> <span class="nx">mixin</span><span class="p">,</span> <span class="s">&#39;mixinOptions&#39;</span><span class="p">,</span> <span class="s">&#39;mixinitialize&#39;</span><span class="p">,</span> <span class="s">&#39;mixconfig&#39;</span>
-      <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">props</span>
+      <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">_</span><span class="p">.</span><span class="nx">omit</span> <span class="nx">definition</span><span class="p">,</span> <span class="p">[</span>
+        <span class="s">&#39;mixinOptions&#39;</span><span class="p">,</span> <span class="s">&#39;mixinitialize&#39;</span><span class="p">,</span> <span class="s">&#39;mixconfig&#39;</span>
+      <span class="p">]</span>
 
       <span class="k">if</span> <span class="nx">late_mix</span>
         <span class="nx">@mixinitialize</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixinName</span>
@@ -744,8 +724,8 @@ applied so that the instance is fully composed.</p>
         <td class="code highlight"><div class="highlight"><pre>
 
     <span class="nv">mixinitialize: </span><span class="nf">(instance, mixinName) -&gt;</span>
-      <span class="nv">mixin = </span><span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
-      <span class="nv">mixinitialize = </span><span class="nx">mixin</span><span class="p">.</span><span class="nx">mixinitialize</span>
+      <span class="p">{</span><span class="nx">definition</span><span class="p">}</span> <span class="o">=</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
+      <span class="nv">mixinitialize = </span><span class="nx">definition</span><span class="p">.</span><span class="nx">mixinitialize</span>
       <span class="nx">mixinitialize</span><span class="p">.</span><span class="nx">call</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span> <span class="nx">mixinitialize</span>
 
 
@@ -778,7 +758,7 @@ method it will get called after initialize and before constructed.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-30" id="section-30">&#182;</a>
+  <a class="pilcrow" href="#section-28" id="section-28">&#182;</a>
 </div>
 <p>clone the instance's mixinOptions to avoid overwriting the defaults</p>
         </td>
@@ -798,7 +778,7 @@ method it will get called after initialize and before constructed.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-31" id="section-31">&#182;</a>
+  <a class="pilcrow" href="#section-29" id="section-29">&#182;</a>
 </div>
 <p>Iterate over all of our resolved mixins, applying their implementation
 to the current instance.</p>
@@ -814,7 +794,7 @@ to the current instance.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-32" id="section-32">&#182;</a>
+  <a class="pilcrow" href="#section-30" id="section-30">&#182;</a>
 </div>
 <p>Because it considers instance.mixinOptions to be canonical
 this needs to execute in reverse order so higher level mixins
@@ -822,8 +802,8 @@ take configuration precedence.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span><span class="p">.</span><span class="nx">slice</span><span class="p">().</span><span class="nx">reverse</span><span class="p">()</span>
-        <span class="nv">mixin = </span><span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
-        <span class="nv">mixinDefaults = </span><span class="nx">mixin</span><span class="p">.</span><span class="nx">mixinOptions</span>
+        <span class="p">{</span><span class="nx">definition</span><span class="p">}</span> <span class="o">=</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
+        <span class="nv">mixinDefaults = </span><span class="nx">definition</span><span class="p">.</span><span class="nx">mixinOptions</span>
         <span class="nv">mixinOptions = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">mixinOptions</span>
         <span class="nx">extendMixinOptions</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">mixinDefaults</span>
 
@@ -834,7 +814,7 @@ take configuration precedence.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-33" id="section-33">&#182;</a>
+  <a class="pilcrow" href="#section-31" id="section-31">&#182;</a>
 </div>
 <p>Complete the composition of the mixinOptions object by
 extending a bare object with mixinDefaults.</p>
@@ -849,16 +829,16 @@ extending a bare object with mixinDefaults.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-34" id="section-34">&#182;</a>
+  <a class="pilcrow" href="#section-32" id="section-32">&#182;</a>
 </div>
 <p>Invoke the mixin's mixconfig method if available, passing through
 the mixinOptions object so that it can be modified by reference.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span>
-        <span class="nv">mixin = </span><span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
+        <span class="p">{</span><span class="nx">definition</span><span class="p">}</span> <span class="o">=</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span>
         <span class="nv">mixinOptions = </span><span class="nx">instance</span><span class="p">.</span><span class="nx">mixinOptions</span>
-        <span class="nx">mixin</span><span class="p">.</span><span class="nx">mixconfig</span><span class="o">?</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">args</span><span class="p">...</span>
+        <span class="nx">definition</span><span class="p">.</span><span class="nx">mixconfig</span><span class="o">?</span> <span class="nx">mixinOptions</span><span class="p">,</span> <span class="nx">args</span><span class="p">...</span>
 
 
 </pre></div>
@@ -867,9 +847,9 @@ the mixinOptions object so that it can be modified by reference.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-35" id="section-35">&#182;</a>
+  <a class="pilcrow" href="#section-33" id="section-33">&#182;</a>
 </div>
-
+<p>Finally, ensure the mixin(s) get initialized</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="k">for</span> <span class="nx">mixinName</span> <span class="k">in</span> <span class="nx">resolvedMixins</span>
@@ -992,8 +972,9 @@ earlier.</p>
       <span class="nv">instances = </span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">?=</span> <span class="p">[]</span>
       <span class="nv">instance = </span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
       <span class="nv">def = </span><span class="nx">@definitions</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span>
-      <span class="nv">message = </span><span class="s">&quot;Invalid Definition :: </span><span class="si">#{</span><span class="nx">name</span><span class="si">}</span><span class="s"> :: not defined&quot;</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span> <span class="k">unless</span> <span class="nx">def</span><span class="o">?</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">InternalError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">get Definition </span><span class="si">#{</span><span class="nx">name</span><span class="si">}</span><span class="s"> is not defined.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">def</span><span class="o">?</span>
       <span class="nv">constructor = </span><span class="nx">def</span><span class="p">.</span><span class="nx">constructor</span>
 
       <span class="nv">options = </span><span class="nx">def</span><span class="p">.</span><span class="nx">options</span> <span class="o">or</span> <span class="p">{}</span>
@@ -1008,7 +989,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-40" id="section-40">&#182;</a>
+  <a class="pilcrow" href="#section-38" id="section-38">&#182;</a>
 </div>
 <p>singleton support</p>
         </td>
@@ -1022,7 +1003,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-41" id="section-41">&#182;</a>
+  <a class="pilcrow" href="#section-39" id="section-39">&#182;</a>
 </div>
 <p>arbitrary arguments length on the constructor</p>
         </td>
@@ -1035,7 +1016,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-42" id="section-42">&#182;</a>
+  <a class="pilcrow" href="#section-40" id="section-40">&#182;</a>
 </div>
 <p>Set the type immediately</p>
         </td>
@@ -1048,7 +1029,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-43" id="section-43">&#182;</a>
+  <a class="pilcrow" href="#section-41" id="section-41">&#182;</a>
 </div>
 <p>Set the constructor of the instance to one that's factory wrapped</p>
         </td>
@@ -1061,7 +1042,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-44" id="section-44">&#182;</a>
+  <a class="pilcrow" href="#section-42" id="section-42">&#182;</a>
 </div>
 <p>mixin support</p>
         </td>
@@ -1074,7 +1055,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-45" id="section-45">&#182;</a>
+  <a class="pilcrow" href="#section-43" id="section-43">&#182;</a>
 </div>
 <p>injection support</p>
         </td>
@@ -1087,7 +1068,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-46" id="section-46">&#182;</a>
+  <a class="pilcrow" href="#section-44" id="section-44">&#182;</a>
 </div>
 <p>tag support</p>
         </td>
@@ -1100,7 +1081,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-47" id="section-47">&#182;</a>
+  <a class="pilcrow" href="#section-45" id="section-45">&#182;</a>
 </div>
 <p>late initialization support</p>
         </td>
@@ -1114,7 +1095,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-48" id="section-48">&#182;</a>
+  <a class="pilcrow" href="#section-46" id="section-46">&#182;</a>
 </div>
 <p>we shortcut the dispose functionality so we can wire it into other
 frameworks and stuff easily</p>
@@ -1131,7 +1112,7 @@ frameworks and stuff easily</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-49" id="section-49">&#182;</a>
+  <a class="pilcrow" href="#section-47" id="section-47">&#182;</a>
 </div>
 <p>we trigger a create event on the factory so we can handle tag listeners
 but the user can use this for other purposes as well.</p>
@@ -1186,8 +1167,10 @@ object to be constructed again.</p>
 
     <span class="nv">dispose: </span><span class="nf">(instance) -&gt;</span>
       <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">__factoryMap</span><span class="p">(),</span> <span class="nf">(arr) -&gt;</span>
-        <span class="nv">message = </span><span class="s">&quot;Instance Not In Factory :: </span><span class="si">#{</span><span class="nx">instance</span><span class="si">}</span><span class="s"> :: disposal failed!&quot;</span>
-        <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span> <span class="k">if</span> <span class="nx">instance</span> <span class="o">not</span> <span class="k">in</span> <span class="nx">arr</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nx">InternalError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">          Factory</span><span class="err">#</span><span class="s">dispose Instance Not In Factory.</span>
+<span class="s">          Disposal failed!</span>
+<span class="s">        &quot;&quot;&quot;</span> <span class="k">if</span> <span class="nx">instance</span> <span class="o">not</span> <span class="k">in</span> <span class="nx">arr</span>
         <span class="k">while</span> <span class="nx">arr</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span>
           <span class="nx">arr</span><span class="p">.</span><span class="nx">splice</span> <span class="nx">arr</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">instance</span><span class="p">),</span> <span class="mi">1</span>
       <span class="nx">@trigger</span> <span class="s">&#39;dispose&#39;</span><span class="p">,</span> <span class="nx">instance</span>
@@ -1240,14 +1223,18 @@ bind that same function to any future instances created.</p>
         <td class="code highlight"><div class="highlight"><pre>
 
     <span class="nv">onTag: </span><span class="nf">(tag, cb) -&gt;</span>
-      <span class="nv">message = </span><span class="s">&quot;Invalid Argument :: </span><span class="si">#{</span><span class="k">typeof</span> <span class="nx">tag</span><span class="si">}</span><span class="s"> provided :: expected String&quot;</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">tag</span><span class="p">)</span>
-      <span class="nv">message = </span><span class="s">&quot;Invalid Argument :: </span><span class="si">#{</span><span class="k">typeof</span> <span class="nx">cb</span><span class="si">}</span><span class="s"> provided :: expected Function&quot;</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">cb</span><span class="p">)</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">onTag Invalid Argument.</span>
+<span class="s">        `tag` must be a String.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span> <span class="nx">tag</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">onTag Invalid Argument.</span>
+<span class="s">        `cb` must be a Function.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span> <span class="nx">cb</span>
       <span class="nx">cb</span> <span class="nx">instance</span> <span class="k">for</span> <span class="nx">instance</span> <span class="k">in</span> <span class="nx">@tagMap</span><span class="p">[</span><span class="nx">tag</span><span class="p">]</span> <span class="o">or</span> <span class="p">[]</span>
       <span class="nx">@tagCbs</span><span class="p">[</span><span class="nx">tag</span><span class="p">]</span> <span class="o">?=</span> <span class="p">[]</span>
       <span class="nx">@tagCbs</span><span class="p">[</span><span class="nx">tag</span><span class="p">].</span><span class="nx">push</span> <span class="nx">cb</span>
-      <span class="kc">true</span>
+      <span class="k">return</span> <span class="kc">true</span>
 
 
 </pre></div>
@@ -1269,15 +1256,18 @@ instance that relates to a tag.</p>
         <td class="code highlight"><div class="highlight"><pre>
 
     <span class="nv">offTag: </span><span class="nf">(tag, cb) -&gt;</span>
-      <span class="nv">message = </span><span class="s">&quot;Invalid Argument :: </span><span class="si">#{</span><span class="k">typeof</span> <span class="nx">tag</span><span class="si">}</span><span class="s"> provided :: expected String&quot;</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">tag</span><span class="p">)</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">offTag Invalid Argument.</span>
+<span class="s">        `tag` must be a String.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span> <span class="nx">tag</span>
       <span class="k">return</span> <span class="k">unless</span> <span class="nx">@tagCbs</span><span class="p">[</span><span class="nx">tag</span><span class="p">]</span><span class="o">?</span>
       <span class="k">unless</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">cb</span><span class="p">)</span>
         <span class="nx">@tagCbs</span><span class="p">[</span><span class="nx">tag</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span>
       <span class="nv">cbIdx = </span><span class="nx">@tagCbs</span><span class="p">[</span><span class="nx">tag</span><span class="p">].</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">cb</span><span class="p">)</span>
-      <span class="nv">message = </span><span class="s">&quot;Callback Not Found :: </span><span class="si">#{</span><span class="nx">cb</span><span class="si">}</span><span class="s"> :: for tag </span><span class="si">#{</span><span class="nx">tag</span><span class="si">}</span><span class="s">&quot;</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="nx">message</span> <span class="k">if</span> <span class="nx">cbIdx</span> <span class="o">is</span> <span class="o">-</span><span class="mi">1</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">ReferenceError</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Factory</span><span class="err">#</span><span class="s">offTag Callback Not Found for </span><span class="si">#{</span><span class="nx">tag</span><span class="si">}</span><span class="s">.</span>
+<span class="s">      &quot;&quot;&quot;</span> <span class="k">if</span> <span class="nx">cbIdx</span> <span class="o">is</span> <span class="o">-</span><span class="mi">1</span>
       <span class="nx">@tagCbs</span><span class="p">[</span><span class="nx">tag</span><span class="p">].</span><span class="nx">splice</span> <span class="nx">cbIdx</span><span class="p">,</span> <span class="mi">1</span>
 
 
@@ -1329,7 +1319,7 @@ instance that relates to a tag.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-57" id="section-57">&#182;</a>
+  <a class="pilcrow" href="#section-55" id="section-55">&#182;</a>
 </div>
 <p>And there you go, have fun with it.</p>
         </td>

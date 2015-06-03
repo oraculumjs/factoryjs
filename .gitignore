@@ -1,8 +1,8 @@
 *.DS_Store
 /build
 
-/components
 /node_modules
+/bower_components
 
 /.grunt
 /specs.html

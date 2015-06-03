@@ -1,10 +1,10 @@
 {
-  "baseUrl": "build/src-cov",
+  "baseUrl": "build/src",
 
   "paths": {
-    "jquery": "../../components/jquery/dist/jquery",
-    "backbone": "../../components/backbone/backbone",
-    "underscore": "../../components/underscore/underscore"
+    "jquery": "../../bower_components/jquery/dist/jquery",
+    "backbone": "../../bower_components/backbone/backbone",
+    "underscore": "../../bower_components/underscore/underscore"
   },
 
   "shim": {
