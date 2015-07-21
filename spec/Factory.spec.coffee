@@ -14,6 +14,46 @@ require ["Factory"], (Factory) ->
       factory = new Factory (->), {baseTags}
       expect(factory.baseTags).toBe baseTags
 
+    describe 'composeConfig class method', ->
+
+      describe 'with objects', ->
+
+        it 'should compose n objects', ->
+          result = Factory.composeConfig {'defaultConfig'}, {'overrideConfig'}
+          expect(result).toEqual {'defaultConfig', 'overrideConfig'}
+
+        it 'should compose n functions', ->
+          result = Factory.composeConfig (->{'defaultConfig'}), (->{'overrideConfig'})
+          expect(result()).toEqual {'defaultConfig', 'overrideConfig'}
+
+        it 'should compose n mixed objects/functions', ->
+          defaultConfig = {'defaultConfig', functionConfig: 'defaultConfig'}
+          functionConfig = -> {'functionConfig', defaultConfig: 'functionConfig'}
+          overrideConfig = {'overrideConfig', functionConfig: 'overrideConfig'}
+          result = Factory.composeConfig defaultConfig, functionConfig, overrideConfig
+          expect(result()).toEqual {
+            defaultConfig: 'functionConfig'
+            functionConfig: 'overrideConfig'
+            overrideConfig: 'overrideConfig'
+          }
+
+      describe 'with arrays', ->
+
+        it 'should compose n arrays', ->
+          result = Factory.composeConfig ['defaultConfig'], ['overrideConfig']
+          expect(result).toEqual ['defaultConfig', 'overrideConfig']
+
+        it 'should compose n functions', ->
+          result = Factory.composeConfig (->['defaultConfig']), (->['overrideConfig'])
+          expect(result()).toEqual ['defaultConfig', 'overrideConfig']
+
+        it 'should compose n mixed arrays/functions', ->
+          defaultConfig = ['defaultConfig']
+          functionConfig = -> ['functionConfig']
+          overrideConfig = ['overrideConfig']
+          result = Factory.composeConfig defaultConfig, functionConfig, overrideConfig
+          expect(result()).toEqual ['defaultConfig', 'functionConfig', 'overrideConfig']
+
     describe "factory instance", ->
       factory = null
 
