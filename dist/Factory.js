@@ -98,7 +98,7 @@
           if (options.silent) {
             return this;
           }
-          throw new InternalError("Factory#define Definition \"" + name + "\" already exists.\nUse override option to ignore.");
+          throw new TypeError("Factory#define Definition \"" + name + "\" already exists.\nUse override option to ignore.");
         }
         if ((base1 = this.promises)[name] == null) {
           base1[name] = $.Deferred();
@@ -269,7 +269,7 @@
           options = {};
         }
         if ((this.mixins[mixinName] != null) && !options.override) {
-          throw new InternalError("Factory#defineMixin Mixin " + mixinName + " already defined.\nUse `override` option to ignore.");
+          throw new TypeError("Factory#defineMixin Mixin " + mixinName + " already defined.\nUse `override` option to ignore.");
         }
         this.mixins[mixinName] = {
           definition: definition,
@@ -431,7 +431,7 @@
         instance = this.instances[name][0];
         def = this.definitions[name];
         if (def == null) {
-          throw new InternalError("Factory#get Definition " + name + " is not defined.");
+          throw new TypeError("Factory#get Definition " + name + " is not defined.");
         }
         constructor = def.constructor;
         options = def.options || {};
@@ -475,6 +475,29 @@
         return instance;
       };
 
+
+      /* Resolve Instance
+       * Provide a method for resolving an instance via a callback or
+       * by resolving an instance in the factory.
+       */
+
+      Factory.prototype.resolveInstance = function() {
+        var args, thing;
+        thing = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+        if (_.isFunction(thing)) {
+          thing = thing.call.apply(thing, [this].concat(slice.call(args)));
+        }
+        if (_.isString(thing)) {
+          return this.get.apply(this, [thing].concat(slice.call(args)));
+        }
+        return thing;
+      };
+
+
+      /* Get Tags
+       * Get all tags for an arbitrary factory instance.
+       */
+
       Factory.prototype.getTags = function(instance) {
         var mixinTags;
         mixinTags = _.chain(instance.__mixins()).map((function(_this) {
@@ -499,7 +522,7 @@
         _.each(instance.__factoryMap(), function(arr) {
           var results;
           if (indexOf.call(arr, instance) < 0) {
-            throw new InternalError("Factory#dispose Instance Not In Factory.\nDisposal failed!");
+            throw new TypeError("Factory#dispose Instance Not In Factory.\nDisposal failed!");
           }
           results = [];
           while (arr.indexOf(instance) > -1) {

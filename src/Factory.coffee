@@ -90,7 +90,7 @@ define [
     define: (name, def, options = {}) ->
       if @definitions[name]? and not options.override
         return this if options.silent
-        throw new InternalError """
+        throw new TypeError """
           Factory#define Definition "#{name}" already exists.
           Use override option to ignore.
         """
@@ -252,7 +252,7 @@ define [
     # a mixins array option with the names of the mixins to include.
 
     defineMixin: (mixinName, definition, options = {}) ->
-      throw new InternalError """
+      throw new TypeError """
         Factory#defineMixin Mixin #{mixinName} already defined.
         Use `override` option to ignore.
       """ if @mixins[mixinName]? and not options.override
@@ -422,7 +422,7 @@ define [
       instances = @instances[name] ?= []
       instance = @instances[name][0]
       def = @definitions[name]
-      throw new InternalError """
+      throw new TypeError """
         Factory#get Definition #{name} is not defined.
       """ unless def?
       constructor = def.constructor
@@ -470,6 +470,20 @@ define [
 
       return instance
 
+    ### Resolve Instance
+    # Provide a method for resolving an instance via a callback or
+    # by resolving an instance in the factory.
+    ###
+
+    resolveInstance: (thing, args...) ->
+      thing = thing.call this, args... if _.isFunction thing
+      return @get thing, args... if _.isString thing
+      return thing
+
+    ### Get Tags
+    # Get all tags for an arbitrary factory instance.
+    ###
+
     getTags: (instance) ->
       mixinTags = _.chain(instance.__mixins()).map((mixinName) =>
         return @mixins[mixinName]?.options?.tags
@@ -495,7 +509,7 @@ define [
 
     dispose: (instance) ->
       _.each instance.__factoryMap(), (arr) ->
-        throw new InternalError """
+        throw new TypeError """
           Factory#dispose Instance Not In Factory.
           Disposal failed!
         """ if instance not in arr
