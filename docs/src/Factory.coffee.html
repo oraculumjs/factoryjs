@@ -766,10 +766,9 @@ method it will get called after initialize and before constructed.</p>
 
       <span class="nv">instance.mixinOptions = </span><span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{},</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">mixinOptions</span>
 
-      <span class="nv">resolvedMixins = </span><span class="nx">@composeMixinDependencies</span> <span class="nx">mixins</span>
-
-      <span class="nv">instance.__mixins = </span><span class="nf">-&gt;</span>
-        <span class="nx">resolvedMixins</span><span class="p">.</span><span class="nx">slice</span><span class="p">()</span>
+      <span class="nv">allMixins = </span><span class="p">[].</span><span class="nx">concat</span> <span class="nx">mixins</span><span class="p">,</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">__mixins</span><span class="p">()</span>
+      <span class="nv">resolvedMixins = </span><span class="nx">@composeMixinDependencies</span> <span class="nx">allMixins</span>
+      <span class="nv">instance.__mixins = </span><span class="nf">-&gt;</span> <span class="nx">resolvedMixins</span>
 
 
 </pre></div>
@@ -856,7 +855,6 @@ the mixinOptions object so that it can be modified by reference.</p>
         <span class="nx">@mixinitialize</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixinName</span>
 
       <span class="nv">instance.__mixin = </span><span class="nx">_</span><span class="p">.</span><span class="nx">chain</span><span class="p">(</span><span class="nf">(obj, mixin, mixinOptions) -&gt;</span>
-        <span class="nv">obj.____mixed = </span><span class="p">[]</span>
         <span class="nx">@handleMixins</span> <span class="nx">obj</span><span class="p">,</span> <span class="p">[</span><span class="nx">mixin</span><span class="p">],</span> <span class="nx">mixinOptions</span>
         <span class="k">delete</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">____mixed</span>
       <span class="p">).</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">partial</span><span class="p">(</span><span class="nx">instance</span><span class="p">).</span><span class="nx">value</span><span class="p">()</span>
@@ -935,12 +933,9 @@ types tags and any user defined tags are put into this list for use.</p>
 
     <span class="nv">handleTags: </span><span class="nf">(name, instance, tags) -&gt;</span>
       <span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">].</span><span class="nx">push</span> <span class="nx">instance</span>
-      <span class="nv">fullTags = </span><span class="nx">_</span><span class="p">.</span><span class="nx">toArray</span><span class="p">(</span><span class="nx">tags</span><span class="p">).</span><span class="nx">concat</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span> <span class="o">or</span> <span class="p">[])</span>
-      <span class="k">delete</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span> <span class="k">if</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span>
-      <span class="nv">instance.__tags = </span><span class="nf">-&gt;</span> <span class="nx">_</span><span class="p">.</span><span class="nx">toArray</span> <span class="nx">fullTags</span>
-
+      <span class="k">delete</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span>
       <span class="nv">factoryMap = </span><span class="p">[</span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]]</span>
-      <span class="k">for</span> <span class="nx">tag</span> <span class="k">in</span> <span class="nx">fullTags</span>
+      <span class="k">for</span> <span class="nx">tag</span> <span class="k">in</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">__tags</span><span class="p">()</span>
         <span class="nx">@tagMap</span><span class="p">[</span><span class="nx">tag</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">unless</span> <span class="nx">@tagMap</span><span class="p">[</span><span class="nx">tag</span><span class="p">]</span><span class="o">?</span>
         <span class="nx">@tagMap</span><span class="p">[</span><span class="nx">tag</span><span class="p">].</span><span class="nx">push</span> <span class="nx">instance</span>
         <span class="nx">factoryMap</span><span class="p">.</span><span class="nx">push</span> <span class="nx">@tagMap</span><span class="p">[</span><span class="nx">tag</span><span class="p">]</span>
@@ -1010,6 +1005,7 @@ earlier.</p>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="nv">instance = </span><span class="k">new</span> <span class="nx">constructor</span> <span class="nx">args</span><span class="p">...</span>
 
+
 </pre></div>
         </td>
       </tr>
@@ -1018,10 +1014,13 @@ earlier.</p>
 <div class="pilwrap">
   <a class="pilcrow" href="#section-40" id="section-40">&#182;</a>
 </div>
-<p>Set the type immediately</p>
+<p>Set the type/tags/mixins immediately</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
-      <span class="nv">instance.__type = </span><span class="nf">-&gt;</span> <span class="nx">name</span>
+      <span class="nv">instance.__type   = </span><span class="nf">-&gt;</span> <span class="nx">name</span>
+      <span class="nv">instance.__mixins = </span><span class="o">=&gt;</span> <span class="nx">@composeMixinDependencies</span> <span class="nx">mixins</span>
+      <span class="nv">instance.__tags   = </span><span class="o">=&gt;</span> <span class="nx">@getTags</span> <span class="nx">instance</span>
+
 
 </pre></div>
         </td>
@@ -1036,6 +1035,7 @@ earlier.</p>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="nv">instance.constructor = </span><span class="nx">@getConstructor</span> <span class="nx">name</span>
 
+
 </pre></div>
         </td>
       </tr>
@@ -1048,6 +1048,7 @@ earlier.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="nx">@handleMixins</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">mixins</span><span class="p">,</span> <span class="nx">args</span>
+
 
 </pre></div>
         </td>
@@ -1062,6 +1063,7 @@ earlier.</p>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="nx">@handleInjections</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">injections</span>
 
+
 </pre></div>
         </td>
       </tr>
@@ -1074,6 +1076,7 @@ earlier.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="nx">@handleTags</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">def</span><span class="p">.</span><span class="nx">tags</span>
+
 
 </pre></div>
         </td>
@@ -1121,6 +1124,14 @@ but the user can use this for other purposes as well.</p>
       <span class="nx">@trigger</span> <span class="s">&#39;create&#39;</span><span class="p">,</span> <span class="nx">instance</span>
 
       <span class="k">return</span> <span class="nx">instance</span>
+
+    <span class="nv">getTags: </span><span class="nf">(instance) -&gt;</span>
+      <span class="nv">mixinTags = </span><span class="nx">_</span><span class="p">.</span><span class="nx">chain</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">__mixins</span><span class="p">()).</span><span class="nx">map</span><span class="p">(</span><span class="nf">(mixinName) =&gt;</span>
+        <span class="k">return</span> <span class="nx">@mixins</span><span class="p">[</span><span class="nx">mixinName</span><span class="p">]</span><span class="o">?</span><span class="p">.</span><span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">tags</span>
+      <span class="p">).</span><span class="nx">flatten</span><span class="p">().</span><span class="nx">compact</span><span class="p">().</span><span class="nx">uniq</span><span class="p">().</span><span class="nx">value</span><span class="p">()</span>
+      <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">chain</span><span class="p">([]).</span><span class="nx">union</span><span class="p">(</span><span class="nx">instance</span><span class="p">.</span><span class="nx">____tags</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">@definitions</span><span class="p">[</span><span class="nx">instance</span><span class="p">.</span><span class="nx">__type</span><span class="p">()].</span><span class="nx">tags</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">union</span><span class="p">(</span><span class="nx">mixinTags</span><span class="p">).</span><span class="nx">compact</span><span class="p">().</span><span class="nx">value</span><span class="p">()</span>
 
 
 </pre></div>

@@ -292,12 +292,13 @@
       };
 
       Factory.prototype.handleMixins = function(instance, mixins, args) {
-        var definition, j, k, l, len, len1, len2, len3, m, mixinDefaults, mixinName, mixinOptions, ref, resolvedMixins;
+        var allMixins, definition, j, k, l, len, len1, len2, len3, m, mixinDefaults, mixinName, mixinOptions, ref, resolvedMixins;
         instance.____mixed = [];
         instance.mixinOptions = _.extend({}, instance.mixinOptions);
-        resolvedMixins = this.composeMixinDependencies(mixins);
+        allMixins = [].concat(mixins, instance.__mixins());
+        resolvedMixins = this.composeMixinDependencies(allMixins);
         instance.__mixins = function() {
-          return resolvedMixins.slice();
+          return resolvedMixins;
         };
         for (j = 0, len = resolvedMixins.length; j < len; j++) {
           mixinName = resolvedMixins[j];
@@ -325,7 +326,6 @@
           this.mixinitialize(instance, mixinName);
         }
         instance.__mixin = _.chain(function(obj, mixin, mixinOptions) {
-          obj.____mixed = [];
           this.handleMixins(obj, [mixin], mixinOptions);
           return delete obj.____mixed;
         }).bind(this).partial(instance).value();
@@ -365,18 +365,13 @@
       };
 
       Factory.prototype.handleTags = function(name, instance, tags) {
-        var factoryMap, fullTags, j, len, tag;
+        var factoryMap, j, len, ref, tag;
         this.instances[name].push(instance);
-        fullTags = _.toArray(tags).concat(instance.____tags || []);
-        if (instance.____tags) {
-          delete instance.____tags;
-        }
-        instance.__tags = function() {
-          return _.toArray(fullTags);
-        };
+        delete instance.____tags;
         factoryMap = [this.instances[name]];
-        for (j = 0, len = fullTags.length; j < len; j++) {
-          tag = fullTags[j];
+        ref = instance.__tags();
+        for (j = 0, len = ref.length; j < len; j++) {
+          tag = ref[j];
           if (this.tagMap[tag] == null) {
             this.tagMap[tag] = [];
           }
@@ -414,6 +409,16 @@
         instance.__type = function() {
           return name;
         };
+        instance.__mixins = (function(_this) {
+          return function() {
+            return _this.composeMixinDependencies(mixins);
+          };
+        })(this);
+        instance.__tags = (function(_this) {
+          return function() {
+            return _this.getTags(instance);
+          };
+        })(this);
         instance.constructor = this.getConstructor(name);
         this.handleMixins(instance, mixins, args);
         this.handleInjections(instance, injections);
@@ -428,6 +433,17 @@
         })(this);
         this.trigger('create', instance);
         return instance;
+      };
+
+      Factory.prototype.getTags = function(instance) {
+        var mixinTags;
+        mixinTags = _.chain(instance.__mixins()).map((function(_this) {
+          return function(mixinName) {
+            var ref, ref1;
+            return (ref = _this.mixins[mixinName]) != null ? (ref1 = ref.options) != null ? ref1.tags : void 0 : void 0;
+          };
+        })(this)).flatten().compact().uniq().value();
+        return _.chain([]).union(instance.____tags).union(this.definitions[instance.__type()].tags).union(mixinTags).compact().value();
       };
 
       Factory.prototype.verifyTags = function(instance) {
