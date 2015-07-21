@@ -288,6 +288,26 @@ require ["Factory"], (Factory) ->
           test = factory.get("Test", 1, 2, 3)
           expect(test.constructed).toHaveBeenCalledOn(test)
 
+      describe 'resolveInstance method', ->
+
+        class TestClass
+          constructor: -> @test = true
+
+        beforeEach ->
+          factory.define 'Test', TestClass
+
+        it 'should resolve string to a factory instance', ->
+          instance = factory.resolveInstance 'Test'
+          expect(instance).toBeInstanceOf TestClass
+
+        it 'should resolve (-> "") to a factory instance', ->
+          instance = factory.resolveInstance -> 'Test'
+          expect(instance).toBeInstanceOf TestClass
+
+        it 'should resolve (-> instance) to instance', ->
+          instance = factory.resolveInstance -> new TestClass
+          expect(instance).toBeInstanceOf TestClass
+
       describe "mixinOptions special cases", ->
 
         beforeEach ->
