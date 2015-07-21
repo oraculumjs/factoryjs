@@ -314,10 +314,9 @@ define [
 
       instance.mixinOptions = _.extend {}, instance.mixinOptions
 
-      resolvedMixins = @composeMixinDependencies mixins
-
-      instance.__mixins = ->
-        resolvedMixins.slice()
+      allMixins = [].concat mixins, instance.__mixins()
+      resolvedMixins = @composeMixinDependencies allMixins
+      instance.__mixins = -> resolvedMixins
 
       # Iterate over all of our resolved mixins, applying their implementation
       # to the current instance.
@@ -349,7 +348,6 @@ define [
         @mixinitialize instance, mixinName
 
       instance.__mixin = _.chain((obj, mixin, mixinOptions) ->
-        obj.____mixed = []
         @handleMixins obj, [mixin], mixinOptions
         delete obj.____mixed
       ).bind(this).partial(instance).value()
@@ -386,12 +384,9 @@ define [
 
     handleTags: (name, instance, tags) ->
       @instances[name].push instance
-      fullTags = _.toArray(tags).concat(instance.____tags or [])
-      delete instance.____tags if instance.____tags
-      instance.__tags = -> _.toArray fullTags
-
+      delete instance.____tags
       factoryMap = [@instances[name]]
-      for tag in fullTags
+      for tag in instance.__tags()
         @tagMap[tag] = [] unless @tagMap[tag]?
         @tagMap[tag].push instance
         factoryMap.push @tagMap[tag]
@@ -424,16 +419,24 @@ define [
 
       # arbitrary arguments length on the constructor
       instance = new constructor args...
-      # Set the type immediately
-      instance.__type = -> name
+
+      # Set the type/tags/mixins immediately
+      instance.__type   = -> name
+      instance.__mixins = => @composeMixinDependencies mixins
+      instance.__tags   = => @getTags instance
+
       # Set the constructor of the instance to one that's factory wrapped
       instance.constructor = @getConstructor name
+
       # mixin support
       @handleMixins instance, mixins, args
+
       # injection support
       @handleInjections instance, injections
+
       # tag support
       @handleTags name, instance, def.tags
+
       # late initialization support
       instance.constructed args... if _.isFunction instance.constructed
 
@@ -448,6 +451,14 @@ define [
       @trigger 'create', instance
 
       return instance
+
+    getTags: (instance) ->
+      mixinTags = _.chain(instance.__mixins()).map((mixinName) =>
+        return @mixins[mixinName]?.options?.tags
+      ).flatten().compact().uniq().value()
+      return _.chain([]).union(instance.____tags)
+        .union(@definitions[instance.__type()].tags)
+        .union(mixinTags).compact().value()
 
     # Verify Tags
     # -----------

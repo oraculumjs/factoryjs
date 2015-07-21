@@ -566,6 +566,7 @@ require ["Factory"], (Factory) ->
               expect(m[method]).toHaveBeenCalledWith('test')
 
       describe "Factory Instance Mapping", ->
+        so = undefined
         lso = undefined
 
         beforeEach ->
@@ -575,8 +576,7 @@ require ["Factory"], (Factory) ->
 
           factory.define "SimpleObject", (->
             @isSimple = true
-          ),
-            tags: ["NotSoSimple", "KindaComplicated"]
+          ), tags: ["NotSoSimple", "KindaComplicated"]
 
           factory.extend "SimpleObject", "LessSimpleObject",
             isThisSiple: ->
@@ -585,6 +585,7 @@ require ["Factory"], (Factory) ->
             mixins: ['TagMixin']
             tags: ["Difficult"]
 
+          so = factory.get 'SimpleObject'
           lso = factory.get("LessSimpleObject")
 
         it "should have the right tags in memory", ->
@@ -593,6 +594,11 @@ require ["Factory"], (Factory) ->
           expect(lso.__tags()).toContain('NotSoSimple')
           expect(lso.__tags()).toContain('KindaComplicated')
           expect(lso.__tags()).toContain('SimpleObject')
+
+        it 'should append late mixed tags', ->
+          expect(so.__tags()).not.toContain 'MixedInto'
+          so.__mixin 'TagMixin'
+          expect(so.__tags()).toContain 'MixedInto'
 
         it "should be able to verify an instance map", ->
           expect(factory.verifyTags(lso)).toBe true
