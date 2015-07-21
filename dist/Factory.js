@@ -1,38 +1,78 @@
 (function() {
-  var indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
-    slice = [].slice;
+  var slice = [].slice,
+    indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
-    var Factory, extendMixinOptions;
-    extendMixinOptions = function(mixinOptions, mixinDefaults) {
-      var defaultValue, isObject, option, results, value;
-      if (mixinOptions == null) {
-        mixinOptions = {};
-      }
-      if (mixinDefaults == null) {
-        mixinDefaults = {};
-      }
-      results = [];
-      for (option in mixinDefaults) {
-        defaultValue = mixinDefaults[option];
-        value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
-        isObject = _.isObject(value) || _.isObject(defaultValue);
-        if (!isObject) {
-          continue;
-        }
-        if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isFunction(value) || _.isFunction(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
-          continue;
-        }
-        if (_.isArray(value) || _.isArray(defaultValue)) {
-          mixinOptions[option] = value.concat(defaultValue);
-          continue;
-        }
-        results.push(mixinOptions[option] = _.extend({}, defaultValue, value));
-      }
-      return results;
-    };
+    var Factory;
     return Factory = (function() {
+      var composeConfig, extendMixinOptions;
+
       _.extend(Factory.prototype, Backbone.Events);
+
+      extendMixinOptions = function(mixinOptions, mixinDefaults) {
+        var defaultValue, isObject, option, results, value;
+        if (mixinOptions == null) {
+          mixinOptions = {};
+        }
+        if (mixinDefaults == null) {
+          mixinDefaults = {};
+        }
+        results = [];
+        for (option in mixinDefaults) {
+          defaultValue = mixinDefaults[option];
+          value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
+          isObject = _.isObject(value) || _.isObject(defaultValue);
+          if (!isObject) {
+            continue;
+          }
+          if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isFunction(value) || _.isFunction(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
+            continue;
+          }
+          results.push(mixinOptions[option] = Factory.composeConfig(defaultValue, value));
+        }
+        return results;
+      };
+
+
+      /* Compose Config
+       * composeConfig allows mixed object/function combinations to be
+       * resolvable to configuration objects/arrays, etc.
+       * Arrays are concatenated, objects are extended.
+       * Constructor configurations are the responsibility of mixins.
+       */
+
+      composeConfig = function() {
+        var args, defaultConfig, overrideConfig;
+        defaultConfig = arguments[0], overrideConfig = arguments[1], args = 3 <= arguments.length ? slice.call(arguments, 2) : [];
+        if (_.isFunction(defaultConfig)) {
+          defaultConfig = defaultConfig.apply(this, args);
+        }
+        if (_.isFunction(overrideConfig)) {
+          overrideConfig = overrideConfig.apply(this, args);
+        }
+        if (overrideConfig == null) {
+          return _.clone(defaultConfig);
+        }
+        if (_.isArray(defaultConfig) && _.isArray(overrideConfig)) {
+          return [].concat(defaultConfig, overrideConfig);
+        } else {
+          return _.extend({}, defaultConfig, overrideConfig);
+        }
+      };
+
+      Factory.composeConfig = function() {
+        var defaults, overrides;
+        defaults = arguments[0], overrides = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+        return _.reduce(overrides, (function(defaults, override) {
+          if (_.isFunction(defaults) || _.isFunction(override)) {
+            return function() {
+              return composeConfig.call.apply(composeConfig, [this, defaults, override].concat(slice.call(arguments)));
+            };
+          } else {
+            return composeConfig(defaults, override);
+          }
+        }), defaults);
+      };
 
       function Factory(Base, options) {
         if (options == null) {

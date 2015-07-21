@@ -21,37 +21,55 @@ define [
   #  * dispose of objects
   #  * inject objects onto keys of other objects by name
 
-  # Provide a utility for shallow extension of the mixinOptions object.
-  # This method only supports certain primitives for extension by design.
-  extendMixinOptions = (mixinOptions = {}, mixinDefaults = {}) ->
-    for option, defaultValue of mixinDefaults
-      value = mixinOptions[option] ?= defaultValue
-
-      # Don't do anything if either value is not an object
-      isObject = _.isObject(value) or _.isObject(defaultValue)
-      continue unless isObject
-
-      # Don't do anything if either object is a type we don't support
-      continue if _.isDate(value) or _.isDate(defaultValue) or
-      _.isElement(value) or _.isElement(defaultValue) or
-      _.isFunction(value) or _.isFunction(defaultValue) or
-      _.isRegExp(value) or _.isRegExp(defaultValue)
-
-      # If it's an array, concat the values
-      if _.isArray(value) or _.isArray(defaultValue)
-        mixinOptions[option] = value.concat defaultValue
-        continue
-
-      # Lastly, if it's a bare object, extend it
-      mixinOptions[option] = _.extend {}, defaultValue, value
-
-  # Constructor
-  # -----------
-  # It only takes one argument, the base class implementation
-  # to use as a default. It becomes the 'Base' type, you can extend.
-
   class Factory
     _.extend @prototype, Backbone.Events
+
+    # Provide a utility for shallow extension of the mixinOptions object.
+    # This method only supports certain primitives for extension by design.
+    extendMixinOptions = (mixinOptions = {}, mixinDefaults = {}) ->
+      for option, defaultValue of mixinDefaults
+        value = mixinOptions[option] ?= defaultValue
+
+        # Don't do anything if either value is not an object
+        isObject = _.isObject(value) or _.isObject(defaultValue)
+        continue unless isObject
+
+        # Don't do anything if either object is a type we don't support
+        continue if _.isDate(value) or _.isDate(defaultValue) or
+        _.isElement(value) or _.isElement(defaultValue) or
+        _.isFunction(value) or _.isFunction(defaultValue) or
+        _.isRegExp(value) or _.isRegExp(defaultValue)
+
+        mixinOptions[option] = Factory.composeConfig defaultValue, value
+
+    ### Compose Config
+    # composeConfig allows mixed object/function combinations to be
+    # resolvable to configuration objects/arrays, etc.
+    # Arrays are concatenated, objects are extended.
+    # Constructor configurations are the responsibility of mixins.
+    ###
+
+    composeConfig = (defaultConfig, overrideConfig, args...) ->
+      if _.isFunction defaultConfig
+        defaultConfig = defaultConfig.apply this, args
+      if _.isFunction overrideConfig
+        overrideConfig = overrideConfig.apply this, args
+      return _.clone(defaultConfig) unless overrideConfig?
+      return if _.isArray(defaultConfig) and _.isArray(overrideConfig)
+      then [].concat defaultConfig, overrideConfig
+      else _.extend {}, defaultConfig, overrideConfig
+
+    @composeConfig: (defaults, overrides...) ->
+      return _.reduce overrides, ((defaults, override) ->
+        return if _.isFunction(defaults) or _.isFunction(override)
+        then -> composeConfig.call this, defaults, override, arguments...
+        else composeConfig defaults, override
+      ), defaults
+
+    # Constructor
+    # -----------
+    # It only takes one argument, the base class implementation
+    # to use as a default. It becomes the 'Base' type, you can extend.
 
     constructor: (Base, options = {}) ->
       @mixins = {}
