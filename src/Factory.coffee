@@ -9,62 +9,82 @@ define [
 ], (_, $, Backbone) ->
 
   # Factory objects can
-  #
-  #  * hold type definitions
-  #  * return objects of those types
-  #  * hold mixin definitions
-  #  * mixin those mixins to defined objects of types
-  #  * return singleton type definitions
-  #  * extend existing definitions
-  #  * tag objects with types and other metadata
-  #  * retrieve and manipulate objects by tag
-  #  * dispose of objects
-  #  * inject objects onto keys of other objects by name
+  #  * Define constructors.
+  #  * Extend existing constructors.
+  #  * Create instances of a constructor.
+  #  * Dispose instance references.
+  #  * Resolve singletons instances.
+  #  * Define mixins.
+  #  * Compose mixins onto an instance.
+  #  * Tag instances with types and other metadata.
+  #  * Retrieve and manipulate instances by tag.
+  #  * Inject instances into other instances.
+
+  # Enhance Object
+  # --------------
+  # Ensures that an object has the correct factory interface
+  _enhanceObject = (factory, name, definition, object) ->
+    # Object environment interfaces
+    mixins = definition.options?.mixins
+    object.__type = -> name
+    object.__tags = -> factory.getTags object
+    object.__mixins = -> factory.composeMixinDependencies mixins
+    object.__factory = -> factory
+    object.__activeMixins = -> []
+
+    # Factory method interfaces
+    object.__mixin = -> factory.applyMixin object, arguments...
+    object.__dispose = -> factory.disposeInstance object, arguments...
+
+  # Compose Config
+  # --------------
+  # composeConfig allows mixed object/function combinations to be
+  # resolvable to configuration objects/arrays, etc.
+  # Arrays are concatenated, objects are extended.
+  # Constructor configurations are the responsibility of mixins.
+
+  _composeConfig = (defaultConfig, overrideConfig, args...) ->
+    if _.isFunction defaultConfig
+      defaultConfig = defaultConfig.apply this, args
+    if _.isFunction overrideConfig
+      overrideConfig = overrideConfig.apply this, args
+    return _.clone(defaultConfig) unless overrideConfig?
+    return if _.isArray(defaultConfig) and _.isArray(overrideConfig)
+    then [].concat defaultConfig, overrideConfig
+    else _.extend {}, defaultConfig, overrideConfig
+
+  composeConfig = (defaults, overrides...) ->
+    return _.reduce overrides, ((defaults, override) ->
+      return if _.isFunction(defaults) or _.isFunction(override)
+      then -> _composeConfig.call this, defaults, override, arguments...
+      else _composeConfig defaults, override
+    ), defaults
+
+  extendMixinOptions = (mixinOptions = {}, mixinDefaults = {}) ->
+    for option, defaultValue of mixinDefaults
+      value = mixinOptions[option] ?= defaultValue
+
+      # Override the default value if one of the values is not extendable.
+      unless _.isObject(value) and _.isObject(defaultValue)
+        mixinOptions[option] = value
+        continue
+
+      # Don't do anything if either object is an object type we don't support.
+      continue if _.isDate(value) or _.isDate(defaultValue) or
+      _.isElement(value) or _.isElement(defaultValue) or
+      _.isFunction(value) or _.isFunction(defaultValue) or
+      _.isRegExp(value) or _.isRegExp(defaultValue)
+
+      mixinOptions[option] = composeConfig defaultValue, value
 
   class Factory
     _.extend @prototype, Backbone.Events
 
-    # Provide a utility for shallow extension of the mixinOptions object.
-    # This method only supports certain primitives for extension by design.
-    extendMixinOptions = (mixinOptions = {}, mixinDefaults = {}) ->
-      for option, defaultValue of mixinDefaults
-        value = mixinOptions[option] ?= defaultValue
-
-        # Don't do anything if either value is not an object
-        isObject = _.isObject(value) or _.isObject(defaultValue)
-        continue unless isObject
-
-        # Don't do anything if either object is a type we don't support
-        continue if _.isDate(value) or _.isDate(defaultValue) or
-        _.isElement(value) or _.isElement(defaultValue) or
-        _.isFunction(value) or _.isFunction(defaultValue) or
-        _.isRegExp(value) or _.isRegExp(defaultValue)
-
-        mixinOptions[option] = Factory.composeConfig defaultValue, value
-
-    ### Compose Config
-    # composeConfig allows mixed object/function combinations to be
-    # resolvable to configuration objects/arrays, etc.
-    # Arrays are concatenated, objects are extended.
-    # Constructor configurations are the responsibility of mixins.
-    ###
-
-    composeConfig = (defaultConfig, overrideConfig, args...) ->
-      if _.isFunction defaultConfig
-        defaultConfig = defaultConfig.apply this, args
-      if _.isFunction overrideConfig
-        overrideConfig = overrideConfig.apply this, args
-      return _.clone(defaultConfig) unless overrideConfig?
-      return if _.isArray(defaultConfig) and _.isArray(overrideConfig)
-      then [].concat defaultConfig, overrideConfig
-      else _.extend {}, defaultConfig, overrideConfig
-
-    @composeConfig: (defaults, overrides...) ->
-      return _.reduce overrides, ((defaults, override) ->
-        return if _.isFunction(defaults) or _.isFunction(override)
-        then -> composeConfig.call this, defaults, override, arguments...
-        else composeConfig defaults, override
-      ), defaults
+    # Expose extendMixinOptions and composeConfig as both
+    # class and instance methods
+    @composeConfig: composeConfig
+    @extendMixinOptions: extendMixinOptions
+    _.extend @prototype, {composeConfig, extendMixinOptions}
 
     # Constructor
     # -----------
@@ -73,101 +93,68 @@ define [
 
     constructor: (Base, options = {}) ->
       @mixins = {}
-      @tagCbs = {}
       @tagMap = {}
       @promises = {}
       @instances = {}
+      @mirrors = []
       @definitions = {}
+      @tagCallbacks = {}
+      @baseTags = options.baseTags or []
+      @on 'create', => @handleCreate arguments...
+      @on 'define', => @handleDefine arguments...
+      # @on 'dispose', => @handleDispose arguments...
       @define 'Base', Base
-      @baseTags = options.baseTags || []
-      @on 'create', @handleCreate, this
 
     # Define
     # ------
-    # Use the define method to define a new type (constructor) in the
-    # factory.
+    # Use the define method to define a new type (constructor)
+    # in the factory.
 
-    define: (name, def, options = {}) ->
-      if @definitions[name]? and not options.override
+    define: (name, definition, options = {}) ->
+      if (existingDefinition = @getDefinition(name))? and not options.override
         return this if options.silent
-        throw new TypeError """
+        {factory} = existingDefinition
+        throw new Error """
           Factory#define Definition "#{name}" already exists.
-          Use override option to ignore.
+          Definition exists in factory tagged with #{factory.baseTags}.
+          Use `override` to replace this definition in the current factory.
         """
 
-      # whenDefined support.
-      @promises[name] ?= $.Deferred()
-      definition = { options }
+      # Have whenDefined create a new promise for this definition
+      @whenDefined name
 
-      # we borrow extend from Backbone unless you brought your own.
-      def.extend = Backbone.Model.extend unless _.isFunction(def.extend)
+      # Create the new definition.
+      factoryDefinition = { options }
 
-      # we will store an object instead of a function if that is what you need.
-      if _.isFunction(def)
-        definition.constructor = def
-      else
-        definition.constructor = -> _.clone(def)
-      definition.constructor.prototype.__factory = => this
+      # Store an object instead of a function if necessary.
+      if _.isFunction(definition)
+      then factoryDefinition.constructor = definition
+      else factoryDefinition.constructor = -> _.clone definition
 
-      # tag support
-      tags = [name].concat(options.tags).concat @baseTags
-      definition.tags = _.uniq(tags).filter (i) -> !!i
-      @instances[name] = []
-      _.each definition.tags, (tag) =>
-        @tagMap[tag] = @tagMap[tag] or []
-        @tagCbs[tag] = @tagCbs[tag] or []
+      # Compose all the tags for this definition.
+      factoryDefinition.tags = _.chain([name])
+        .union(options.tags).union(@baseTags)
+        .compact().uniq().value()
 
-      @definitions[name] = definition
-      # if you need to know when a type is defined you can listen to
+      # Push this definition into our definitions array.
+      @definitions[name] = factoryDefinition
+
+      # If you need to know when a type is defined you can listen to
       # the define event on the factory or ask using whenDefined.
-      @trigger 'define', name, definition, options
-      @promises[name].resolve(this, name)
+      @trigger 'define', name, factoryDefinition, options, this
+
+      # Return the factory for chaining.
       return this
-
-    # Has Definition
-    # --------------
-    # Find out if the factory already has a definition by name.
-
-    hasDefinition: (name) ->
-      !!@definitions[name]
-
-    # When Defined
-    # ------------
-    # Find out when a definition has been loaded into the factory
-    # by name. This returns a jQuery promise object.
-
-    whenDefined: (name) ->
-      @promises[name] ?= $.Deferred()
-      @promises[name].promise()
-
-    # Fetch Definition
-    # ----------------
-    # Fetch a definition from the server and callback when done
-    #
-    #     WARNING! this will not work with jquery or other polymorphic
-    #     function API's. It does expect functions to be constructors!
-
-    fetchDefinition: (name) ->
-      dfd = @whenDefined(name)
-      require [name], (def) =>
-        # Just in case the module is not setup to use the factory
-        # this will get ignored if the module defines itself in the
-        # factory.
-        @define name, def
-      return dfd
 
     # Extend
     # ------
-    # Use extend to define a new type that extends another type in the
-    # factory. It basically uses Backbone.Model extend unless you provide
-    # your own.
+    # Use extend to create a new definition that extends another in the factory.
+    # It uses the default extend method (Backbone.Model.extend) on the
+    # constructor unless a custom implementation was provided.
 
     extend: (base, name, definition, options = {}) ->
-      baseDefinition = @definitions[base]
-
-      throw new ReferenceError """
-        Factory#extend Base Class "#{base}" Not Available.
-      """ unless baseDefinition
+      # Attempt to resolve the base defintion from this, or upstream mirrors.
+      {definition:baseDefinition,factory:baseFactory} = @_getDefinitionSpec base
 
       throw new TypeError """
         Factory#extend Invalid Argument.
@@ -177,345 +164,74 @@ define [
       options.tags = _.chain([])
         .union(options.tags)
         .union(baseDefinition.tags)
-        .compact().value()
+        .union(baseFactory.baseTags)
+        .compact().uniq().value()
 
       if options.inheritMixins
         options.mixins = _.chain([])
           .union(baseDefinition.options.mixins)
           .union(options.mixins)
-          .compact().value()
-        mixinOptions = definition.mixinOptions
+          .compact().uniq().value()
         mixinDefaults = baseDefinition.constructor::mixinOptions
-        extendMixinOptions mixinOptions, mixinDefaults
+        extendMixinOptions definition.mixinOptions, mixinDefaults
 
-      if options.singleton?
-      then options.singleton = options.singleton
-      else options.singleton = baseDefinition.options.singleton
+      if Boolean options.singleton
+      then options.singleton = Boolean options.singleton
+      else options.singleton = Boolean baseDefinition.options.singleton
 
-      extendedDefinition = baseDefinition.constructor.extend definition
+      # No class-level extend method? No problem. We'll borrow Backbone's
+      extend = baseDefinition.constructor.extend or Backbone.Model.extend
+      extendedDefinition = extend.call baseDefinition.constructor, definition
+
       return @define name, extendedDefinition, options
 
-    # Clone
-    # -----
-    # This can be used to add the definitions from one factory to another.
-    # Use it by creating your new clean factory and call clone passing in
-    # the factory whose definitions you want to include.
+    # Has Definition
+    # --------------
+    # Find out if the factory has a definition by name.
 
-    clone: (factory) ->
-      throw new TypeError '''
-        Factory#clone Invalid Argument.
-        `factory` must be an instance of Factory.
-      ''' unless factory instanceof Factory
+    hasDefinition: (name) ->
+      return @getDefinition(name)?
 
-      singletonDefinitions = []
+    # Get Definition
+    # --------------
+    # Finds a requested definition in the current or mirrored mirrors
 
-      _.each ["definitions", "mixins", "promises"], (key) =>
-        _.defaults @[key], factory[key]
-        if key is 'definitions'
-          _.each @[key], (def, defname) =>
-            singletonDefinitions.push defname if def.options.singleton
-            @[key][defname].constructor.prototype.__factory = => this
+    getDefinition: (name) ->
+      if (definition = @definitions[name])?
+        return definitionSpec = {definition, factory: this}
+      for factory in @mirrors
+        if (definitionSpec = factory.getDefinition name)?
+          return definitionSpec
 
-      _.each ["tagCbs","tagMap","promises","instances"], (key) =>
-        @[key] ?= {}
-        for name, payload of factory[key]
-          if key is 'instances' and name in singletonDefinitions
-            singleton = true
-          if _.isArray(payload)
-            @[key][name] ?= []
-            if singleton
-              @[key][name] = @[key][name]
-            else
-              @[key][name] = payload.concat(@[key][name])
-          if _.isFunction payload?.resolve
-            @[key][name] ?= $.Deferred()
-            @[key][name].done(payload.resolve)
-    # Mirror
-    # ------
-    # This is a wrapper for clone that keeps this factory synced with the
-    # cloned factory. Useful for when you have need to clone a factory that
-    # has asynchronous definitions.
+    _getDefinitionSpec: (name) ->
+      throw new ReferenceError """
+        Factory#_getDefinitionSpec Definition #{name} does not exist.
+      """ unless (definitionSpec = @getDefinition name)?
+      return definitionSpec
 
-    mirror: (factory) ->
-      factory.off 'create', factory.handleCreate
-      _.chain(this).methods().each (method) =>
-        factory[method] = =>
-          @[method] arguments...
-      @clone factory
-      _.chain(factory).keys().each (key) ->
-        delete factory[key] unless _.isFunction(factory[key])
+    # Fetch Definition
+    # ----------------
+    # Fetch a definition from the server and callback when done
+    #
+    # WARNING! this will not work with jquery or other polymorphic
+    # function API's. It expects functions to be constructors!
+    # TODO: This should support CJS/Node
 
-    # Define Mixin
+    fetchDefinition: (name) ->
+      require [name], (definition) =>
+        # Just in case the module is not setup to use the factory
+        # this will get ignored if the module defines itself in the
+        # factory.
+        @define name, definition
+      return @whenDefined(name)
+
+    # When Defined
     # ------------
-    # Use defineMixin to add mixin definitions to the factory. You can
-    # use these definitions in the define and extend method by adding
-    # a mixins array option with the names of the mixins to include.
+    # Find out when a definition has been loaded into the factory
+    # by name. This returns a jQuery promise object.
 
-    defineMixin: (mixinName, definition, options = {}) ->
-      throw new TypeError """
-        Factory#defineMixin Mixin #{mixinName} already defined.
-        Use `override` option to ignore.
-      """ if @mixins[mixinName]? and not options.override
-      @mixins[mixinName] = {definition, options}
-      @trigger 'defineMixin', mixinName, definition, options
-      return this
-
-    # Compose Mixin Dependencies
-    # --------------------------
-    # This allows to get all the mixin dependencies as a consolidated list
-    # in the order we are expecting.
-
-    composeMixinDependencies: (mixins = []) ->
-      # mixins is the top level mixins
-      result = []
-      for mixinName in mixins
-        {options} = @mixins[mixinName]
-        result = result.concat @composeMixinDependencies options.mixins
-        result.push mixinName
-      return _.uniq result
-
-    # Apply Mixin
-    # -----------
-    # Apply a mixin by name to an object. Options that are on the object
-    # will be supported by passed in defaults then by mixin defaults. Will
-    # invoke mixinitialize and empty mixinitialize method after invocation.
-
-    applyMixin: (instance, mixinName) ->
-      {definition, options} = @mixins[mixinName]
-      throw new TypeError """
-        Factory#applyMixin Mixin #{mixinName} not defined
-      """ unless definition
-
-      unless instance.____mixed
-        late_mix = true # we are in a late mix, use transient loop protection
-        ignore_tags = true # ignore tags
-        instance.____mixed = []
-
-      return if mixinName in instance.____mixed
-
-      if options.tags and not ignore_tags
-        instance.____tags or= []
-        instance.____tags = instance.____tags.concat options.tags
-
-      _.extend instance, _.omit definition, [
-        'mixinOptions', 'mixinitialize', 'mixconfig'
-      ]
-
-      if late_mix
-        @mixinitialize instance, mixinName
-        delete instance.____mixed
-      else instance.____mixed.push mixinName
-
-      return instance
-
-    # Mixinitialize
-    # -------------
-    # Invoke the mixin's mixinitialize method on the instance, if it exists.
-    # This is done after the mixin's options are composed and its methods
-    # applied so that the instance is fully composed.
-
-    mixinitialize: (instance, mixinName) ->
-      {definition} = @mixins[mixinName]
-      mixinitialize = definition.mixinitialize
-      mixinitialize.call instance if _.isFunction mixinitialize
-
-    # Handle Mixins
-    # -------------
-    # Gets called when an object is created to mixin anything you said
-    # to include in the definition. If the mixin defines a mixinitialize
-    # method it will get called after initialize and before constructed.
-
-    handleMixins: (instance, mixins, args) ->
-      instance.____mixed = []
-
-      # clone the instance's mixinOptions to avoid overwriting the defaults
-
-      instance.mixinOptions = _.extend {}, instance.mixinOptions
-
-      allMixins = [].concat mixins, instance.__mixins()
-      resolvedMixins = @composeMixinDependencies allMixins
-      instance.__mixins = -> resolvedMixins
-
-      # Iterate over all of our resolved mixins, applying their implementation
-      # to the current instance.
-      for mixinName in resolvedMixins
-        @applyMixin instance, mixinName
-
-      # Because it considers instance.mixinOptions to be canonical
-      # this needs to execute in reverse order so higher level mixins
-      # take configuration precedence.
-      for mixinName in resolvedMixins.slice().reverse()
-        {definition} = @mixins[mixinName]
-        mixinDefaults = definition.mixinOptions
-        mixinOptions = instance.mixinOptions
-        extendMixinOptions mixinOptions, mixinDefaults
-
-        # Complete the composition of the mixinOptions object by
-        # extending a bare object with mixinDefaults.
-        instance.mixinOptions = _.extend {}, mixinDefaults, mixinOptions
-
-      # Invoke the mixin's mixconfig method if available, passing through
-      # the mixinOptions object so that it can be modified by reference.
-      for mixinName in resolvedMixins
-        {definition} = @mixins[mixinName]
-        mixinOptions = instance.mixinOptions
-        definition.mixconfig? mixinOptions, args...
-
-      # Finally, ensure the mixin(s) get initialized
-      for mixinName in resolvedMixins
-        @mixinitialize instance, mixinName
-
-      instance.__mixin = _.chain((obj, mixin, mixinOptions) ->
-        @handleMixins obj, [mixin], mixinOptions
-        delete obj.____mixed
-      ).bind(this).partial(instance).value()
-
-      delete instance.____mixed
-
-    # Handle Injections
-    # -----------------
-    # Gets called then an object is created to add anything you said
-    # to include in the definition.
-
-    handleInjections: (instance, injections) ->
-      instance[name] = @get(type) for name, type of injections
-
-    # Handle Create
-    # -------------
-    # Gets called when an object is created to handle any events based
-    # on tags. This is the engine for doing AOP style Dependency Injection.
-
-    handleCreate: (instance) ->
-      for tag in instance.__tags()
-        @tagCbs[tag] = [] unless @tagCbs[tag]?
-        cbs = @tagCbs[tag]
-        continue if cbs.length is 0
-        for cb in cbs
-          cb instance if _.isFunction(cb)
-      true
-
-    # Handle Tags
-    # -----------
-    # Gets called when an object is created to wire the instance up with
-    # all of it's tags. Any type that the object inherits from, any of those
-    # types tags and any user defined tags are put into this list for use.
-
-    handleTags: (name, instance, tags) ->
-      @instances[name].push instance
-      delete instance.____tags
-      factoryMap = [@instances[name]]
-      for tag in instance.__tags()
-        @tagMap[tag] = [] unless @tagMap[tag]?
-        @tagMap[tag].push instance
-        factoryMap.push @tagMap[tag]
-      factoryMap = _.uniq(factoryMap)
-      instance.__factoryMap = -> [].slice.call factoryMap
-
-    # Get
-    # ---
-    # Call this with the name of the object type you want to get. You will
-    # definitely get that kind of object back. This is a pretty big function
-    # but it's just generally making decisions about the options you defined
-    # earlier.
-
-    get: (name, args...) ->
-      instances = @instances[name] ?= []
-      instance = @instances[name][0]
-      def = @definitions[name]
-      throw new TypeError """
-        Factory#get Definition #{name} is not defined.
-      """ unless def?
-      constructor = def.constructor
-
-      options = def.options or {}
-      singleton = !!options.singleton
-      mixins = options.mixins or []
-      injections = options.injections or []
-
-      # singleton support
-      return instance if singleton and instance
-
-      # arbitrary arguments length on the constructor
-      instance = new constructor args...
-
-      # Set the type/tags/mixins immediately
-      instance.__type   = -> name
-      instance.__mixins = => @composeMixinDependencies mixins
-      instance.__tags   = => @getTags instance
-
-      # Set the constructor of the instance to one that's factory wrapped
-      instance.constructor = @getConstructor name
-
-      # mixin support
-      @handleMixins instance, mixins, args
-
-      # injection support
-      @handleInjections instance, injections
-
-      # tag support
-      @handleTags name, instance, def.tags
-
-      # late initialization support
-      instance.constructed args... if _.isFunction instance.constructed
-
-      # we shortcut the dispose functionality so we can wire it into other
-      # frameworks and stuff easily
-      instance.__dispose = ((factory) ->
-        return -> factory.dispose this
-      )(this)
-
-      # we trigger a create event on the factory so we can handle tag listeners
-      # but the user can use this for other purposes as well.
-      @trigger 'create', instance
-
-      return instance
-
-    ### Resolve Instance
-    # Provide a method for resolving an instance via a callback or
-    # by resolving an instance in the factory.
-    ###
-
-    resolveInstance: (thing, args...) ->
-      thing = thing.call this, args... if _.isFunction thing
-      return @get thing, args... if _.isString thing
-      return thing
-
-    ### Get Tags
-    # Get all tags for an arbitrary factory instance.
-    ###
-
-    getTags: (instance) ->
-      mixinTags = _.chain(instance.__mixins()).map((mixinName) =>
-        return @mixins[mixinName]?.options?.tags
-      ).flatten().compact().uniq().value()
-      return _.chain([]).union(instance.____tags)
-        .union(@definitions[instance.__type()].tags)
-        .union(mixinTags).compact().value()
-
-    # Verify Tags
-    # -----------
-    # Call this to make sure that the instance hasn't yet been disposed. If it
-    # hasn't been disposed this will return true, otherwise return false.
-
-    verifyTags: (instance) ->
-      return false unless instance.__factoryMap
-      _.all instance.__factoryMap(), (arr) -> instance in arr
-
-    # Dispose
-    # -------
-    # Call this to remove the instance from the factories memory.
-    # Note that this will destroy singletons allowing a singleton
-    # object to be constructed again.
-
-    dispose: (instance) ->
-      _.each instance.__factoryMap(), (arr) ->
-        throw new TypeError """
-          Factory#dispose Instance Not In Factory.
-          Disposal failed!
-        """ if instance not in arr
-        while arr.indexOf(instance) > -1
-          arr.splice arr.indexOf(instance), 1
-      @trigger 'dispose', instance
+    whenDefined: (name) ->
+      return @promises[name] ?= $.Deferred()
 
     # Get Constructor
     # ---------------
@@ -526,10 +242,399 @@ define [
     # original constructor method. Use this for instance of checks.
 
     getConstructor: (name, original = false) ->
-      return @definitions[name].constructor if original
-      result = _.chain(@get).bind(this).partial(name).value()
-      result.prototype = @definitions[name].constructor.prototype
-      return result
+      # Attempt to resolve the defintion from this, or upstream mirrors.
+      {definition, factory} = @_getDefinitionSpec name
+
+      # If the original ctor was requested, return it immediately.
+      return definition.constructor if original
+
+      # Else, create a ctor partial bount to the factory get method.
+      ctor = => @getInstance name, arguments...
+      ctor.prototype = definition.constructor.prototype
+
+      return ctor
+
+    # Get
+    # ---
+    # An alias for getInstance
+
+    get: -> @getInstance arguments...
+
+    # Get Instance
+    # ------------
+    # Call this with the name of the object type you want to get. You will
+    # definitely get that kind of object back. This is a pretty big function
+    # but it's just generally making decisions about the options you defined
+    # earlier.
+
+    getInstance: (name, args...) ->
+      # Attempt to resolve the defintion from this, or upstream mirrors.
+      {definition, factory} = @_getDefinitionSpec name
+
+      # Resolve all the options for this definition
+      mixins = definition.options.mixins or []
+      singleton = Boolean definition.options.singleton
+      injections = definition.options.injections or []
+
+      # Check to see if an instance of this definition already exists.
+      instance = @instances[name]?[0]
+      return instance if singleton and instance
+
+      # Get a reference to the constructor
+      Constructor = definition.constructor
+
+      # Enhance the constructor's prototype so that the factory interfaces
+      # are available immediately upon construction.
+      _enhanceObject this, name, definition, Constructor.prototype
+
+      # Create the instance
+      instance = new Constructor args...
+      instanceMixins = @composeMixinDependencies mixins
+
+      # Enhance the instance, in case it's a bare object instead of a proper
+      # Constructor.
+      _enhanceObject this, name, definition, instance
+
+      # Set the constructor of the instance to one that's factory wrapped
+      instance.constructor = factory.getConstructor name
+
+      # Then push the instance into the right cache.
+      @instances[name] ?= []
+      @instances[name].push instance
+
+      # Ensure this definition has the appropriate caches on the factory.
+      @handleDefine name, definition, ignore_promise: true
+
+      # Compose mixins on the instance.
+      @handleMixins instance, mixins, args
+
+      # Compose injections on the instance.
+      @handleInjections instance, injections
+
+      # Trigger evets for tags on the instance.
+      @handleTags name, instance, definition.tags
+
+      # If there's a constructed method, execute it with our ctor args.
+      instance.constructed? args...
+
+      # Notify any listeners that a new instance was created.
+      @trigger 'create', name, instance, args...
+
+      return instance
+
+    # Resolve Instance
+    # ----------------
+    # Provide a method for resolving an instance via a callback or
+    # by resolving an instance in the factory.
+
+    resolveInstance: (thing, args...) ->
+      thing = thing.call this, args... if _.isFunction thing
+      thing = @getInstance thing, args... if _.isString thing
+      return thing
+
+    ### Mixins
+    Say something about mixins
+    ###
+
+    # Define Mixin
+    # ------------
+    # Use defineMixin to add mixin definitions to the factory. You can
+    # use these definitions in the define and extend method by adding
+    # a mixins array option with the names of the mixins to include.
+
+    defineMixin: (name, definition, options = {}) ->
+      if (existingMixin = @getMixin(name))? and not options.override
+        return this if options.silent
+        {factory} = existingMixin
+        throw new Error """
+          Factory#defineMixin Mixin "#{name}" already exists.
+          Mixin exists in factory tagged with #{factory.baseTags}.
+          Use `override` to replace this mixin in the current factory.
+        """
+      @mixins[name] = {definition, options}
+      @trigger 'defineMixin', name, definition, options
+      return this
+
+    # Has Mixin
+    # ---------
+    # Find out if the factory has a mixin by name.
+
+    hasMixin: (name) ->
+      return @getMixin(name)?
+
+    # Get Mixin
+    # ---------
+    # Finds a requested mixin in the current or mirrored mirrors
+
+    getMixin: (name) ->
+      if (mixin = @mixins[name])?
+        return mixinSpec = {mixin, factory: this}
+      for factory in @mirrors
+        if (mixinSpec = factory.getMixin name)?
+          return mixinSpec
+
+    # _getMixin
+    # ---------
+    # A wrapper around getMixin that throws if the requested mixin isn't defined
+
+    _getMixinSpec: (name) ->
+      throw new ReferenceError """
+        Factory#_getMixin Mixin #{name} does not exist.
+      """ unless (mixinSpec = @getMixin name)?
+      return mixinSpec
+
+    # Compose Mixin Dependencies
+    # --------------------------
+    # This allows to get all the mixin dependencies as a consolidated list
+    # in the order we are expecting.
+
+    composeMixinDependencies: (mixins = []) ->
+      # mixins is the top level mixins
+      return _.chain(mixins).reduce(((memo, name) =>
+        mixinSpec = @_getMixinSpec name
+        mixinMixins = mixinSpec.mixin.options?.mixins
+        memo = memo.concat @composeMixinDependencies mixinMixins if mixinMixins?
+        memo.push name
+        return memo
+      ), []).compact().uniq().value()
+
+    # Apply Mixin
+    # -----------
+    # Apply a mixin by name to an object. Options that are on the object
+    # will be supported by passed in defaults then by mixin defaults. Will
+    # invoke mixinitialize and empty mixinitialize method after invocation.
+
+    applyMixin: (instance, name, args) ->
+      # clone the instance's mixinOptions to avoid overwriting the defaults.
+      instance.mixinOptions = _.extend {}, instance.mixinOptions
+
+      # Attempt to resolve the defintion from this, or upstream mirrors.
+      # This will throw if @getMixin cannot resolve the target.
+      {mixin, factory} = @_getMixinSpec name
+
+      unless name in instance.__mixins()
+        late_mix = true # we are in a late mix, use transient loop protection.
+        ignore_tags = true # ignore tags.
+
+      # Do no further processing if the instance already has this mixin.
+      return if name in instance.__activeMixins()
+
+      # Ensure we apply ally mixin dependencies if we're in a late mix.
+      if (mixinDependencies = mixin.options?.mixins) and late_mix
+        for dependency in @composeMixinDependencies mixinDependencies
+          @applyMixin instance, dependency
+
+      # If we have tags and we're not in a late mix, add the tags.
+      if mixin.options?.tags? and not ignore_tags
+        instance.____tags or= []
+        instance.____tags = instance.____tags.concat mixin.options.tags
+
+      # Extend the instance with the mixin's implementation, omitting
+      # factoryjs-specific mixin properties.
+      _.extend instance, _.omit mixin.definition, [
+        'mixinOptions', 'mixinitialize', 'mixconfig'
+      ]
+
+      # Push this mixin name into the growing list of active mixins
+      activeMixins = instance.__activeMixins()
+      activeMixins.push name
+
+      # And reassign the function with our new list.
+      instance.__activeMixins = -> activeMixins
+
+      # If we're in a late mix, initialize the mixin.
+      @mixconfig instance, name, args if late_mix
+      @mixinitialize instance, name if late_mix
+
+      # Return the instance for consumption
+      return instance
+
+    # Mixconfig
+    # ---------
+    # Allow mixin-specified constructor arguments to modify configuration.
+    # This method intentionally omits the instance scope to discourage
+    # instance manipulation in mixconfig (no-no).
+
+    mixconfig: (instance, name, args) ->
+      {mixin, factory} = @_getMixinSpec name
+      mixin.definition.mixconfig? instance.mixinOptions, args...
+
+    # Mixinitialize
+    # -------------
+    # Invoke the mixin's mixinitialize method on the instance, if it exists.
+    # This is done after the mixin's options are composed and its methods
+    # applied so that the instance is fully composed.
+
+    mixinitialize: (instance, name) ->
+      {mixin, factory} = @_getMixinSpec name
+      mixin.definition.mixinitialize?.call instance
+
+    # Handle Injections
+    # -----------------
+    # Gets called then an object is created to add anything you said
+    # to include in the definition.
+
+    handleInjections: (instance, injections) ->
+      for propertyName, definitionName of injections
+        instance[propertyName] = @getInstance definitionName
+
+    # Get Tags
+    # ----------
+    # Get a list of tags from inherited definitions, mixins, etc.
+
+    getTags: (instance) ->
+      mixinTags = _.chain(instance.__mixins()).map((name) =>
+        return @_getMixinSpec(name).mixin.options?.tags
+      ).flatten().compact().uniq().value()
+      definitionTags = @_getDefinitionSpec(instance.__type()).definition.tags
+      return _.chain([]).union(instance.____tags)
+        .union(definitionTags)
+        .union(mixinTags)
+        .compact()
+        .uniq()
+        .value()
+
+    # Handle Define
+    # -------------
+    # Gets called when a definition is defined in this, or any mirrored
+    # mirrors.
+
+    handleDefine: (name, definition, options) ->
+      # Resolved any whenDefined callbacks for this instance type
+      @whenDefined(name).resolve arguments... unless options.ignore_promise
+
+    # Handle Create
+    # -------------
+    # Gets called when an object is created to handle any events based
+    # on tags. This is the engine for doing AOP style Dependency Injection.
+
+    handleCreate: (name, instance, args...) ->
+      _.each instance.__tags(), (tag) =>
+        return unless (callbacks = @tagCallbacks[tag])?
+        callback? instance for callback in callbacks
+
+    # Handle Mixins
+    # -------------
+    # Gets called when an object is created to mixin anything you said
+    # to include in the definition. If the mixin defines a mixinitialize
+    # method it will get called after initialize and before constructed.
+
+    handleMixins: (instance, mixins, args) ->
+      # Resolve the mixin's dependencies
+      currentMixins = _.chain([]).union(instance.__mixins())
+        .union(mixins).compact().uniq().value()
+      resolvedMixins = @composeMixinDependencies currentMixins
+
+      # Iterate over all of our resolved mixins, applying their implementation
+      # to the current instance.
+      @applyMixin instance, name for name in resolvedMixins
+
+      # Because it considers instance.mixinOptions to be canonical
+      # this needs to execute in reverse order so higher level mixins
+      # take configuration precedence.
+      for name in resolvedMixins.slice().reverse()
+        # Attempt to resolve the defintion from this, or upstream mirrors.
+        {mixin, factory} = @_getMixinSpec name
+        mixinOptions = instance.mixinOptions
+        mixinDefaults = mixin.definition.mixinOptions
+        extendMixinOptions mixinOptions, mixinDefaults
+
+        # Complete the composition of the mixinOptions object by
+        # extending a bare object with mixinDefaults.
+        instance.mixinOptions = _.extend {}, mixinDefaults, mixinOptions
+
+      # Invoke the mixin's mixconfig method if available, passing through
+      # the mixinOptions object so that it can be modified by reference.
+      @mixconfig instance, name, args for name in resolvedMixins
+
+      # Finally, ensure the mixin(s) get initialized
+      @mixinitialize instance, name for name in resolvedMixins
+
+    # Handle Tags
+    # -----------
+    # Gets called when an object is created to wire the instance up with
+    # all of it's tags. Any type that the object inherits from, any of those
+    # types tags and any user defined tags are put into this list for use.
+
+    handleTags: (name, instance, tags) ->
+      delete instance.____tags
+
+      # Create a map of all the places in the factory this instance is stored.
+      factoryMap = [@instances[name]]
+
+      # Create an empty entry in the tagMap, tagCallbacks array
+      tags = instance.__tags()
+      _.each tags, (tag) =>
+        @tagMap[tag] ?= []
+        @tagCallbacks[tag] ?= []
+        @tagMap[tag].push instance
+        factoryMap.push @tagMap[tag]
+
+      instance.__factoryMap = -> _.uniq factoryMap
+
+    # Mirror
+    # ------
+    # This is a wrapper for clone that keeps this factory synced with the
+    # cloned factory. Useful for when you have need to clone a factory that
+    # has asynchronous definitions.
+
+    mirror: (factory) ->
+      throw new TypeError '''
+        Factory#mirror Invalid Argument.
+        `factory` must be an instance of Factory.
+      ''' unless factory instanceof Factory
+      @mirrors.unshift factory
+      @baseTags = _.chain(@baseTags)
+        .union(factory.baseTags)
+        .compact().uniq().value()
+
+      # Push create, dispose events to upstream factories.
+      @on 'create', -> factory.trigger 'create', arguments...
+      @on 'dispose', -> factory.trigger 'dispose', arguments...
+
+      # Listen for define, defibeNuxub events from upstream factories
+      @listenTo factory, 'define', => @trigger 'define', arguments...
+      @listenTo factory, 'defineMixin', => @trigger 'defineMixin', arguments...
+
+    # Dispose
+    # -------
+    # Call this to remove the instance from the mirrors memory.
+    # Note that this will destroy singletons allowing a singleton
+    # object to be constructed again.
+
+    dispose: (thing) ->
+      return @disposeFactory unless thing?
+      return @disposeFactory thing if thing instanceof Factory
+      return @disposeInstance thing
+
+    disposeInstance: (instance, options = {}) ->
+      for array in instance.__factoryMap()
+        if instance not in array
+          return this if options.silent
+          throw new ReferenceError """
+            Factory#dispose Instance not in Factory.
+            Instance does not exist in factory tagged with #{@baseTags}.
+            Use `silent` option to ignore.
+          """  and not options.silent
+        while (index = array.indexOf(instance)) > -1
+          array.splice index, 1
+      @trigger 'dispose', instance
+
+    disposeFactory: (factory = this) ->
+      # TODO: Dispose factory
+
+    # Verify Tags
+    # -----------
+    # An alias for verifyInstance.
+
+    verifyTags: -> @verifyInstance arguments...
+
+    # Verify Instance
+    # ---------------
+    # Verify that the instance is still managed by the factory.
+    verifyInstance: (instance) ->
+      return false unless factoryMap = instance.__factoryMap?()
+      return _.all factoryMap, (arr) -> instance in arr
 
     # On Tag
     # ------
@@ -546,8 +651,8 @@ define [
         `cb` must be a Function.
       """ unless _.isFunction cb
       cb instance for instance in @tagMap[tag] or []
-      @tagCbs[tag] ?= []
-      @tagCbs[tag].push cb
+      @tagCallbacks[tag] ?= []
+      @tagCallbacks[tag].push cb
       return true
 
     # Off Tag
@@ -560,28 +665,12 @@ define [
         Factory#offTag Invalid Argument.
         `tag` must be a String.
       """ unless _.isString tag
-      return unless @tagCbs[tag]?
+      return unless @tagCallbacks[tag]?
       unless _.isFunction(cb)
-        @tagCbs[tag] = []
+        @tagCallbacks[tag] = []
         return
-      cbIdx = @tagCbs[tag].indexOf(cb)
+      cbIdx = @tagCallbacks[tag].indexOf(cb)
       throw new ReferenceError """
         Factory#offTag Callback Not Found for #{tag}.
       """ if cbIdx is -1
-      @tagCbs[tag].splice cbIdx, 1
-
-    # Is Type
-    # -------
-    # Call this to check if the instance passed in if of the passed in type.
-
-    isType: (instance, type) ->
-      return instance.__type() is type
-
-    # Get Type
-    # --------
-    # Call this to get the type of the instance as a string.
-
-    getType: (instance) ->
-      return instance.__type()
-
-  # And there you go, have fun with it.
+      @tagCallbacks[tag].splice cbIdx, 1
