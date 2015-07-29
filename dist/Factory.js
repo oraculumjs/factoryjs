@@ -399,9 +399,13 @@
       };
 
       Factory.prototype.mixconfig = function(instance, name, args) {
-        var base1, factory, mixin, ref;
+        var base1, base2, factory, mixin, ref;
         ref = this._getMixinSpec(name), mixin = ref.mixin, factory = ref.factory;
-        return typeof (base1 = mixin.definition).mixconfig === "function" ? base1.mixconfig.apply(base1, [instance.mixinOptions].concat(slice.call(args))) : void 0;
+        if ((args != null ? args.length : void 0) > 0) {
+          return typeof (base1 = mixin.definition).mixconfig === "function" ? base1.mixconfig.apply(base1, [instance.mixinOptions].concat(slice.call(args))) : void 0;
+        } else {
+          return typeof (base2 = mixin.definition).mixconfig === "function" ? base2.mixconfig(instance.mixinOptions) : void 0;
+        }
       };
 
       Factory.prototype.mixinitialize = function(instance, name) {
