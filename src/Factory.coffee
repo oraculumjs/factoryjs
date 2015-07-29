@@ -457,7 +457,9 @@ define [
 
     mixconfig: (instance, name, args) ->
       {mixin, factory} = @_getMixinSpec name
-      mixin.definition.mixconfig? instance.mixinOptions, args...
+      if args?.length > 0
+      then mixin.definition.mixconfig? instance.mixinOptions, args...
+      else mixin.definition.mixconfig? instance.mixinOptions
 
     # Mixinitialize
     # -------------

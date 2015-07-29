@@ -398,7 +398,9 @@ require ['Factory'], (Factory) ->
         testFactory.mirror baseFactory
 
         baseFactory.defineMixin 'one', one: true
-        baseFactory.defineMixin 'two', mixinitialize: -> @two = true
+        baseFactory.defineMixin 'two',
+          mixconfig: -> # nop
+          mixinitialize: -> @two = true
 
         testFactory.defineMixin 'three', mixinitialize: -> @three = true
         testFactory.defineMixin 'four', { mixinitialize: -> @four = true }, mixins: ['three']
@@ -482,6 +484,9 @@ require ['Factory'], (Factory) ->
         expect(testInstance.constructed).toHaveBeenCalledWith 1, 2, 3
         expect(testInstance.constructed).toHaveBeenCalledOn testInstance
 
+      it 'should not throw if executing mixconfig with no ctor args', ->
+        expect(-> testInstance = testFactory.getInstance 'BaseDefinition').not.toThrow()
+
     describe 'resolveInstance method', ->
 
       class TestDefinition
@@ -538,7 +543,7 @@ require ['Factory'], (Factory) ->
         remixed = testFactory.getInstance 'RemixedObject'
         expect(remixed.mixinOptions.two.test).toBe(true)
 
-    describe 'Definition mixin special cases', ->
+    describe 'definition mixin special cases', ->
 
       beforeEach ->
         @date = new Date()
