@@ -240,13 +240,13 @@
       };
 
       Factory.prototype.getInstance = function() {
-        var Constructor, args, base1, definition, factory, injections, instance, instanceMixins, mixins, name, ref, ref1, singleton;
+        var Constructor, args, base1, definition, factory, injections, instance, instanceMixins, mixins, name, ref, singleton;
         name = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
         ref = this._getDefinitionSpec(name), definition = ref.definition, factory = ref.factory;
         mixins = definition.options.mixins || [];
         singleton = Boolean(definition.options.singleton);
         injections = definition.options.injections || [];
-        instance = (ref1 = this.instances[name]) != null ? ref1[0] : void 0;
+        instance = this._getFirstInstanceFromMemory(name);
         if (singleton && instance) {
           return instance;
         }
@@ -275,6 +275,20 @@
         }
         this.trigger.apply(this, ['create', name, instance].concat(slice.call(args)));
         return instance;
+      };
+
+      Factory.prototype._getFirstInstanceFromMemory = function(name) {
+        var factory, i, instance, len, ref, ref1, ref2;
+        if (instance = (ref = this.instances[name]) != null ? ref[0] : void 0) {
+          return instance;
+        }
+        ref1 = this.mirrors;
+        for (i = 0, len = ref1.length; i < len; i++) {
+          factory = ref1[i];
+          if (instance = (ref2 = factory.instances[name]) != null ? ref2[0] : void 0) {
+            return instance;
+          }
+        }
       };
 
       Factory.prototype.resolveInstance = function() {
