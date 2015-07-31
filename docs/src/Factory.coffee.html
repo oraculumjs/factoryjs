@@ -775,10 +775,11 @@ earlier.</p>
 <div class="pilwrap">
   <a class="pilcrow" href="#section-36" id="section-36">&#182;</a>
 </div>
-<p>Check to see if an instance of this definition already exists.</p>
+<p>Check to see if an instance of this definition already exists in this
+or any mirrored factories</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
-      <span class="nv">instance = </span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="nv">instance = </span><span class="nx">@_getFirstInstanceFromMemory</span> <span class="nx">name</span>
       <span class="k">return</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nx">singleton</span> <span class="o">and</span> <span class="nx">instance</span>
 
 
@@ -954,6 +955,11 @@ Constructor.</p>
       <span class="nx">@trigger</span> <span class="s">&#39;create&#39;</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">instance</span><span class="p">,</span> <span class="nx">args</span><span class="p">...</span>
 
       <span class="k">return</span> <span class="nx">instance</span>
+
+    <span class="nv">_getFirstInstanceFromMemory: </span><span class="nf">(name) -&gt;</span>
+      <span class="k">return</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nv">instance = </span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">for</span> <span class="nx">factory</span> <span class="k">in</span> <span class="nx">@mirrors</span>
+        <span class="k">return</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nv">instance = </span><span class="nx">factory</span><span class="p">.</span><span class="nx">instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 
 </pre></div>

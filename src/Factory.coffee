@@ -276,8 +276,9 @@ define [
       singleton = Boolean definition.options.singleton
       injections = definition.options.injections or []
 
-      # Check to see if an instance of this definition already exists.
-      instance = @instances[name]?[0]
+      # Check to see if an instance of this definition already exists in this
+      # or any mirrored factories
+      instance = @_getFirstInstanceFromMemory name
       return instance if singleton and instance
 
       # Get a reference to the constructor
@@ -321,6 +322,11 @@ define [
       @trigger 'create', name, instance, args...
 
       return instance
+
+    _getFirstInstanceFromMemory: (name) ->
+      return instance if instance = @instances[name]?[0]
+      for factory in @mirrors
+        return instance if instance = factory.instances[name]?[0]
 
     # Resolve Instance
     # ----------------

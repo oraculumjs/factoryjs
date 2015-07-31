@@ -466,14 +466,32 @@ require ['Factory'], (Factory) ->
         expect(baseInstance.four).toBe true
 
       it 'should support late mixing via the __mixin method', ->
-        baseInstance = baseFactory.getInstance 'BaseDefinition'
-        testInstance = testFactory.getInstance 'BaseDefinition'
-        expect(-> baseInstance.__mixin 'four').toThrow()
-        expect(-> testInstance.__mixin 'four').not.toThrow()
-        expect(testInstance.one).toBe true
-        expect(testInstance.two).toBe true
-        expect(testInstance.three).toBe true
-        expect(testInstance.four).toBe true
+        testInstance1 = baseFactory.getInstance 'BaseDefinition'
+        testInstance2 = testFactory.getInstance 'BaseDefinition'
+        testInstance3 = testFactory.getInstance 'TestDefinition'
+
+        # The original BaseDefinition instance should throw because it was
+        # created in a factory that doesn't know about the 'four' mixin
+        expect(-> testInstance1.__mixin 'four').toThrow()
+        expect(testInstance1.one).toBe true
+        expect(testInstance1.two).toBe true
+
+        # The second BaseDefinition instance should also throw because it
+        # is a singleton definition returned by the base factory, which still
+        # doesn't know about the 'four' mixin.
+        expect(-> testInstance2.__mixin 'four').toThrow()
+        expect(testInstance2.one).toBe true
+        expect(testInstance2.two).toBe true
+        expect(testInstance2.three).not.toBeDefined()
+        expect(testInstance2.four).not.toBeDefined()
+
+        # The instance of TestInstance can have the mixin applied to it via the
+        # __mixin method since it was created by the testFactory
+        expect(-> testInstance3.__mixin 'four').not.toThrow
+        expect(testInstance3.one).toBe true
+        expect(testInstance3.two).toBe true
+        expect(testInstance3.three).toBe true
+        expect(testInstance3.four).toBe true
 
       it 'should throw if an invalid definition is referenced', ->
         expect(-> testFactory.getInstance 'Invalid').toThrow()
@@ -486,6 +504,13 @@ require ['Factory'], (Factory) ->
 
       it 'should not throw if executing mixconfig with no ctor args', ->
         expect(-> testInstance = testFactory.getInstance 'BaseDefinition').not.toThrow()
+
+      it 'should return the first discovered instance in memory for a singleton definition', ->
+        testInstance1 = baseFactory.get 'BaseDefinition'
+        testInstance2 = baseFactory.get 'BaseDefinition'
+        testInstance3 = testFactory.get 'BaseDefinition'
+        expect(testInstance1).toBe testInstance2
+        expect(testInstance2).toBe testInstance3
 
     describe 'resolveInstance method', ->
 
