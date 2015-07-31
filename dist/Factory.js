@@ -390,10 +390,9 @@
           return activeMixins;
         };
         if (late_mix) {
+          extendMixinOptions(instance.mixinOptions, mixin.definition.mixinOptions);
           this.mixconfig(instance, name, args);
-        }
-        if (late_mix) {
-          this.mixinitialize(instance, name);
+          this.mixinitialize(instance, name, args);
         }
         return instance;
       };
@@ -408,10 +407,14 @@
         }
       };
 
-      Factory.prototype.mixinitialize = function(instance, name) {
-        var factory, mixin, ref, ref1;
+      Factory.prototype.mixinitialize = function(instance, name, args) {
+        var factory, mixin, ref, ref1, ref2;
         ref = this._getMixinSpec(name), mixin = ref.mixin, factory = ref.factory;
-        return (ref1 = mixin.definition.mixinitialize) != null ? ref1.call(instance) : void 0;
+        if ((args != null ? args.length : void 0) > 0) {
+          return (ref1 = mixin.definition.mixinitialize) != null ? ref1.apply(instance, args) : void 0;
+        } else {
+          return (ref2 = mixin.definition.mixinitialize) != null ? ref2.apply(instance) : void 0;
+        }
       };
 
       Factory.prototype.handleInjections = function(instance, injections) {

@@ -11,7 +11,7 @@ beforeEach ->
 
     toUseMixin: (util, customEqualityTesters) ->
       compare: (actual, expected) ->
-        return pass: expected in actual.__mixins()
+        return pass: expected in actual.__activeMixins()
 
     toProvideMethod: (util, customEqualityTesters) ->
       compare: (actual, expected) ->
