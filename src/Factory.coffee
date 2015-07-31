@@ -443,8 +443,10 @@ define [
       instance.__activeMixins = -> activeMixins
 
       # If we're in a late mix, initialize the mixin.
-      @mixconfig instance, name, args if late_mix
-      @mixinitialize instance, name if late_mix
+      if late_mix
+        extendMixinOptions instance.mixinOptions, mixin.definition.mixinOptions
+        @mixconfig instance, name, args
+        @mixinitialize instance, name, args
 
       # Return the instance for consumption
       return instance
@@ -467,9 +469,11 @@ define [
     # This is done after the mixin's options are composed and its methods
     # applied so that the instance is fully composed.
 
-    mixinitialize: (instance, name) ->
+    mixinitialize: (instance, name, args) ->
       {mixin, factory} = @_getMixinSpec name
-      mixin.definition.mixinitialize?.call instance
+      if args?.length > 0
+      then mixin.definition.mixinitialize?.apply instance, args
+      else mixin.definition.mixinitialize?.apply instance
 
     # Handle Injections
     # -----------------
