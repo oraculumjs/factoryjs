@@ -23,7 +23,7 @@ define [
   # Enhance Object
   # --------------
   # Ensures that an object has the correct factory interface
-  _enhanceObject = (factory, name, definition, object) ->
+  enhanceObject = (factory, name, options, object) ->
     # Object environment interfaces
     object.__type = -> name
     object.__factory = -> factory
@@ -33,10 +33,10 @@ define [
       return factory.getTags object
 
     object.__mixins = ->
-      return factory.composeMixinDependencies definition.options?.mixins
+      return factory.composeMixinDependencies options?.mixins
 
     object.__singleton = ->
-      return Boolean definition.options.singleton
+      return Boolean options.singleton
 
     # Factory method interfaces
     object.__mixin = -> factory.applyMixin object, arguments...
@@ -75,7 +75,7 @@ define [
         mixinOptions[option] = value
         continue
 
-      # Don't do anything if either object is an object type we don't support.
+      # Don't do anything if either object is a type we don't support.
       continue if _.isDate(value) or _.isDate(defaultValue) or
       _.isElement(value) or _.isElement(defaultValue) or
       _.isFunction(value) or _.isFunction(defaultValue) or
@@ -86,11 +86,12 @@ define [
   class Factory
     _.extend @prototype, Backbone.Events
 
-    # Expose extendMixinOptions and composeConfig as both
+    # Expose enhanceObject, extendMixinOptions and composeConfig as
     # class and instance methods
+    @enhanceObject: enhanceObject
     @composeConfig: composeConfig
     @extendMixinOptions: extendMixinOptions
-    _.extend @prototype, {composeConfig, extendMixinOptions}
+    _.extend @prototype, {enhanceObject, composeConfig, extendMixinOptions}
 
     # Constructor
     # -----------
@@ -283,23 +284,24 @@ define [
       {definition, factory} = @_getDefinitionSpec name
 
       # Resolve all the options for this definition
-      mixins = definition.options.mixins or []
-      singleton = Boolean definition.options.singleton
-      injections = definition.options.injections or []
+      options = definition.options
+      mixins = options.mixins or []
+      singleton = Boolean options.singleton
+      injections = options.injections or []
 
       # Get a reference to the constructor
       Constructor = definition.constructor
 
       # Enhance the constructor's prototype so that the factory interfaces
       # are available immediately upon construction.
-      _enhanceObject this, name, definition, Constructor.prototype
+      @enhanceObject this, name, options, Constructor.prototype
 
       # Create the instance
       instance = new Constructor args...
 
       # Enhance the instance, in case it's a bare object instead of a proper
       # Constructor.
-      _enhanceObject this, name, definition, instance
+      @enhanceObject this, name, options, instance
 
       # Set the constructor of the instance to one that's factory wrapped
       instance.constructor = factory.getConstructor name
