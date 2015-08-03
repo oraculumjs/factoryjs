@@ -65,7 +65,6 @@ module.exports = (grunt) ->
             'build/spec/**/*.helper.js'
             'build/spec/**/*.spec.js'
           ]
-          outfile: 'specs.html'
           template: requirejsTemplate
           templateOptions: {
             version: '2.0.6'
@@ -85,7 +84,6 @@ module.exports = (grunt) ->
             'build/spec/**/*.spec.js'
           ]
           styles: ['lib/jscoverage/jscoverage.css']
-          outfile: 'specs.html'
           template: requirejsTemplate
           templateOptions: {
             version: '2.0.6'

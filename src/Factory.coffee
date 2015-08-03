@@ -25,12 +25,18 @@ define [
   # Ensures that an object has the correct factory interface
   _enhanceObject = (factory, name, definition, object) ->
     # Object environment interfaces
-    mixins = definition.options?.mixins
     object.__type = -> name
-    object.__tags = -> factory.getTags object
-    object.__mixins = -> factory.composeMixinDependencies mixins
     object.__factory = -> factory
     object.__activeMixins = -> []
+
+    object.__tags = ->
+      return factory.getTags object
+
+    object.__mixins = ->
+      return factory.composeMixinDependencies definition.options?.mixins
+
+    object.__singleton = ->
+      return Boolean definition.options.singleton
 
     # Factory method interfaces
     object.__mixin = -> factory.applyMixin object, arguments...
@@ -268,6 +274,11 @@ define [
     # earlier.
 
     getInstance: (name, args...) ->
+      # Check to see if an instance of this definition already exists in this
+      # or any mirrored factories
+      instance = @_getFirstInstanceFromMemory(name)?.instance
+      return instance if instance and instance.__singleton?()
+
       # Attempt to resolve the defintion from this, or upstream mirrors.
       {definition, factory} = @_getDefinitionSpec name
 
@@ -275,11 +286,6 @@ define [
       mixins = definition.options.mixins or []
       singleton = Boolean definition.options.singleton
       injections = definition.options.injections or []
-
-      # Check to see if an instance of this definition already exists in this
-      # or any mirrored factories
-      instance = @_getFirstInstanceFromMemory name
-      return instance if singleton and instance
 
       # Get a reference to the constructor
       Constructor = definition.constructor
@@ -290,7 +296,6 @@ define [
 
       # Create the instance
       instance = new Constructor args...
-      instanceMixins = @composeMixinDependencies mixins
 
       # Enhance the instance, in case it's a bare object instead of a proper
       # Constructor.
@@ -324,9 +329,11 @@ define [
       return instance
 
     _getFirstInstanceFromMemory: (name) ->
-      return instance if instance = @instances[name]?[0]
+      if (instance = @instances[name]?[0])?
+        return instanceSpec = {instance, factory: this}
       for factory in @mirrors
-        return instance if instance = factory.instances[name]?[0]
+        if (instanceSpec = factory._getFirstInstanceFromMemory name)?
+          return instanceSpec
 
     # Resolve Instance
     # ----------------
