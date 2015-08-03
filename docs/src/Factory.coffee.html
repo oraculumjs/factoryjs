@@ -141,12 +141,18 @@
 <p>Object environment interfaces</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
-    <span class="nv">mixins = </span><span class="nx">definition</span><span class="p">.</span><span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">mixins</span>
     <span class="nv">object.__type = </span><span class="nf">-&gt;</span> <span class="nx">name</span>
-    <span class="nv">object.__tags = </span><span class="nf">-&gt;</span> <span class="nx">factory</span><span class="p">.</span><span class="nx">getTags</span> <span class="nx">object</span>
-    <span class="nv">object.__mixins = </span><span class="nf">-&gt;</span> <span class="nx">factory</span><span class="p">.</span><span class="nx">composeMixinDependencies</span> <span class="nx">mixins</span>
     <span class="nv">object.__factory = </span><span class="nf">-&gt;</span> <span class="nx">factory</span>
     <span class="nv">object.__activeMixins = </span><span class="nf">-&gt;</span> <span class="p">[]</span>
+
+    <span class="nv">object.__tags = </span><span class="nf">-&gt;</span>
+      <span class="k">return</span> <span class="nx">factory</span><span class="p">.</span><span class="nx">getTags</span> <span class="nx">object</span>
+
+    <span class="nv">object.__mixins = </span><span class="nf">-&gt;</span>
+      <span class="k">return</span> <span class="nx">factory</span><span class="p">.</span><span class="nx">composeMixinDependencies</span> <span class="nx">definition</span><span class="p">.</span><span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">mixins</span>
+
+    <span class="nv">object.__singleton = </span><span class="nf">-&gt;</span>
+      <span class="k">return</span> <span class="nb">Boolean</span> <span class="nx">definition</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">singleton</span>
 
 
 </pre></div>
@@ -745,6 +751,22 @@ earlier.</p>
 <div class="pilwrap">
   <a class="pilcrow" href="#section-34" id="section-34">&#182;</a>
 </div>
+<p>Check to see if an instance of this definition already exists in this
+or any mirrored factories</p>
+        </td>
+        <td class="code highlight"><div class="highlight"><pre>
+      <span class="nv">instance = </span><span class="nx">@_getFirstInstanceFromMemory</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="nx">instance</span>
+      <span class="k">return</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nx">instance</span> <span class="o">and</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">__singleton</span><span class="o">?</span><span class="p">()</span>
+
+
+</pre></div>
+        </td>
+      </tr>
+      <tr>
+        <td class="docs">
+<div class="pilwrap">
+  <a class="pilcrow" href="#section-35" id="section-35">&#182;</a>
+</div>
 <p>Attempt to resolve the defintion from this, or upstream mirrors.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
@@ -757,7 +779,7 @@ earlier.</p>
       <tr>
         <td class="docs">
 <div class="pilwrap">
-  <a class="pilcrow" href="#section-35" id="section-35">&#182;</a>
+  <a class="pilcrow" href="#section-36" id="section-36">&#182;</a>
 </div>
 <p>Resolve all the options for this definition</p>
         </td>
@@ -765,22 +787,6 @@ earlier.</p>
       <span class="nv">mixins = </span><span class="nx">definition</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">mixins</span> <span class="o">or</span> <span class="p">[]</span>
       <span class="nv">singleton = </span><span class="nb">Boolean</span> <span class="nx">definition</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">singleton</span>
       <span class="nv">injections = </span><span class="nx">definition</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">injections</span> <span class="o">or</span> <span class="p">[]</span>
-
-
-</pre></div>
-        </td>
-      </tr>
-      <tr>
-        <td class="docs">
-<div class="pilwrap">
-  <a class="pilcrow" href="#section-36" id="section-36">&#182;</a>
-</div>
-<p>Check to see if an instance of this definition already exists in this
-or any mirrored factories</p>
-        </td>
-        <td class="code highlight"><div class="highlight"><pre>
-      <span class="nv">instance = </span><span class="nx">@_getFirstInstanceFromMemory</span> <span class="nx">name</span>
-      <span class="k">return</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nx">singleton</span> <span class="o">and</span> <span class="nx">instance</span>
 
 
 </pre></div>
@@ -824,7 +830,6 @@ are available immediately upon construction.</p>
         </td>
         <td class="code highlight"><div class="highlight"><pre>
       <span class="nv">instance = </span><span class="k">new</span> <span class="nx">Constructor</span> <span class="nx">args</span><span class="p">...</span>
-      <span class="nv">instanceMixins = </span><span class="nx">@composeMixinDependencies</span> <span class="nx">mixins</span>
 
 
 </pre></div>
@@ -957,9 +962,11 @@ Constructor.</p>
       <span class="k">return</span> <span class="nx">instance</span>
 
     <span class="nv">_getFirstInstanceFromMemory: </span><span class="nf">(name) -&gt;</span>
-      <span class="k">return</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nv">instance = </span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nv">instance = </span><span class="nx">@instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">?</span>
+        <span class="k">return</span> <span class="nv">instanceSpec = </span><span class="p">{</span><span class="nx">instance</span><span class="p">,</span> <span class="nv">factory: </span><span class="k">this</span><span class="p">}</span>
       <span class="k">for</span> <span class="nx">factory</span> <span class="k">in</span> <span class="nx">@mirrors</span>
-        <span class="k">return</span> <span class="nx">instance</span> <span class="k">if</span> <span class="nv">instance = </span><span class="nx">factory</span><span class="p">.</span><span class="nx">instances</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span><span class="o">?</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">instanceSpec = </span><span class="nx">factory</span><span class="p">.</span><span class="nx">_getFirstInstanceFromMemory</span> <span class="nx">name</span><span class="p">)</span><span class="o">?</span>
+          <span class="k">return</span> <span class="nx">instanceSpec</span>
 
 
 </pre></div>

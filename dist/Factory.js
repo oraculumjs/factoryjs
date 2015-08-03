@@ -5,22 +5,24 @@
   define(["underscore", "jquery", "backbone"], function(_, $, Backbone) {
     var Factory, _composeConfig, _enhanceObject, composeConfig, extendMixinOptions;
     _enhanceObject = function(factory, name, definition, object) {
-      var mixins, ref;
-      mixins = (ref = definition.options) != null ? ref.mixins : void 0;
       object.__type = function() {
         return name;
-      };
-      object.__tags = function() {
-        return factory.getTags(object);
-      };
-      object.__mixins = function() {
-        return factory.composeMixinDependencies(mixins);
       };
       object.__factory = function() {
         return factory;
       };
       object.__activeMixins = function() {
         return [];
+      };
+      object.__tags = function() {
+        return factory.getTags(object);
+      };
+      object.__mixins = function() {
+        var ref;
+        return factory.composeMixinDependencies((ref = definition.options) != null ? ref.mixins : void 0);
+      };
+      object.__singleton = function() {
+        return Boolean(definition.options.singleton);
       };
       object.__mixin = function() {
         return factory.applyMixin.apply(factory, [object].concat(slice.call(arguments)));
@@ -240,16 +242,16 @@
       };
 
       Factory.prototype.getInstance = function() {
-        var Constructor, args, base1, definition, factory, injections, instance, instanceMixins, mixins, name, ref, singleton;
+        var Constructor, args, base1, definition, factory, injections, instance, mixins, name, ref, ref1, singleton;
         name = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
-        ref = this._getDefinitionSpec(name), definition = ref.definition, factory = ref.factory;
+        instance = (ref = this._getFirstInstanceFromMemory(name)) != null ? ref.instance : void 0;
+        if (instance && (typeof instance.__singleton === "function" ? instance.__singleton() : void 0)) {
+          return instance;
+        }
+        ref1 = this._getDefinitionSpec(name), definition = ref1.definition, factory = ref1.factory;
         mixins = definition.options.mixins || [];
         singleton = Boolean(definition.options.singleton);
         injections = definition.options.injections || [];
-        instance = this._getFirstInstanceFromMemory(name);
-        if (singleton && instance) {
-          return instance;
-        }
         Constructor = definition.constructor;
         _enhanceObject(this, name, definition, Constructor.prototype);
         instance = (function(func, args, ctor) {
@@ -257,7 +259,6 @@
           var child = new ctor, result = func.apply(child, args);
           return Object(result) === result ? result : child;
         })(Constructor, args, function(){});
-        instanceMixins = this.composeMixinDependencies(mixins);
         _enhanceObject(this, name, definition, instance);
         instance.constructor = factory.getConstructor(name);
         if ((base1 = this.instances)[name] == null) {
@@ -278,15 +279,18 @@
       };
 
       Factory.prototype._getFirstInstanceFromMemory = function(name) {
-        var factory, i, instance, len, ref, ref1, ref2;
-        if (instance = (ref = this.instances[name]) != null ? ref[0] : void 0) {
-          return instance;
+        var factory, i, instance, instanceSpec, len, ref, ref1;
+        if ((instance = (ref = this.instances[name]) != null ? ref[0] : void 0) != null) {
+          return instanceSpec = {
+            instance: instance,
+            factory: this
+          };
         }
         ref1 = this.mirrors;
         for (i = 0, len = ref1.length; i < len; i++) {
           factory = ref1[i];
-          if (instance = (ref2 = factory.instances[name]) != null ? ref2[0] : void 0) {
-            return instance;
+          if ((instanceSpec = factory._getFirstInstanceFromMemory(name)) != null) {
+            return instanceSpec;
           }
         }
       };
