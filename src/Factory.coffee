@@ -662,36 +662,63 @@ define [
     # Call to run a function on all existing instances that relate to a tag and
     # bind that same function to any future instances created.
 
-    onTag: (tag, cb) ->
+    onTag: (tag, callback) ->
+      # Wat r u doin?
       throw new TypeError """
         Factory#onTag Invalid Argument.
         `tag` must be a String.
       """ unless _.isString tag
+
+      # Nope.
       throw new TypeError """
         Factory#onTag Invalid Argument.
-        `cb` must be a Function.
-      """ unless _.isFunction cb
-      cb instance for instance in @tagMap[tag] or []
+        `callback` must be a Function.
+      """ unless _.isFunction callback
+
+      # Recursively iterate over all instances and apply our callback.
+      @_handleTagCallback tag, callback
+
+      # Create a store for this callback if none exists.
       @tagCallbacks[tag] ?= []
-      @tagCallbacks[tag].push cb
+
+      # Push our callback into the store.
+      @tagCallbacks[tag].push callback
+
       return true
+
+    # Handle Tag Callback
+    # -------------------
+    # Recursively iterate over all instances in all mirrored factories, applying
+    # this callback to any instances with the desired tag.
+
+    _handleTagCallback: (tag, callback) ->
+      callback instance for instance in @tagMap[tag] or []
+      factory._handleTagCallback tag, callback for factory in @mirrors
 
     # Off Tag
     # -------
     # Call to remove a function from calling on all future instances of an
     # instance that relates to a tag.
 
-    offTag: (tag, cb) ->
+    offTag: (tag, callback) ->
       throw new TypeError """
         Factory#offTag Invalid Argument.
         `tag` must be a String.
       """ unless _.isString tag
-      return unless @tagCallbacks[tag]?
-      unless _.isFunction(cb)
-        @tagCallbacks[tag] = []
-        return
-      cbIdx = @tagCallbacks[tag].indexOf(cb)
+
+      # Nothing in the callback stack? Nothing to do here...
+      return if (callbacks = @tagCallbacks[tag])?.length < 1
+
+      # Callback not provided, or not a function? Clean up all callbacks.
+      return delete @tagCallbacks[tag] unless _.isFunction callback
+
+      # User provided a callback to remove, but it doesn't exist? Oops.
       throw new ReferenceError """
         Factory#offTag Callback Not Found for #{tag}.
-      """ if cbIdx is -1
-      @tagCallbacks[tag].splice cbIdx, 1
+      """ if (index = callbacks.indexOf callback) < 0
+
+      # Made it this far? Remove the callback.
+      callbacks.splice index, 1
+
+      # No callbacks left? Remove the array.
+      delete @tagCallbacks[tag]

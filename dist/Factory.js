@@ -613,43 +613,54 @@
         });
       };
 
-      Factory.prototype.onTag = function(tag, cb) {
-        var base1, i, instance, len, ref;
+      Factory.prototype.onTag = function(tag, callback) {
+        var base1;
         if (!_.isString(tag)) {
           throw new TypeError("Factory#onTag Invalid Argument.\n`tag` must be a String.");
         }
-        if (!_.isFunction(cb)) {
-          throw new TypeError("Factory#onTag Invalid Argument.\n`cb` must be a Function.");
+        if (!_.isFunction(callback)) {
+          throw new TypeError("Factory#onTag Invalid Argument.\n`callback` must be a Function.");
         }
-        ref = this.tagMap[tag] || [];
-        for (i = 0, len = ref.length; i < len; i++) {
-          instance = ref[i];
-          cb(instance);
-        }
+        this._handleTagCallback(tag, callback);
         if ((base1 = this.tagCallbacks)[tag] == null) {
           base1[tag] = [];
         }
-        this.tagCallbacks[tag].push(cb);
+        this.tagCallbacks[tag].push(callback);
         return true;
       };
 
-      Factory.prototype.offTag = function(tag, cb) {
-        var cbIdx;
+      Factory.prototype._handleTagCallback = function(tag, callback) {
+        var factory, i, instance, j, len, len1, ref, ref1, results;
+        ref = this.tagMap[tag] || [];
+        for (i = 0, len = ref.length; i < len; i++) {
+          instance = ref[i];
+          callback(instance);
+        }
+        ref1 = this.mirrors;
+        results = [];
+        for (j = 0, len1 = ref1.length; j < len1; j++) {
+          factory = ref1[j];
+          results.push(factory._handleTagCallback(tag, callback));
+        }
+        return results;
+      };
+
+      Factory.prototype.offTag = function(tag, callback) {
+        var callbacks, index, ref;
         if (!_.isString(tag)) {
           throw new TypeError("Factory#offTag Invalid Argument.\n`tag` must be a String.");
         }
-        if (this.tagCallbacks[tag] == null) {
+        if (((ref = (callbacks = this.tagCallbacks[tag])) != null ? ref.length : void 0) < 1) {
           return;
         }
-        if (!_.isFunction(cb)) {
-          this.tagCallbacks[tag] = [];
-          return;
+        if (!_.isFunction(callback)) {
+          return delete this.tagCallbacks[tag];
         }
-        cbIdx = this.tagCallbacks[tag].indexOf(cb);
-        if (cbIdx === -1) {
+        if ((index = callbacks.indexOf(callback)) < 0) {
           throw new ReferenceError("Factory#offTag Callback Not Found for " + tag + ".");
         }
-        return this.tagCallbacks[tag].splice(cbIdx, 1);
+        callbacks.splice(index, 1);
+        return delete this.tagCallbacks[tag];
       };
 
       return Factory;
