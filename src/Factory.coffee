@@ -707,18 +707,20 @@ define [
       """ unless _.isString tag
 
       # Nothing in the callback stack? Nothing to do here...
-      return if (callbacks = @tagCallbacks[tag])?.length < 1
+      return unless (callbacks = @tagCallbacks[tag])?
+      return delete @tagCallbacks[tag] if callbacks.length is 0
 
-      # Callback not provided, or not a function? Clean up all callbacks.
+      # Callback not a function? Clean up all callbacks.
+      # You must have meant "clear all callbacks"
       return delete @tagCallbacks[tag] unless _.isFunction callback
 
-      # User provided a callback to remove, but it doesn't exist? Oops.
+      # User provided a callback to remove, but it doesn't exist? Fail.
       throw new ReferenceError """
         Factory#offTag Callback Not Found for #{tag}.
       """ if (index = callbacks.indexOf callback) < 0
 
-      # Made it this far? Remove the callback.
+      # Made it this far? Remove the specified callback.
       callbacks.splice index, 1
 
-      # No callbacks left? Remove the array.
-      delete @tagCallbacks[tag]
+      # No callbacks left? Drink up! Move down!
+      delete @tagCallbacks[tag] if callbacks.length is 0

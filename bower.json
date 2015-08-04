@@ -1,6 +1,6 @@
 {
   "name": "Factory",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "main": "dist/Factory.js",
   "dependencies": {
     "jquery": "~2.1.4",

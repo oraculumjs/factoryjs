@@ -646,12 +646,15 @@
       };
 
       Factory.prototype.offTag = function(tag, callback) {
-        var callbacks, index, ref;
+        var callbacks, index;
         if (!_.isString(tag)) {
           throw new TypeError("Factory#offTag Invalid Argument.\n`tag` must be a String.");
         }
-        if (((ref = (callbacks = this.tagCallbacks[tag])) != null ? ref.length : void 0) < 1) {
+        if ((callbacks = this.tagCallbacks[tag]) == null) {
           return;
+        }
+        if (callbacks.length === 0) {
+          return delete this.tagCallbacks[tag];
         }
         if (!_.isFunction(callback)) {
           return delete this.tagCallbacks[tag];
@@ -660,7 +663,9 @@
           throw new ReferenceError("Factory#offTag Callback Not Found for " + tag + ".");
         }
         callbacks.splice(index, 1);
-        return delete this.tagCallbacks[tag];
+        if (callbacks.length === 0) {
+          return delete this.tagCallbacks[tag];
+        }
       };
 
       return Factory;
