@@ -1,12 +1,17 @@
+/* FactoryJS 1.1.8 */
 (function() {
   define(["Factory", "backbone", "underscore"], function(Factory, Backbone, _) {
     'use strict';
     var BackboneFactory;
     BackboneFactory = new Factory((function() {
-      _.extend(this, Backbone.Events);
-      return typeof this.initialize === "function" ? this.initialize.apply(this, arguments) : void 0;
+      return Backbone;
     }), {
       baseTags: ['Backbone']
+    });
+    BackboneFactory.define('BackboneFactory', (function() {
+      return BackboneFactory;
+    }), {
+      singleton: true
     });
     BackboneFactory.define('View', Backbone.View.extend({
       constructor: function(options) {

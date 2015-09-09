@@ -8,12 +8,6 @@ require ["BackboneFactory", "backbone"], (BackboneFactory, Backbone) ->
       expect(BackboneFactory.get("Base")).toBeDefined()
       expect(BackboneFactory.get("Base").on).toBeDefined()
 
-    it "should initialize objects that support that interface", ->
-      TestObject = initialize: -> @tested = true
-      BackboneFactory.extend "Base", "TestObject", TestObject
-      ctor = BackboneFactory.definitions.Base.constructor
-      expect(BackboneFactory.get("TestObject")).toBeInstanceOf ctor
-
     it "should return a view as defined", ->
       view = BackboneFactory.get("View")
       expect(view).toBeInstanceOf(Backbone.View)

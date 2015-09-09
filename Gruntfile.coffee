@@ -7,6 +7,7 @@ module.exports = (grunt) ->
 
   grunt.loadNpmTasks 'grunt-bump'
   grunt.loadNpmTasks 'grunt-docker'
+  grunt.loadNpmTasks 'grunt-gitinfo'
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-clean'
   grunt.loadNpmTasks 'grunt-contrib-watch'
@@ -97,6 +98,9 @@ module.exports = (grunt) ->
           ]
 
     concat:
+      options:
+        banner: "/* <%- pkg.name %> <%- pkg.version %> */\n"
+        process: true
       factory:
         src: ['build/src/Factory.js']
         dest: 'dist/Factory.js'
@@ -106,7 +110,7 @@ module.exports = (grunt) ->
 
     uglify:
       options:
-        banner: '/*! <%= pkg.name %> <%= pkg.version %> */\n'
+        banner: "/* <%- pkg.name %> <%- pkg.version %> */\n"
       factory:
         files:
           'dist/Factory.min.js': ['build/src/Factory.js']
@@ -164,6 +168,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'dist', [
     'clean:dist'
+    'gitinfo'
     'concat'
     'uglify'
   ]

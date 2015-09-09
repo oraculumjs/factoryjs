@@ -78,16 +78,19 @@ define [
       # Don't do anything if either object is a type we don't support.
       continue if _.isDate(value) or _.isDate(defaultValue) or
       _.isElement(value) or _.isElement(defaultValue) or
-      _.isFunction(value) or _.isFunction(defaultValue) or
       _.isRegExp(value) or _.isRegExp(defaultValue)
 
       mixinOptions[option] = composeConfig defaultValue, value
 
   class Factory
+    # Borrow the eventing mechanism from Backbone
     _.extend @prototype, Backbone.Events
 
-    # Expose enhanceObject, extendMixinOptions and composeConfig as
-    # class and instance methods
+    # Expose our version/commit info
+    @COMMIT = "<%- gitinfo.local.branch.current.SHA %>"
+    @VERSION = "<%- component.version %>"
+
+    # Expose our helpers on both the class/instance
     @enhanceObject: enhanceObject
     @composeConfig: composeConfig
     @extendMixinOptions: extendMixinOptions

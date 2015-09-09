@@ -12,9 +12,12 @@ define [
   # the other objects defined below.
 
   BackboneFactory = new Factory (->
-    _.extend this, Backbone.Events
-    @initialize? arguments...
+    return Backbone
   ), baseTags: ['Backbone']
+
+  BackboneFactory.define 'BackboneFactory', (->
+    return BackboneFactory
+  ), singleton: true
 
   # View
   # ----

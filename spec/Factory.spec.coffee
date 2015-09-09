@@ -405,6 +405,14 @@ require ['Factory'], (Factory) ->
         testFactory.defineMixin 'three', mixinitialize: -> @three = true
         testFactory.defineMixin 'four', { mixinitialize: -> @four = true }, mixins: ['three']
 
+        testFactory.defineMixin 'five',
+          mixinOptions: five: -> {'five'}
+
+        testFactory.define 'six', (class Six
+          mixinOptions: five: -> {'six'}
+          constructor: ->
+        ), mixins: ['five']
+
         baseFactory.define 'BaseDefinition', BaseDefinition, {
           mixins: ['one', 'two']
           singleton: true
@@ -511,6 +519,13 @@ require ['Factory'], (Factory) ->
         testInstance3 = testFactory.get 'BaseDefinition'
         expect(testInstance1).toBe testInstance2
         expect(testInstance2).toBe testInstance3
+
+      it 'should compose an instances function mixinOptions with the default mixin mixinOptions', ->
+        testInstance = testFactory.get 'six'
+        expect(testInstance.mixinOptions.five).toBeFunction()
+        expect(testInstance.mixinOptions.five()).toEqual {
+          'five', 'six'
+        }
 
     describe 'resolveInstance method', ->
 
@@ -627,7 +642,6 @@ require ['Factory'], (Factory) ->
 
       it 'should just keep the newest for other types', ->
         expect(@object.mixinOptions.date).toBe(@date)
-        expect(@object.mixinOptions.fn).toBe(@fn)
 
       it 'should inherit mixins when the inheritMixins flag is true', ->
         expect(@object.center).toBe(true)

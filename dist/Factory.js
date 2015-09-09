@@ -1,3 +1,4 @@
+/* FactoryJS 1.1.8 */
 (function() {
   var slice = [].slice,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -77,7 +78,7 @@
           mixinOptions[option] = value;
           continue;
         }
-        if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isFunction(value) || _.isFunction(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
+        if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
           continue;
         }
         results.push(mixinOptions[option] = composeConfig(defaultValue, value));
@@ -86,6 +87,10 @@
     };
     return Factory = (function() {
       _.extend(Factory.prototype, Backbone.Events);
+
+      Factory.COMMIT = "63538cde5f3325948fc1c4d132e4a6b49df6e362";
+
+      Factory.VERSION = "1.1.8";
 
       Factory.enhanceObject = enhanceObject;
 

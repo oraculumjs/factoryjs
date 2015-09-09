@@ -1,6 +1,6 @@
 {
   "name": "FactoryJS",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "repository": "git://github.com/lookout/factoryjs.git",
   "author": "Gabriel Hernandez <gabriel.hernandez@lookout.com>",
   "contributors": [
@@ -8,20 +8,21 @@
   ],
   "devDependencies": {
     "bower": "latest",
-    "grunt-cli": "latest",
-    "grunt-bump": "latest",
-    "grunt-docker": "0.0.8",
     "grunt-blanket": "latest",
-    "grunt-markdown": "latest",
+    "grunt-bump": "latest",
+    "grunt-cli": "latest",
     "grunt-coffeelint": "latest",
     "grunt-contrib-clean": "latest",
-    "grunt-contrib-watch": "latest",
     "grunt-contrib-coffee": "latest",
+    "grunt-contrib-concat": "latest",
+    "grunt-contrib-connect": "latest",
+    "grunt-contrib-jasmine": "latest",
     "grunt-contrib-jshint": "latest",
     "grunt-contrib-uglify": "latest",
-    "grunt-contrib-concat": "latest",
-    "grunt-contrib-jasmine": "latest",
-    "grunt-contrib-connect": "latest",
+    "grunt-contrib-watch": "latest",
+    "grunt-docker": "0.0.8",
+    "grunt-gitinfo": "^0.1.7",
+    "grunt-markdown": "latest",
     "grunt-template-jasmine-requirejs": "latest"
   }
 }
