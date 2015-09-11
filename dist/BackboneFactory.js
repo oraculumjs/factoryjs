@@ -1,6 +1,6 @@
-/* FactoryJS 1.1.8 */
+/* FactoryJS 1.1.9 */
 (function() {
-  define(["Factory", "backbone", "underscore"], function(Factory, Backbone, _) {
+  define(["Factory", "jquery", "backbone", "underscore"], function(Factory, jQuery, Backbone, _) {
     'use strict';
     var BackboneFactory;
     BackboneFactory = new Factory((function() {
@@ -13,6 +13,26 @@
     }), {
       singleton: true
     });
+    BackboneFactory.define('jQuery', (function() {
+      return jQuery;
+    }), {
+      singleton: true,
+      tags: ['vendor']
+    });
+    BackboneFactory.define('Backbone', (function() {
+      return Backbone;
+    }), {
+      singleton: true,
+      tags: ['vendor']
+    });
+    BackboneFactory.define('underscore', (function() {
+      return _;
+    }), {
+      singleton: true,
+      tags: ['vendor']
+    });
+    BackboneFactory.COMMIT = Factory.COMMIT;
+    BackboneFactory.VERSION = Factory.VERSION;
     BackboneFactory.define('View', Backbone.View.extend({
       constructor: function(options) {
         if (options == null) {

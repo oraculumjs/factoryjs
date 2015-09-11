@@ -1,8 +1,9 @@
 define [
   "Factory"
+  "jquery"
   "backbone"
   "underscore"
-], (Factory, Backbone, _) ->
+], (Factory, jQuery, Backbone, _) ->
   'use strict'
 
   # Backbone Factory
@@ -15,9 +16,27 @@ define [
     return Backbone
   ), baseTags: ['Backbone']
 
+  # Provide a self-referencing definition
   BackboneFactory.define 'BackboneFactory', (->
     return BackboneFactory
   ), singleton: true
+
+  # Provide vendor definitions.
+  BackboneFactory.define 'jQuery', (-> jQuery),
+    singleton: true
+    tags: ['vendor']
+
+  BackboneFactory.define 'Backbone', (-> Backbone),
+    singleton: true
+    tags: ['vendor']
+
+  BackboneFactory.define 'underscore', (-> _),
+    singleton: true
+    tags: ['vendor']
+
+  # Expose our version/commit info
+  BackboneFactory.COMMIT = Factory.COMMIT
+  BackboneFactory.VERSION = Factory.VERSION
 
   # View
   # ----

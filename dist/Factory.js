@@ -1,4 +1,4 @@
-/* FactoryJS 1.1.8 */
+/* FactoryJS 1.1.9 */
 (function() {
   var slice = [].slice,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -88,9 +88,9 @@
     return Factory = (function() {
       _.extend(Factory.prototype, Backbone.Events);
 
-      Factory.COMMIT = "63538cde5f3325948fc1c4d132e4a6b49df6e362";
+      Factory.COMMIT = "50b70f83ee255b3f06284b6b1eca598204772c90";
 
-      Factory.VERSION = "1.1.8";
+      Factory.VERSION = "1.1.9";
 
       Factory.enhanceObject = enhanceObject;
 
