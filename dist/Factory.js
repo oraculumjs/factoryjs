@@ -74,8 +74,17 @@
       for (option in mixinDefaults) {
         defaultValue = mixinDefaults[option];
         value = mixinOptions[option] != null ? mixinOptions[option] : mixinOptions[option] = defaultValue;
+        if (value === defaultValue) {
+          if (defaultValue.constructor === Object) {
+            mixinOptions[option] = _.clone(value);
+          }
+          continue;
+        }
         if (!(_.isObject(value) && _.isObject(defaultValue))) {
           mixinOptions[option] = value;
+          if (mixinOptions[option] == null) {
+            mixinOptions[option] = defaultValue;
+          }
           continue;
         }
         if (_.isDate(value) || _.isDate(defaultValue) || _.isElement(value) || _.isElement(defaultValue) || _.isRegExp(value) || _.isRegExp(defaultValue)) {
@@ -88,7 +97,7 @@
     return Factory = (function() {
       _.extend(Factory.prototype, Backbone.Events);
 
-      Factory.COMMIT = "50b70f83ee255b3f06284b6b1eca598204772c90";
+      Factory.COMMIT = "70f59223ef078f912aafd9d242b97a57aa9adfeb";
 
       Factory.VERSION = "1.1.9";
 

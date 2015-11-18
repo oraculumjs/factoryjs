@@ -70,9 +70,17 @@ define [
     for option, defaultValue of mixinDefaults
       value = mixinOptions[option] ?= defaultValue
 
-      # Override the default value if one of the values is not extendable.
+      # If we assigned the default value as the current value, continue.
+      if value is defaultValue
+        # But first, make sure we're not passing around a mutable reference.
+        if defaultValue.constructor is Object
+          mixinOptions[option] = _.clone value
+        continue
+
+      # Override the default value if either of the values is not extendable.
       unless _.isObject(value) and _.isObject(defaultValue)
         mixinOptions[option] = value
+        mixinOptions[option] ?= defaultValue
         continue
 
       # Don't do anything if either object is a type we don't support.
